@@ -19,7 +19,7 @@ import android.widget.inline.InlinePresentationSpec
 import androidx.annotation.RequiresApi
 import androidx.autofill.inline.UiVersions
 import androidx.autofill.inline.v1.InlineSuggestionUi
-import com.example.R
+import com.atomicvault.android.R
 import com.example.database.CredentialInput
 import com.example.database.VaultDatabase
 import com.example.database.VaultRepositoryImpl
