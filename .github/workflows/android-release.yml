@@ -1,0 +1,289 @@
+name: Android Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_bundle:
+        description: 'Build Android App Bundle (AAB) alongside APK'
+        required: false
+        type: boolean
+        default: true
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-release:
+    name: Build & Sign Production Release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Grant execute permission for Gradle wrapper
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+          else
+            echo "::error::gradlew wrapper not found in root workspace!"
+            exit 1
+          fi
+
+      - name: Validate Release Signing Secrets
+        id: validate-secrets
+        run: |
+          echo "Verifying presence of production signing secrets..."
+          MISSING_SECRETS=()
+          [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && MISSING_SECRETS+=("ANDROID_KEYSTORE_BASE64")
+          [ -z "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && MISSING_SECRETS+=("ANDROID_KEYSTORE_PASSWORD")
+          [ -z "${{ secrets.ANDROID_KEY_ALIAS }}" ] && MISSING_SECRETS+=("ANDROID_KEY_ALIAS")
+          [ -z "${{ secrets.ANDROID_KEY_PASSWORD }}" ] && MISSING_SECRETS+=("ANDROID_KEY_PASSWORD")
+
+          if [ ${#MISSING_SECRETS[@]} -ne 0 ]; then
+            echo "::error::Missing required Android production signing secrets: ${MISSING_SECRETS[*]}"
+            echo "Please configure these secrets under GitHub Repository Settings -> Secrets and variables -> Actions."
+            echo "Fail-safe: Refusing to build an unsigned or debug-signed release APK."
+            exit 1
+          fi
+          echo "All production signing secrets are present."
+
+      - name: Decode Release Keystore
+        id: decode-keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          KEYSTORE_DEST="${{ runner.temp }}/release.keystore"
+          echo "Decoding release keystore to $KEYSTORE_DEST..."
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_DEST"
+
+          if [ ! -s "$KEYSTORE_DEST" ]; then
+            echo "::error::Failed to decode release keystore or decoded keystore file is empty."
+            exit 1
+          fi
+
+          echo "KEYSTORE_PATH=$KEYSTORE_DEST" >> $GITHUB_ENV
+          echo "Keystore decoded successfully (size: $(wc -c < "$KEYSTORE_DEST") bytes)."
+
+      - name: Run Unit Tests
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "Executing pre-release test suite..."
+          ./gradlew test --stacktrace
+
+      - name: Build Signed Release APK
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "Executing clean assembleRelease..."
+          ./gradlew clean assembleRelease --stacktrace
+
+      - name: Build Signed Release AAB (Optional / Configured)
+        if: ${{ inputs.build_bundle != false }}
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "Executing bundleRelease..."
+          ./gradlew bundleRelease --stacktrace
+
+      - name: Locate apksigner Tool
+        id: find-apksigner
+        run: |
+          APKSIGNER_BIN=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          if [ -z "$APKSIGNER_BIN" ] || [ ! -x "$APKSIGNER_BIN" ]; then
+            echo "::error::apksigner binary could not be found under $ANDROID_HOME/build-tools"
+            exit 1
+          fi
+          echo "Located apksigner tool at: $APKSIGNER_BIN"
+          echo "APKSIGNER=$APKSIGNER_BIN" >> $GITHUB_ENV
+
+      - name: Verify Release APK Exists & Validate Signatures
+        id: verify-apk
+        run: |
+          echo "Inspecting release APK build output directory..."
+          APK_DIR="app/build/outputs/apk/release"
+          if [ ! -d "$APK_DIR" ]; then
+            echo "::error::Release APK directory not found at $APK_DIR!"
+            exit 1
+          fi
+
+          APKS=($(find "$APK_DIR" -maxdepth 1 -name "*.apk" -not -name "*-unsigned.apk"))
+          if [ ${#APKS[@]} -eq 0 ]; then
+            echo "::error::No signed release APK found in $APK_DIR!"
+            ls -la "$APK_DIR" || true
+            exit 1
+          fi
+
+          echo "Found candidate release APK(s):"
+          for apk in "${APKS[@]}"; do
+            echo " -> Verifying signature for $(basename "$apk")..."
+            "$APKSIGNER" verify --verbose "$apk"
+
+            CERTS_OUTPUT=$("$APKSIGNER" verify --print-certs "$apk")
+            if echo "$CERTS_OUTPUT" | grep -qi "Android Debug"; then
+              echo "::error::SECURITY ALERT: $apk is signed with the Android Debug Key! Production releases must use a valid release keystore."
+              exit 1
+            fi
+            echo "Verified production release signature for $(basename "$apk")"
+          done
+
+      - name: Prepare Versioned Distributables & Compute SHA-256
+        id: prepare-distributables
+        run: |
+          mkdir -p release-artifacts
+
+          # Determine version name
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION_TAG="${GITHUB_REF_NAME}"
+            VERSION_NAME="${VERSION_TAG#v}"
+          else
+            EXTRACTED_VERSION=$(grep -E 'versionName\s*=\s*"[^"]+"' app/build.gradle.kts | head -n 1 | sed -E 's/.*versionName\s*=\s*"([^"]+)".*/\1/')
+            VERSION_NAME="${EXTRACTED_VERSION:-1.0.0}"
+            VERSION_TAG="v${VERSION_NAME}"
+          fi
+          echo "Release Version: $VERSION_NAME (Tag: $VERSION_TAG)"
+
+          APK_DIR="app/build/outputs/apk/release"
+
+          # Prioritize universal release APK or default release APK
+          UNIVERSAL_SRC=$(find "$APK_DIR" -maxdepth 1 -name "*universal*release*.apk" | head -n 1)
+          DEFAULT_RELEASE_SRC=$(find "$APK_DIR" -maxdepth 1 -name "*release*.apk" -not -name "*-unsigned.apk" | head -n 1)
+          PRIMARY_APK_SRC="${UNIVERSAL_SRC:-$DEFAULT_RELEASE_SRC}"
+
+          if [ -z "$PRIMARY_APK_SRC" ] || [ ! -f "$PRIMARY_APK_SRC" ]; then
+            echo "::error::No primary release APK found in $APK_DIR!"
+            exit 1
+          fi
+
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            FINAL_APK_NAME="AtomicVault-${VERSION_TAG}.apk"
+          else
+            FINAL_APK_NAME="AtomicVault-${VERSION_NAME}-release.apk"
+          fi
+
+          cp "$PRIMARY_APK_SRC" "release-artifacts/$FINAL_APK_NAME"
+          echo "Prepared primary release APK: release-artifacts/$FINAL_APK_NAME"
+
+          # Handle any architecture-specific split APKs if configured
+          SPLIT_APKS=($(find "$APK_DIR" -maxdepth 1 -name "*release*.apk" -not -name "*-unsigned.apk" -not -path "$PRIMARY_APK_SRC"))
+          for split in "${SPLIT_APKS[@]}"; do
+            SPLIT_BASE=$(basename "$split")
+            ABI=$(echo "$SPLIT_BASE" | sed -E 's/.*-([a-zA-Z0-9_-]+)-release\.apk/\1/')
+            if [ -n "$ABI" ] && [ "$ABI" != "$SPLIT_BASE" ]; then
+              SPLIT_TARGET="AtomicVault-${VERSION_TAG}-${ABI}.apk"
+              cp "$split" "release-artifacts/$SPLIT_TARGET"
+              echo "Prepared ABI split APK: release-artifacts/$SPLIT_TARGET"
+            fi
+          done
+
+          # Handle App Bundle (AAB) if produced
+          AAB_SRC=$(find "app/build/outputs/bundle/release" -name "*.aab" 2>/dev/null | head -n 1)
+          if [ -n "$AAB_SRC" ] && [ -f "$AAB_SRC" ]; then
+            if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+              FINAL_AAB_NAME="AtomicVault-${VERSION_TAG}.aab"
+            else
+              FINAL_AAB_NAME="AtomicVault-${VERSION_NAME}-release.aab"
+            fi
+            cp "$AAB_SRC" "release-artifacts/$FINAL_AAB_NAME"
+            echo "Prepared release bundle: release-artifacts/$FINAL_AAB_NAME"
+          fi
+
+          # Compute SHA-256 checksums
+          cd release-artifacts
+          for artifact in *; do
+            if [ -f "$artifact" ] && [[ "$artifact" != *.sha256 ]]; then
+              sha256sum "$artifact" > "${artifact}.sha256"
+              echo "Generated checksum for ${artifact}:"
+              cat "${artifact}.sha256"
+            fi
+          done
+          cd ..
+
+          # Output non-sensitive summary to GITHUB_STEP_SUMMARY
+          echo "## 🛡️ AtomicVault Production Release Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact File | Size | SHA-256 Checksum |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+
+          for file in release-artifacts/*.apk release-artifacts/*.aab; do
+            if [ -f "$file" ]; then
+              FILE_NAME=$(basename "$file")
+              FILE_SIZE=$(ls -lh "$file" | awk '{print $5}')
+              FILE_SHA=$(sha256sum "$file" | awk '{print $1}')
+              echo "| \`$FILE_NAME\` | $FILE_SIZE | \`$FILE_SHA\` |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "PRIMARY_APK_NAME=$FINAL_APK_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+      - name: Upload Production Artifacts (GitHub Actions)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Release-APK
+          path: |
+            release-artifacts/*.apk
+            release-artifacts/*.apk.sha256
+            release-artifacts/*.aab
+            release-artifacts/*.aab.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release (Tag Triggers)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "AtomicVault ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release-artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Securely Wipe Temporary Keystore
+        if: always()
+        run: |
+          echo "Securely cleaning temporary keystore from runner disk..."
+          if [ -n "${{ env.KEYSTORE_PATH }}" ] && [ -f "${{ env.KEYSTORE_PATH }}" ]; then
+            if command -v shred >/dev/null 2>&1; then
+              shred -u -z -n 3 "${{ env.KEYSTORE_PATH }}"
+            else
+              dd if=/dev/urandom of="${{ env.KEYSTORE_PATH }}" bs=1K count=10 status=none 2>/dev/null || true
+              rm -f "${{ env.KEYSTORE_PATH }}"
+            fi
+            echo "Temporary keystore shredded and removed."
+          else
+            echo "No temporary keystore file exists on disk."
+          fi

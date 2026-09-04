@@ -1,37 +1,43 @@
-# Atomic Vault
+# AtomicVault (Web Edition)
 
-An offline, encrypted credential manager for Android (Kotlin, Jetpack
-Compose, SQLCipher, Android Autofill Framework). No network permission,
-no cloud sync, no analytics -- everything stays on-device.
+An offline, zero-knowledge encrypted credential and password manager built with React, TypeScript, Vite, and Tailwind CSS.
 
-This project started from a Google AI Studio scaffold; the unused
-Firebase/Gemini/Google-Services/network scaffolding that shipped in that
-default template has been removed, since none of it fits an offline-only
-app. See `docs/` (if present) or the project's design/architecture notes
-for the security model and roadmap.
+Zero network transmission, zero cloud sync, zero telemetry — all cryptographic secrets and credential databases stay strictly on-device.
 
-## Run Locally
+## Core Features & Architecture
 
-**Prerequisites:** [Android Studio](https://developer.android.com/studio)
+- **Envelope Encryption (WebCrypto API)**:
+  - Key Encryption Key (KEK) derived from master password using PBKDF2 (100,000 iterations, SHA-256) with high-entropy salt.
+  - 256-bit Data Encryption Key (DEK) wrapped using AES-256-GCM.
+  - All credentials, payment cards, identity records, and custom fields encrypted with AES-256-GCM.
+- **Tamper-Evident Trust Ledger**:
+  - Hash-chained audit trail of all security events (vault creations, unlocks, credential alterations, backups, integrity checks).
+  - Every event is signed via HMAC-SHA256 rooted in a genesis state and verified through full chain re-computation.
+- **Item Categories**:
+  - **Login Credentials**: Username, password, TOTP 2FA secret (with live RFC 6238 code generation & countdown), URL match pattern, notes, and custom key-value pairs.
+  - **Payment Cards**: Cardholder, formatted card number with brand detection (Visa, Mastercard, Amex, Discover), expiration date, CVV, ATM PIN, and liquid glass card preview.
+  - **Identity Records**: Full legal name, passport/ID/SSN, phone, address, and notes.
+  - **Secure Notes**: Encrypted freeform notes for sensitive documents and recovery instructions.
+- **Security Audit & Password Health**:
+  - Real-time Shannon entropy calculation for passwords.
+  - Vault-wide audit detecting reused passwords, weak passwords (< 50 bits of entropy), and empty credentials.
+- **Unbiased Password Generator**:
+  - CSPRNG random generation with rejection sampling to eliminate modulo bias.
+  - Custom length, character classes (uppercase, lowercase, digits, symbols), and ambiguous character filters.
+- **Encrypted Standalone Backup (.atvb)**:
+  - Export and import passphrase-protected binary `.atvb` files matching the specification with `ATVB` magic header.
+- **Zero-Knowledge Privacy Proofs**:
+  - Verified local audit confirming zero outbound network requests and cryptographic integrity.
 
-1. Open Android Studio.
-2. Select **Open** and choose the directory containing this project.
-3. Allow Android Studio to sync Gradle and fix any incompatibilities as it imports the project.
-4. Before a real signed release, replace the placeholder `applicationId`
-   in `app/build.gradle.kts` (currently `com.devbehindyou.atomicvault`)
-   with your actual reverse-domain ID if this isn't it, and remove the
-   `signingConfig = signingConfigs.getByName("debugConfig")` line.
-5. Run the app on an emulator or physical device. Biometric-gated
-   unlock/autofill features require a device or emulator with a biometric
-   sensor configured.
+## Development
 
-## Notes for contributors
+```bash
+npm install
+npm run dev
+```
 
-- `minSdk` is currently 27. Several features (inline autofill matching
-  refinements, data-access auditing, Credential Manager/passkeys) are
-  tiered by Android API level -- see the project's roadmap notes before
-  assuming a feature is available on all supported devices.
-- The Keystore-backed biometric flow (`keystore/BiometricGatedKeyStore.kt`)
-  is the single source of truth for the vault's DEK across the main app
-  and the autofill service. Don't add a second parallel key store --
-  extend this one.
+Build for production:
+
+```bash
+npm run build
+```
