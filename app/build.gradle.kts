@@ -101,6 +101,10 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.security.crypto)
     implementation(libs.sqlcipher)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.autofill)
+    implementation(libs.bouncycastle)
+    implementation(libs.androidx.sqlite.ktx)
 
     // Serialization
     implementation(libs.moshi)

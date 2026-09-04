@@ -153,50 +153,70 @@ object AtomicColors {
  * backgrounds and foregrounds in both palettes, not a softened
  * off-white.
  */
-private object DarkPalette {
-    val background = Color(0xFF000000)
-    val foreground = Color(0xFFFFFFFF)
-    val glassFill = Color(0x0FFFFFFF)
-    val glassBorder = Color(0x40FFFFFF)
-    val glassHighlight = Color(0x99FFFFFF)
-    val surfaceStrong = Color(0x1FFFFFFF)
-    val borderSubtle = Color(0x1AFFFFFF)
-    val textBody = Color(0xFFCCCCCC)
-    val textSecondary = Color(0xFF999999)
-    val textMuted = Color(0xFF666666)
-    val danger = Color(0xFFF43F5E)
-    val dangerLight = Color(0x26F43F5E)
-    val success = Color(0xFF10B981)
-    val successLight = Color(0x2610B981)
-    val warning = Color(0xFFCCCCCC)
-    val warningLight = Color(0x1AFFFFFF)
-    val accentPressed = Color(0xFFCCCCCC)
-}
+private data class AtomicPalette(
+    val background: Color,
+    val foreground: Color,
+    val glassFill: Color,
+    val glassBorder: Color,
+    val glassHighlight: Color,
+    val surfaceStrong: Color,
+    val borderSubtle: Color,
+    val textBody: Color,
+    val textSecondary: Color,
+    val textMuted: Color,
+    val danger: Color,
+    val dangerLight: Color,
+    val success: Color,
+    val successLight: Color,
+    val warning: Color,
+    val warningLight: Color,
+    val accentPressed: Color
+)
 
-private object LightPalette {
-    val background = Color(0xFFFFFFFF)
-    val foreground = Color(0xFF000000)
+private val DarkPalette = AtomicPalette(
+    background = Color(0xFF000000),
+    foreground = Color(0xFFFFFFFF),
+    glassFill = Color(0x0FFFFFFF),
+    glassBorder = Color(0x40FFFFFF),
+    glassHighlight = Color(0x99FFFFFF),
+    surfaceStrong = Color(0x1FFFFFFF),
+    borderSubtle = Color(0x1AFFFFFF),
+    textBody = Color(0xFFCCCCCC),
+    textSecondary = Color(0xFF999999),
+    textMuted = Color(0xFF666666),
+    danger = Color(0xFFF43F5E),
+    dangerLight = Color(0x26F43F5E),
+    success = Color(0xFF10B981),
+    successLight = Color(0x2610B981),
+    warning = Color(0xFFCCCCCC),
+    warningLight = Color(0x1AFFFFFF),
+    accentPressed = Color(0xFFCCCCCC)
+)
+
+private val LightPalette = AtomicPalette(
+    background = Color(0xFFFFFFFF),
+    foreground = Color(0xFF000000),
     // Glass tokens invert TINT direction, not just alpha -- black-tinted
     // translucency reads as "glass" against a light background the way
     // white-tinted translucency does against black. See object doc comment.
-    val glassFill = Color(0x0F000000)
-    val glassBorder = Color(0x40000000)
-    val glassHighlight = Color(0x99000000)
-    val surfaceStrong = Color(0x1F000000)
-    val borderSubtle = Color(0x1A000000)
-    val textBody = Color(0xFF333333)
+    glassFill = Color(0x0F000000),
+    glassBorder = Color(0x40000000),
+    glassHighlight = Color(0x99000000),
+    surfaceStrong = Color(0x1F000000),
+    borderSubtle = Color(0x1A000000),
+    textBody = Color(0xFF333333),
     // Note the RELATIVE relationship is preserved, not just each value
     // independently inverted: on dark, TextSecondary (lighter) reads as
     // MORE prominent than TextMuted (darker); on light, TextSecondary
     // (darker) must stay MORE prominent than TextMuted (lighter) for
     // the same visual hierarchy to hold.
-    val textSecondary = Color(0xFF555555)
-    val textMuted = Color(0xFF888888)
-    val danger = Color(0xFFE11D48) // slightly deepened for AA contrast against white
-    val dangerLight = Color(0x26E11D48)
-    val success = Color(0xFF059669) // slightly deepened for AA contrast against white
-    val successLight = Color(0x26059669)
-    val warning = Color(0xFF444444)
-    val warningLight = Color(0x1A000000)
-    val accentPressed = Color(0xFF333333)
-}
+    textSecondary = Color(0xFF555555),
+    textMuted = Color(0xFF888888),
+    danger = Color(0xFFE11D48), // slightly deepened for AA contrast against white
+    dangerLight = Color(0x26E11D48),
+    success = Color(0xFF059669), // slightly deepened for AA contrast against white
+    successLight = Color(0x26059669),
+    warning = Color(0xFF444444),
+    warningLight = Color(0x1A000000),
+    accentPressed = Color(0xFF333333)
+)
