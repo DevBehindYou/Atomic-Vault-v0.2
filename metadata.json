@@ -1,6 +1,0 @@
-{
-  "name": "AtomicVault",
-  "description": "Offline encrypted password and credential manager with AES-256-GCM encryption, tamper-evident trust ledger, password generator, security audit, and encrypted backup.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
