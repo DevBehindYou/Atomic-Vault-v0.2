@@ -1,0 +1,6 @@
+{
+  "name": "AtomicVault",
+  "description": "Offline native Android password manager with Argon2id + AES-256-GCM encryption, biometric unlock, and AutofillService.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
