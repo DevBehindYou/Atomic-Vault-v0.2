@@ -17,11 +17,11 @@ object BackupFile {
         val file = File(cacheDir, fileName)
         file.writeBytes(backupBytes)
 
-        val uri: Uri = try {
-            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-        } catch (e: Exception) {
-            Uri.fromFile(file)
-        }
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
 
         return Intent(Intent.ACTION_SEND).apply {
             type = "application/octet-stream"
