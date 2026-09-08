@@ -9,8 +9,6 @@ on:
         type: boolean
         default: true
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
@@ -19,7 +17,7 @@ permissions:
 
 concurrency:
   group: android-release-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+  cancel-in-progress: false
 
 jobs:
   build-release:
@@ -98,17 +96,6 @@ jobs:
           echo "Executing pre-release test suite..."
           ./gradlew test --stacktrace
 
-      - name: Upload Test Reports on Failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: AtomicVault-Test-Reports-${{ github.run_number }}
-          path: |
-            app/build/reports/tests/
-            app/build/test-results/
-          if-no-files-found: warn
-          retention-days: 14
-
       - name: Build Signed Release APK
         env:
           ANDROID_KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
@@ -120,7 +107,7 @@ jobs:
           ./gradlew clean assembleRelease --stacktrace
 
       - name: Build Signed Release AAB (Optional / Configured)
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_bundle }}
+        if: ${{ inputs.build_bundle != false }}
         env:
           ANDROID_KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
