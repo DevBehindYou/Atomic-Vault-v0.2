@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.atomicvault.android"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.atomicvault.android"
-        minSdk = 28 // Required minimum Android SDK 9.0 (Pie)
-        targetSdk = 36
+        minSdk = 26
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -55,19 +55,18 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
         debug {
-            applicationIdSuffix = ".debug"
             isDebuggable = true
             signingConfig = signingConfigs.getByName("debug")
         }
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "21"
+        jvmTarget = "17"
         freeCompilerArgs += listOf(
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
             "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
@@ -88,7 +87,9 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -100,7 +101,7 @@ dependencies {
     // Security & Biometric
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.security.crypto)
-    implementation(libs.sqlcipher)
+    // implementation(libs.sqlcipher)
 
     // Serialization
     implementation(libs.moshi)

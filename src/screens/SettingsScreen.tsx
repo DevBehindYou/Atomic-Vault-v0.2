@@ -9,6 +9,7 @@ import {
   Trash2,
   Plus,
   AlertCircle,
+  Download,
 } from 'lucide-react';
 import { FolderPlain, TagPlain, VaultSettingsPlain } from '../types';
 import { LiquidGlassCard } from '../components/LiquidGlassCard';
@@ -27,6 +28,7 @@ interface SettingsScreenProps {
   onNavigatePrivacy: () => void;
   onResetVault: () => void;
   onBack: () => void;
+  onInstallClick?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
@@ -42,6 +44,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onNavigatePrivacy,
   onResetVault,
   onBack,
+  onInstallClick,
 }) => {
   const { theme, toggleTheme } = useTheme();
   const [newFolderName, setNewFolderName] = useState('');
@@ -179,6 +182,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 </div>
               </div>
             </button>
+
+            {onInstallClick && (
+              <button
+                type="button"
+                onClick={onInstallClick}
+                className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors text-left cursor-pointer border-t border-white/5"
+              >
+                <div className="flex items-center gap-3">
+                  <Download className="w-4 h-4 text-cyan-400" />
+                  <div>
+                    <div className="font-medium text-sm text-white">Install Application</div>
+                    <div className="text-xs text-neutral-400">Install as standalone app on Android, iOS, or Desktop</div>
+                  </div>
+                </div>
+              </button>
+            )}
           </LiquidGlassCard>
         </div>
 

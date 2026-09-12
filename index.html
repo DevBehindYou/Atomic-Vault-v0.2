@@ -6,8 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AtomicVault</title>
     <meta name="description" content="Offline encrypted password and credential manager with AES-256-GCM encryption, tamper-evident trust ledger, password generator, security audit, and encrypted backup." />
+    <meta name="theme-color" content="#10B981" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AtomicVault" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
     <meta property="og:title" content="AtomicVault" />
     <meta property="og:description" content="Offline encrypted password and credential manager with AES-256-GCM encryption, tamper-evident trust ledger, password generator, security audit, and encrypted backup." />
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </head>
   <body class="bg-black text-white antialiased selection:bg-white/20 selection:text-white">
     <div id="root"></div>

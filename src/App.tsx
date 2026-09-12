@@ -28,6 +28,7 @@ import { SecurityTimelineScreen } from './screens/SecurityTimelineScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { BackupScreen } from './screens/BackupScreen';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { InstallAppModal } from './components/InstallAppModal';
 
 type AppRoute =
   | 'HOME'
@@ -65,6 +66,48 @@ export const App: React.FC = () => {
 
   const [authError, setAuthError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Progressive Web App (PWA) Install Prompt
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone) {
+      setIsInstalled(true);
+    }
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handlePromptInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try {
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setIsInstalled(true);
+        }
+      } catch {
+        // ignore
+      }
+      setDeferredPrompt(null);
+    } else {
+      setIsInstallModalOpen(true);
+    }
+  };
 
   const lastActivityRef = useRef<number>(Date.now());
 
@@ -614,6 +657,7 @@ export const App: React.FC = () => {
             onPrivacyProofClick={() => setRoute('PRIVACY_PROOF')}
             onLockClick={handleLock}
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+            onInstallClick={() => setIsInstallModalOpen(true)}
             securityScore={securityReport.score}
             getItemPassword={(id) => vaultData.items.find((i) => i.id === id)?.password || null}
           />
@@ -697,6 +741,7 @@ export const App: React.FC = () => {
             onNavigateBackup={() => setRoute('BACKUP')}
             onNavigatePrivacy={() => setRoute('PRIVACY_PROOF')}
             onResetVault={handleResetVault}
+            onInstallClick={() => setIsInstallModalOpen(true)}
             onBack={() => setRoute('HOME')}
           />
         )}
@@ -729,6 +774,15 @@ export const App: React.FC = () => {
           onAddNew={handleAddNewClick}
           onNavigate={(destRoute) => setRoute(destRoute as AppRoute)}
           onLock={handleLock}
+        />
+
+        {/* PWA / Native Install Modal */}
+        <InstallAppModal
+          isOpen={isInstallModalOpen}
+          onClose={() => setIsInstallModalOpen(false)}
+          onInstallNative={handlePromptInstall}
+          canPromptNative={!!deferredPrompt}
+          isInstalled={isInstalled}
         />
       </div>
     </ThemeProvider>

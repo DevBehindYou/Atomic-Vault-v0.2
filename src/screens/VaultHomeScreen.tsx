@@ -18,6 +18,7 @@ import {
   ChevronDown,
   AlertTriangle,
   AlertCircle,
+  Download,
 } from 'lucide-react';
 import { CredentialPreview, FolderPlain, TagPlain, VaultItemType, CredentialFinding, PasswordIssue } from '../types';
 import { LiquidGlassCard } from '../components/LiquidGlassCard';
@@ -79,6 +80,7 @@ interface VaultHomeScreenProps {
   onPrivacyProofClick: () => void;
   onLockClick: () => void;
   onOpenCommandPalette?: () => void;
+  onInstallClick?: () => void;
   securityScore?: number;
   getItemPassword?: (id: string) => string | null;
 }
@@ -102,6 +104,7 @@ export const VaultHomeScreen: React.FC<VaultHomeScreenProps> = ({
   onPrivacyProofClick,
   onLockClick,
   onOpenCommandPalette,
+  onInstallClick,
   securityScore = 100,
   getItemPassword,
 }) => {
@@ -213,6 +216,18 @@ export const VaultHomeScreen: React.FC<VaultHomeScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {onInstallClick && (
+            <button
+              type="button"
+              onClick={onInstallClick}
+              title="Install App as PWA / Offline App"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 text-xs font-medium cursor-pointer transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Install App</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onPrivacyProofClick}
