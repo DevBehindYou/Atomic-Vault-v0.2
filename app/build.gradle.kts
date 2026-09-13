@@ -14,8 +14,8 @@ android {
         applicationId = "com.atomicvault.android"
         minSdk = 28 // Required minimum Android SDK 9.0 (Pie)
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "0.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
