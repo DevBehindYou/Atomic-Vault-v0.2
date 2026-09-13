@@ -1,0 +1,7 @@
+# Ensure proper line endings across platforms
+* text=auto eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf

@@ -153,6 +153,7 @@ object CredentialMatcher {
     }
 
     private fun isOsVerifiedDomain(context: Context, packageName: String, domain: String): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return false
         return try {
             val manager = context.getSystemService(DomainVerificationManager::class.java) ?: return false
             val userState: DomainVerificationUserState =
@@ -160,7 +161,7 @@ object CredentialMatcher {
             userState.hostToStateMap.entries.any { (host, state) ->
                 host.equals(domain, ignoreCase = true) && state == DomainVerificationUserState.DOMAIN_STATE_VERIFIED
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Fail closed to "not verified" -- this can only ever reduce
             // trust to Level 3, never invent a match that isn't real.
             false

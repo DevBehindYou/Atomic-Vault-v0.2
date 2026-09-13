@@ -30,7 +30,11 @@ object ClipboardHelper {
                 if (currentClip != null && currentClip.itemCount > 0) {
                     val currentText = currentClip.getItemAt(0).text?.toString()
                     if (currentText == value) {
-                        clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            clipboard.clearPrimaryClip()
+                        } else {
+                            clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
+                        }
                     }
                 }
             } catch (e: Exception) {

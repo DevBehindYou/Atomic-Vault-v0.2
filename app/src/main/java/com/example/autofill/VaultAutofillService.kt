@@ -89,9 +89,12 @@ class VaultAutofillService : AutofillService() {
             // way. This does NOT change when the real credential value
             // becomes available; it only changes where the suggestion is
             // visually offered. See the design plan's note on this.
-            val inlineRequest = request.inlineSuggestionsRequest
-            val inlineSpecs: List<InlinePresentationSpec> = inlineRequest?.inlinePresentationSpecs ?: emptyList()
-            val maxInline = inlineRequest?.maxSuggestionCount ?: 0
+            val inlineSpecs: List<InlinePresentationSpec> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                request.inlineSuggestionsRequest?.inlinePresentationSpecs ?: emptyList()
+            } else emptyList()
+            val maxInline = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                request.inlineSuggestionsRequest?.maxSuggestionCount ?: 0
+            } else 0
 
             val responseBuilder = FillResponse.Builder()
             val offered = matches.take(5)
@@ -114,7 +117,7 @@ class VaultAutofillService : AutofillService() {
                     PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
                 )
 
-                val inlinePresentation = if (index < maxInline) {
+                val inlinePresentation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && index < maxInline) {
                     val spec = inlineSpecs.getOrNull(index) ?: inlineSpecs.lastOrNull()
                     spec?.let { buildInlinePresentation(it, match.title, pendingIntent) }
                 } else null
@@ -123,14 +126,14 @@ class VaultAutofillService : AutofillService() {
                     .setAuthentication(pendingIntent.intentSender)
 
                 if (parsed.usernameId != null) {
-                    if (inlinePresentation != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
                         datasetBuilder.setValue(parsed.usernameId, null, null, presentation, inlinePresentation)
                     } else {
                         datasetBuilder.setValue(parsed.usernameId, null, presentation)
                     }
                 }
                 if (parsed.passwordId != null) {
-                    if (inlinePresentation != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
                         datasetBuilder.setValue(parsed.passwordId, null, null, presentation, inlinePresentation)
                     } else {
                         datasetBuilder.setValue(parsed.passwordId, null, presentation)
@@ -175,6 +178,8 @@ class VaultAutofillService : AutofillService() {
      * the RemoteViews-only presentation without the whole fill request
      * failing.
      */
+    @RequiresApi(Build.VERSION_CODES.R)
+    @android.annotation.SuppressLint("RestrictedApi")
     private fun buildInlinePresentation(
         spec: InlinePresentationSpec,
         title: String,

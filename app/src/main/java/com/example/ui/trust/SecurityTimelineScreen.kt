@@ -74,8 +74,8 @@ private fun eventLabel(type: TrustEventType): String = when (type) {
     TrustEventType.INTEGRITY_CHECK_COMPLETED -> "Integrity check completed"
 }
 
-private val dayFormat = SimpleDateFormat("MMMM d", Locale.getDefault())
-private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+private fun formatDay(timestamp: Long): String = SimpleDateFormat("MMMM d", Locale.getDefault()).format(Date(timestamp))
+private fun formatTime(timestamp: Long): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(timestamp))
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +86,7 @@ fun SecurityTimelineScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val grouped = entries.groupBy { dayFormat.format(Date(it.timestamp)) }
+    val grouped = entries.groupBy { formatDay(it.timestamp) }
 
     Scaffold(
         modifier = modifier,
@@ -171,7 +171,7 @@ private fun TimelineRow(entry: TrustLedgerEntry, previews: List<CredentialPrevie
                 )
             }
             Text(
-                text = timeFormat.format(Date(entry.timestamp)),
+                text = formatTime(entry.timestamp),
                 color = AtomicColors.TextMuted,
                 fontSize = AtomicFontSize.caption
             )

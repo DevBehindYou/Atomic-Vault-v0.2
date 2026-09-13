@@ -48,11 +48,16 @@ class MainActivity : FragmentActivity() {
         // Protect sensitive vault screens and credentials from screenshot, recents, and recording capture
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                var currentSecure: Boolean? = null
                 viewModel.uiState.collect { state ->
-                    if (state.status == VaultStatus.UNLOCKED || state.status == VaultStatus.LOCKED) {
-                        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
-                    } else {
-                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    val shouldBeSecure = state.status == VaultStatus.UNLOCKED || state.status == VaultStatus.LOCKED
+                    if (currentSecure != shouldBeSecure) {
+                        currentSecure = shouldBeSecure
+                        if (shouldBeSecure) {
+                            window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+                        } else {
+                            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        }
                     }
                 }
             }
