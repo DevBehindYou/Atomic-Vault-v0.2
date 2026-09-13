@@ -12,7 +12,7 @@ import java.util.Locale
 object BackupFile {
     fun createShareIntent(context: Context, backupBytes: ByteArray): Intent {
         val dateStr = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        val fileName = "AtomicVault_backup_$dateStr.vault"
+        val fileName = "AtomicVault_backup_$dateStr.atvb"
         val cacheDir = File(context.cacheDir, "backups").apply { mkdirs() }
         val file = File(cacheDir, fileName)
         file.writeBytes(backupBytes)

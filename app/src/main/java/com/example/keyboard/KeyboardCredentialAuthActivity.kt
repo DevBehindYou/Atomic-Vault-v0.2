@@ -23,6 +23,10 @@ class KeyboardCredentialAuthActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE
+        )
 
         val itemId = intent.getStringExtra(EXTRA_ITEM_ID)
         if (itemId == null) {

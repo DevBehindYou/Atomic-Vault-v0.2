@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.example.security.VaultLifecycleObserver
 import com.example.ui.AtomicVaultNavGraph
@@ -17,6 +20,7 @@ import com.example.ui.VaultViewModel
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicVaultTheme
 import com.example.ui.theme.ThemePreferenceStore
+import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
 
@@ -40,6 +44,19 @@ class MainActivity : FragmentActivity() {
             onLock = { viewModel.lockVault() }
         )
         lifecycle.addObserver(lifecycleObserver)
+
+        // Protect sensitive vault screens and credentials from screenshot, recents, and recording capture
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    if (state.status == VaultStatus.UNLOCKED || state.status == VaultStatus.LOCKED) {
+                        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    }
+                }
+            }
+        }
 
         setContent {
             AtomicVaultTheme {

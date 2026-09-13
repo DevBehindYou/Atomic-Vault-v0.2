@@ -91,7 +91,7 @@ fun BackupScreen(
     ) { uri: Uri? ->
         if (uri != null) {
             selectedFileUri = uri
-            selectedFileName = uri.lastPathSegment ?: "backup.vault"
+            selectedFileName = uri.lastPathSegment ?: "backup.atvb"
         }
     }
 
@@ -303,7 +303,7 @@ fun BackupScreen(
                     Spacer(modifier = Modifier.height(AtomicSpacing.lg))
 
                     AtomicOutlinedButton(
-                        text = if (selectedFileName != null) "File: $selectedFileName" else "Choose .vault file",
+                        text = if (selectedFileName != null) "File: $selectedFileName" else "Choose backup (.atvb) file",
                         onClick = {
                             filePickerLauncher.launch(arrayOf("*/*"))
                         },

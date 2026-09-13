@@ -1,10 +1,13 @@
 package com.example.security
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.PersistableBundle
 
 object ClipboardHelper {
     private const val CLEAR_DELAY_MS = 45_000L
@@ -13,6 +16,11 @@ object ClipboardHelper {
     fun copySensitive(context: Context, label: String, value: String) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
         val clip = ClipData.newPlainText(label, value)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            clip.description.extras = PersistableBundle().apply {
+                putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+            }
+        }
         clipboard.setPrimaryClip(clip)
 
         // Schedule clear after 45s ONLY if primary clip still matches value

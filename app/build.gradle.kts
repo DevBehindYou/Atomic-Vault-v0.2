@@ -25,33 +25,30 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH") ?: (project.findProperty("ANDROID_KEYSTORE_PATH") as? String)
-            val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD") ?: (project.findProperty("ANDROID_KEYSTORE_PASSWORD") as? String)
-            val keyAlias = System.getenv("ANDROID_KEY_ALIAS") ?: (project.findProperty("ANDROID_KEY_ALIAS") as? String)
-            val keyPassword = System.getenv("ANDROID_KEY_PASSWORD") ?: (project.findProperty("ANDROID_KEY_PASSWORD") as? String)
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+                ?: (project.findProperty("ANDROID_KEYSTORE_PATH") as? String)
+            val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                ?: (project.findProperty("ANDROID_KEYSTORE_PASSWORD") as? String)
+            val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                ?: System.getenv("ANDROID_KEYSTORE_ALIAS")
+                ?: (project.findProperty("ANDROID_KEY_ALIAS") as? String)
+                ?: (project.findProperty("ANDROID_KEYSTORE_ALIAS") as? String)
+            val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                ?: System.getenv("ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD")
+                ?: (project.findProperty("ANDROID_KEY_PASSWORD") as? String)
+                ?: (project.findProperty("ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD") as? String)
 
             if (!keystorePath.isNullOrBlank()) {
                 val keystoreFile = file(keystorePath)
-                storeFile = keystoreFile
-                storePassword = keystorePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
-                enableV1Signing = true
-                enableV2Signing = true
-                enableV3Signing = true
-                enableV4Signing = false
-            } else {
-                // Local developer fallback: if no production keystore is supplied in environment,
-                // sign with debug keystore so local assembleRelease produces an installable signed APK rather than an unsigned one.
-                val debugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
-                if (debugKeystore.exists()) {
-                    storeFile = debugKeystore
-                    storePassword = "android"
-                    this.keyAlias = "androiddebugkey"
-                    this.keyPassword = "android"
+                if (keystoreFile.exists()) {
+                    storeFile = keystoreFile
+                    storePassword = keystorePassword
+                    this.keyAlias = keyAlias
+                    this.keyPassword = keyPassword
                     enableV1Signing = true
                     enableV2Signing = true
                     enableV3Signing = true
+                    enableV4Signing = false
                 }
             }
         }
@@ -67,6 +64,13 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+        }
+        create("internal") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".internal"
+            matchingFallbacks += listOf("release")
+            // Signed with standard debug keystore strictly for local R8 & minification testing
+            signingConfig = signingConfigs.getByName("debug")
         }
         debug {
             applicationIdSuffix = ".debug"
@@ -154,3 +158,27 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+gradle.taskGraph.whenReady {
+    val productionReleaseTasks = setOf(
+        "assembleRelease",
+        "bundleRelease",
+        "packageRelease",
+        "packageReleaseBundle"
+    )
+    val isPackagingProductionRelease = allTasks.any { task ->
+        task.name in productionReleaseTasks
+    }
+    if (isPackagingProductionRelease) {
+        val releaseSigning = android.signingConfigs.getByName("release")
+        if (releaseSigning.storeFile == null || !releaseSigning.storeFile!!.exists()) {
+            throw GradleException(
+                "CRITICAL: Production release build requires valid production signing credentials.\n" +
+                "Missing or invalid ANDROID_KEYSTORE_PATH.\n" +
+                "Production package 'com.atomicvault.android' must NEVER be signed with debug keys or left unsigned.\n" +
+                "For local testing of minified release behavior, run './gradlew assembleInternal'."
+            )
+        }
+    }
+}
+
