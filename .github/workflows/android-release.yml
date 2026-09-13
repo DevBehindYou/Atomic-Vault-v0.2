@@ -9,6 +9,8 @@ on:
         type: boolean
         default: true
   push:
+    branches:
+      - main
     tags:
       - 'v*'
 
@@ -17,7 +19,7 @@ permissions:
 
 concurrency:
   group: android-release-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
 
 jobs:
   build-release:
@@ -96,6 +98,17 @@ jobs:
           echo "Executing pre-release test suite..."
           ./gradlew test --stacktrace
 
+      - name: Upload Test Reports on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Test-Reports-${{ github.run_number }}
+          path: |
+            app/build/reports/tests/
+            app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Build Signed Release APK
         env:
           ANDROID_KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
@@ -107,7 +120,7 @@ jobs:
           ./gradlew clean assembleRelease --stacktrace
 
       - name: Build Signed Release AAB (Optional / Configured)
-        if: ${{ inputs.build_bundle != false }}
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_bundle }}
         env:
           ANDROID_KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -287,3 +300,48 @@ jobs:
           else
             echo "No temporary keystore file exists on disk."
           fi
+
+  smoke-test:
+    name: Emulator Install & Startup Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Debug APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Run Android Emulator Smoke Test (API 29 / x86_64)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            echo "Installing debug APK on emulator..."
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            echo "Launching MainActivity..."
+            adb shell am start -n com.atomicvault.android.debug/com.example.MainActivity
+            sleep 5
+            PID=$(adb shell pidof com.atomicvault.android.debug)
+            if [ -z "$PID" ]; then
+              echo "::error::MainActivity crashed or failed to start!"
+              adb logcat -d -t 200
+              exit 1
+            fi
+            echo "Smoke test passed! MainActivity is alive with PID: $PID"
+
