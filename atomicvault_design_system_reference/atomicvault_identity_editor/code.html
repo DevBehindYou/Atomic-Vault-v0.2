@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#131313;background-image:linear-gradient(to right,rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:64px 64px;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {"colors": {"background": "#131313","on-surface": "#e2e2e2","outline": "#8e9192","on-secondary-container": "#00311f","inverse-surface": "#e2e2e2","on-tertiary": "#67001b","surface-dim": "#131313","inverse-primary": "#5d5f5f","on-background": "#e2e2e2","outline-variant": "#444748","surface-container-high": "#2a2a2a","on-surface-variant": "#c4c7c8","on-primary-container": "#636565","on-tertiary-fixed-variant": "#92002a","inverse-on-surface": "#303030","secondary-container": "#00a572","surface": "#131313","on-primary-fixed-variant": "#454747","surface-container": "#1f1f1f","on-error-container": "#ffdad6","on-error": "#690005","tertiary-fixed-dim": "#ffb2b7","error-container": "#93000a","secondary": "#4edea3","on-secondary-fixed-variant": "#005236","secondary-fixed": "#6ffbbe","primary": "#ffffff","tertiary-container": "#ffdadb","surface-bright": "#393939","surface-container-low": "#1b1b1b","surface-tint": "#c6c6c7","primary-fixed": "#e2e2e2","on-secondary-fixed": "#002113","on-tertiary-fixed": "#40000d","primary-fixed-dim": "#c6c6c7","surface-container-lowest": "#0e0e0e","tertiary": "#ffffff","on-primary": "#2f3131","primary-container": "#e2e2e2","on-primary-fixed": "#1a1c1c","on-tertiary-container": "#c51640","surface-variant": "#353535","secondary-fixed-dim": "#4edea3","tertiary-fixed": "#ffdadb","on-secondary": "#003824","error": "#ffb4ab","surface-container-highest": "#353535"},"borderRadius": {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px"},"spacing": {"space-xs": "0.25rem","space-xxl": "2rem","space-sm": "0.5rem","gutter": "1rem","space-lg": "1rem","margin": "1rem","space-xl": "1.5rem","space-md": "0.75rem"},"fontFamily": {"headline-sm": ["Inter"],"headline-lg": ["Inter"],"caption": ["Inter"],"body-md": ["Inter"],"label-md": ["Inter"],"body-lg": ["Inter"],"label-lg": ["Inter"],"headline-md": ["Inter"],"micro": ["Inter"]},"fontSize": {"headline-sm": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],"headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],"caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],"body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],"label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600"}],"body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],"label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],"headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],"micro": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-surface-bright selection:text-primary"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe"><div class="h-20 px-space-lg flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md min-w-0"><div class="relative flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-secondary animate-pulse absolute -top-0.5 -right-0.5 z-10"></div><span class="material-symbols-outlined text-primary text-2xl">lock</span></div><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">AtomicVault</span><span class="material-symbols-outlined text-secondary text-base">verified_user</span></div><span class="font-micro text-micro text-on-surface-variant truncate uppercase">Zero-Knowledge · Encrypted AES-256-GCM</span></div></div><div class="flex items-center gap-space-xs shrink-0"><a aria-label="Security Audit" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="audit-view" href="#"><span class="material-symbols-outlined text-xl">security</span></a><a aria-label="Settings" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="vault-settings" href="#"><span class="material-symbols-outlined text-xl">settings</span></a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs ring-1 ring-outline/20" src="https://lh3.googleusercontent.com/aida/AEtjO1UWVDPK8zPpZn80ri0MvKjEd8WiVJ4RhgT45rjqFHxwZfoWiuqEdCy_8TcjRw1IE_9AGM34mt9rJ0GNSrB3nJoOAtPcxSPH-0RvK7ku-VSznxmZRoHzJzWMYJ14o-d6h_qIvZBc5Ex-_Cr9wut20Vo2oEQI1uRyxPWfr6bPw0Mh9TS02BJ7QkKp2HScf4nNPViK0xg5AT_CYTy2xFEPpYdtx0EZNaYg0VHEAgGD4HcQUuppY1fx_pszRSM"/></div></div></header><main class="flex flex-col relative w-full px-space-lg pt-20 pb-32 bg-surface min-h-screen"><div class="flex flex-col w-full gap-space-lg pb-12">
+<!-- Toast Notification Anchor -->
+<div class="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 translate-y-2 bg-surface-container-highest/90 backdrop-blur-xl px-space-md py-space-xs rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.6)] flex items-center gap-space-xs" id="toast">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+<span class="font-micro text-micro text-primary" id="toast-text">Copied to Clipboard</span>
+</div>
+<!-- Screen Top Navigation / Context Bar -->
+<div class="flex items-center justify-between gap-space-sm w-full">
+<div class="flex items-center gap-space-sm min-w-0">
+<a class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface hover:text-primary transition-all active:scale-95 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1)]" data-path="vault" href="#">
+<span class="material-symbols-outlined text-lg">arrow_back</span>
+</a>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">Identity Record</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-container/20 text-secondary font-micro text-micro uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+            AES-256
+          </span>
+</div>
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-widest truncate">ZERO-KNOWLEDGE · RECORD §3</span>
+</div>
+</div>
+<button class="h-9 px-space-md rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all shadow-[0_0_16px_rgba(255,255,255,0.25)]" onclick="saveRecord()" type="button">
+<span class="material-symbols-outlined text-base">lock</span>
+<span>Save</span>
+</button>
+</div>
+<!-- Hero Liquid Glass Identity Badge Card -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container/70 backdrop-blur-2xl p-space-lg shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)] flex flex-col gap-space-md">
+<!-- Top specular rim reflection overlay -->
+<div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
+<div class="absolute -right-8 -bottom-8 w-36 h-36 rounded-full bg-secondary/5 blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<!-- Persona Avatar Shield in Glass Circle -->
+<div class="relative w-14 h-14 rounded-full bg-surface-bright/50 flex items-center justify-center shadow-[inset_0_1px_2px_rgba(255,255,255,0.3)]">
+<span class="material-symbols-outlined text-primary text-2xl">fingerprint</span>
+<div class="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-secondary flex items-center justify-center ring-2 ring-surface">
+<span class="material-symbols-outlined text-on-secondary text-xs" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight truncate">Alexander V. Vance</h1>
+</div>
+<p class="font-caption text-caption text-on-surface-variant flex items-center gap-1.5 flex-wrap">
+<span>Primary Legal &amp; Tax Identity</span>
+<span class="text-outline-variant">·</span>
+<span class="font-micro text-micro text-secondary tracking-wider uppercase font-semibold">PASSPORT VERIFIED</span>
+</p>
+</div>
+</div>
+<button class="w-9 h-9 rounded-lg bg-surface-bright/40 flex items-center justify-center text-on-surface-variant hover:text-primary transition-all active:scale-90" id="star-btn" onclick="toggleStar()" type="button">
+<span class="material-symbols-outlined text-lg" id="star-icon">star</span>
+</button>
+</div>
+<!-- Quick copy pill bar -->
+<div class="flex items-center justify-between gap-space-sm bg-surface-container-lowest/70 rounded-lg p-space-sm">
+<div class="flex items-center gap-space-xs min-w-0">
+<span class="material-symbols-outlined text-secondary text-sm">vpn_key</span>
+<span class="font-micro text-micro text-on-surface font-mono truncate">0x9B82...VANCE_ID_SEAL_GCM</span>
+</div>
+<button class="flex items-center gap-1 text-primary hover:text-secondary transition-colors font-micro text-micro uppercase tracking-wider font-semibold px-2 py-1 rounded bg-surface-bright/40 active:scale-95" onclick="copyValue('Alexander Valentine Vance · DOB: 1988-11-24 · SSN: 8842 · SF CA')" type="button">
+<span class="material-symbols-outlined text-xs">content_copy</span>
+        Copy Identity
+      </button>
+</div>
+</div>
+<!-- §1 Personal Information -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-widest font-semibold">§1 PERSONAL INFORMATION · ENCRYPTED PAYLOAD</span>
+<span class="font-micro text-micro text-secondary uppercase font-semibold">Decrypted Local</span>
+</div>
+<div class="flex flex-col gap-space-xs rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md shadow-sm">
+<!-- Full Legal Name -->
+<div class="flex flex-col gap-1">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Full Legal Name</span>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2.5">
+<input class="bg-transparent border-0 outline-none text-primary font-body-md text-body-md w-full focus:ring-0" type="text" value="Alexander Valentine Vance"/>
+<button aria-label="Copy Full Name" class="text-on-surface-variant hover:text-primary transition-colors p-1" onclick="copyValue('Alexander Valentine Vance')" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Preferred Alias -->
+<div class="flex flex-col gap-1">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Preferred Name / Alias</span>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2.5">
+<input class="bg-transparent border-0 outline-none text-primary font-body-md text-body-md w-full focus:ring-0" type="text" value="Alex Vance"/>
+</div>
+</div>
+<!-- Date of Birth & Tax ID in 2 Columns -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
+<!-- Date of Birth -->
+<div class="flex flex-col gap-1">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Date of Birth</span>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2.5">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="font-body-md text-body-md text-primary truncate">Nov 24, 1988 (Age 36)</span>
+</div>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-surface-bright text-secondary font-micro text-micro font-semibold">21+</span>
+</div>
+</div>
+<!-- SSN / Tax ID -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-on-surface-variant uppercase">SSN / Tax ID</span>
+<span class="font-micro text-micro text-secondary font-semibold">ENCRYPTED SSN</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2.5">
+<span class="font-body-md text-body-md text-primary font-mono tracking-wider" id="ssn-field">••••-••-8842</span>
+<div class="flex items-center gap-1">
+<button aria-label="Toggle Reveal SSN" class="text-on-surface-variant hover:text-primary transition-colors p-1" onclick="toggleSSN()" type="button">
+<span class="material-symbols-outlined text-base" id="ssn-icon">visibility</span>
+</button>
+<button aria-label="Copy SSN" class="text-on-surface-variant hover:text-primary transition-colors p-1" onclick="copyValue('982-41-8842')" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Nationality -->
+<div class="flex flex-col gap-1">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Nationality &amp; Citizenship</span>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2.5">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant text-base">public</span>
+<span class="font-body-md text-body-md text-primary">United States of America (USA)</span>
+</div>
+<span class="font-micro text-micro text-on-surface-variant font-mono">ISO-3166 US</span>
+</div>
+</div>
+</div>
+</div>
+<!-- §2 Contact Details -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-widest font-semibold">§2 CONTACT DETAILS</span>
+<span class="font-micro text-micro text-secondary uppercase font-semibold">Hardware Key Bound</span>
+</div>
+<div class="flex flex-col gap-space-xs rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md shadow-sm">
+<!-- Primary Email -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Primary Secure Email</span>
+<span class="font-micro text-micro text-secondary flex items-center gap-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            PGP Enabled
+          </span>
+</div>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2.5">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-on-surface-variant text-base">mail</span>
+<span class="font-body-md text-body-md text-primary truncate">alexander@pm.me</span>
+</div>
+<button aria-label="Copy Email" class="text-on-surface-variant hover:text-primary transition-colors p-1" onclick="copyValue('alexander@pm.me')" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Secondary Email -->
+<div class="flex flex-col gap-1">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Internal Identity Mesh Email</span>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2.5">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-on-surface-variant text-base">alternate_email</span>
+<span class="font-body-md text-body-md text-on-surface-variant truncate">alex.v@atomicvault.internal</span>
+</div>
+<button aria-label="Copy Internal Email" class="text-on-surface-variant hover:text-primary transition-colors p-1" onclick="copyValue('alex.v@atomicvault.internal')" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Phone Number -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Phone Number</span>
+<span class="font-micro text-micro text-secondary font-semibold">SMS 2FA ROUTING</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2.5">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-on-surface-variant text-base">phone_iphone</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">+1 (555) 382-9014</span>
+</div>
+<button aria-label="Copy Phone" class="text-on-surface-variant hover:text-primary transition-colors p-1" onclick="copyValue('+15553829014')" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- §3 Physical & Residential Address -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-widest font-semibold">§3 PHYSICAL &amp; RESIDENTIAL ADDRESS</span>
+<span class="font-micro text-micro text-secondary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-xs">verified</span>
+        AVS Certified
+      </span>
+</div>
+<div class="flex flex-col gap-space-xs rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md shadow-sm">
+<div class="flex flex-col gap-1">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Street Address</span>
+<div class="bg-surface-container-low rounded-lg px-space-md py-2.5">
+<input class="bg-transparent border-0 outline-none text-primary font-body-md text-body-md w-full focus:ring-0" type="text" value="500 Howard Street, Suite 400"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-space-xs">
+<div class="flex flex-col gap-1">
+<span class="font-micro text-micro text-on-surface-variant uppercase">City &amp; State</span>
+<div class="bg-surface-container-low rounded-lg px-space-md py-2.5">
+<input class="bg-transparent border-0 outline-none text-primary font-body-md text-body-md w-full focus:ring-0" type="text" value="San Francisco, CA"/>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Postal Code</span>
+<div class="bg-surface-container-low rounded-lg px-space-md py-2.5">
+<input class="bg-transparent border-0 outline-none text-primary font-body-md text-body-md w-full focus:ring-0" type="text" value="94107"/>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+<span class="font-caption text-caption text-secondary font-medium">AVS Matched &amp; Certified against Postal Ledger</span>
+</div>
+<button aria-label="Copy Address" class="text-on-surface-variant hover:text-primary transition-colors p-1" onclick="copyValue('500 Howard Street, Suite 400, San Francisco, CA 94107')" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- §4 Government Issued Documents -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-widest font-semibold">§4 GOVERNMENT ISSUED DOCUMENTS</span>
+<span class="font-micro text-micro text-on-surface-variant uppercase font-semibold">2 Active Credentials</span>
+</div>
+<!-- Passport Card -->
+<div class="rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-bright flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">badge</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary">United States Passport</span>
+<span class="font-caption text-caption text-on-surface-variant">Type P · Issuing Authority: DOS</span>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-bright text-secondary font-micro text-micro font-semibold">
+          ACTIVE
+        </span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex flex-col">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Document Number</span>
+<span class="font-body-md text-body-md text-primary font-mono">•••••0492</span>
+</div>
+<div class="flex flex-col">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Expiration</span>
+<span class="font-body-md text-body-md text-primary">2031-08-14</span>
+</div>
+</div>
+</div>
+<!-- Driver's License Card -->
+<div class="rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-bright flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">directions_car</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary">California Real ID Driver License</span>
+<span class="font-caption text-caption text-on-surface-variant">Class C · DMV RealID Gold Star</span>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-bright text-secondary font-micro text-micro font-semibold">
+          VALID
+        </span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex flex-col">
+<span class="font-micro text-micro text-on-surface-variant uppercase">License ID</span>
+<span class="font-body-md text-body-md text-primary font-mono">D7491028</span>
+</div>
+<div class="flex flex-col">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Expiration</span>
+<span class="font-body-md text-body-md text-primary">2028-11-24</span>
+</div>
+</div>
+</div>
+<!-- Add Document Button -->
+<button class="w-full h-11 rounded-xl bg-surface-container/40 hover:bg-surface-container transition-all flex items-center justify-center gap-space-xs text-on-surface-variant hover:text-primary active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-base">add_circle</span>
+<span class="font-label-md text-label-md">Add Document or Attestation Certificate</span>
+</button>
+</div>
+<!-- §5 Taxonomy & Vault Partitions -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-widest font-semibold">§5 TAXONOMY &amp; PARTITIONS</span>
+</div>
+<div class="flex flex-col gap-space-md rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md shadow-sm">
+<!-- Partition Selector -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Target Vault Partition</span>
+<div class="grid grid-cols-3 gap-space-xs bg-surface-container-lowest p-1 rounded-lg">
+<button class="partition-btn py-1.5 rounded-md bg-surface-bright text-primary font-label-md text-label-md text-center transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]" onclick="selectPartition(this)" type="button">Personal</button>
+<button class="partition-btn py-1.5 rounded-md text-on-surface-variant hover:text-primary font-label-md text-label-md text-center transition-all" onclick="selectPartition(this)" type="button">Work</button>
+<button class="partition-btn py-1.5 rounded-md text-on-surface-variant hover:text-primary font-label-md text-label-md text-center transition-all" onclick="selectPartition(this)" type="button">Financial</button>
+</div>
+</div>
+<!-- Security Tags -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Cryptographic Classification Tags</span>
+<div class="flex flex-wrap gap-space-xs">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-primary font-micro text-micro">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Primary Identity
+          </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-primary font-micro text-micro">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Biometric Sealed
+          </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-primary font-micro text-micro">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Tax Filer
+          </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Zero-Knowledge Attestation & Audit Trail -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container/40 p-space-md flex flex-col gap-space-sm">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary text-xl">verified_user</span>
+</div>
+<div class="flex flex-col gap-1 min-w-0">
+<span class="font-label-md text-label-md text-primary">Zero-Knowledge Attestation Protocol</span>
+<p class="font-caption text-caption text-on-surface-variant">
+          Identity records, government IDs, and tax identifiers are sealed using client-side AES-256-GCM. Unencrypted entropy never touches remote relays or telemetry aggregators.
+        </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs bg-surface-container-lowest/50 px-space-md py-2 rounded-lg">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-xs">history</span>
+<span class="font-micro text-micro text-on-surface-variant">Updated today at 11:04 · Version 3</span>
+</div>
+<span class="font-micro text-micro text-secondary font-semibold uppercase">Zero Breaches Detected</span>
+</div>
+</div>
+<!-- Primary Action Buttons -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<!-- Save Identity Button -->
+<button class="w-full h-12 rounded-xl bg-primary text-on-primary font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.99] transition-all shadow-[0_4px_24px_rgba(255,255,255,0.15)]" onclick="saveRecord()" type="button">
+<span class="material-symbols-outlined text-lg">shield_lock</span>
+<span>Seal &amp; Save Identity Changes</span>
+</button>
+<!-- Purge Identity Record Button -->
+<button class="w-full h-12 rounded-xl bg-error-container/20 text-error font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 hover:bg-error-container/30 active:scale-[0.99] transition-all" onclick="confirmPurge()" type="button">
+<span class="material-symbols-outlined text-lg">delete_forever</span>
+<span>Purge Identity Record from Vault</span>
+</button>
+</div>
+</div>
+<script>
+  function showToast(message) {
+    var toast = document.getElementById('toast');
+    var toastText = document.getElementById('toast-text');
+    if (!toast || !toastText) return;
+    toastText.textContent = message;
+    toast.classList.remove('opacity-0', 'translate-y-2');
+    toast.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(function() {
+      toast.classList.add('opacity-0', 'translate-y-2');
+      toast.classList.remove('opacity-100', 'translate-y-0');
+    }, 2200);
+  }
+
+  function copyValue(val) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(val);
+    }
+    showToast('Copied to Clipboard: ' + val.substring(0, 16) + '...');
+  }
+
+  var ssnRevealed = false;
+  function toggleSSN() {
+    var ssnField = document.getElementById('ssn-field');
+    var ssnIcon = document.getElementById('ssn-icon');
+    if (!ssnField || !ssnIcon) return;
+    ssnRevealed = !ssnRevealed;
+    if (ssnRevealed) {
+      ssnField.textContent = '982-41-8842';
+      ssnIcon.textContent = 'visibility_off';
+      showToast('Decrypted SSN Revealed');
+    } else {
+      ssnField.textContent = '••••-••-8842';
+      ssnIcon.textContent = 'visibility';
+      showToast('SSN Field Concealed');
+    }
+  }
+
+  var isStarred = false;
+  function toggleStar() {
+    var starIcon = document.getElementById('star-icon');
+    if (!starIcon) return;
+    isStarred = !isStarred;
+    if (isStarred) {
+      starIcon.textContent = 'star';
+      starIcon.classList.add('text-secondary');
+      starIcon.setAttribute('style', "font-variation-settings: 'FILL' 1;");
+      showToast('Marked as Primary Identity');
+    } else {
+      starIcon.textContent = 'star';
+      starIcon.classList.remove('text-secondary');
+      starIcon.removeAttribute('style');
+      showToast('Removed from Favorites');
+    }
+  }
+
+  function selectPartition(btn) {
+    var all = document.querySelectorAll('.partition-btn');
+    all.forEach(function(b) {
+      b.className = 'partition-btn py-1.5 rounded-md text-on-surface-variant hover:text-primary font-label-md text-label-md text-center transition-all';
+    });
+    btn.className = 'partition-btn py-1.5 rounded-md bg-surface-bright text-primary font-label-md text-label-md text-center transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]';
+    showToast('Vault Partition Switched');
+  }
+
+  function saveRecord() {
+    showToast('Identity Sealed with AES-256-GCM');
+  }
+
+  function confirmPurge() {
+    if (confirm('Irreversible Action: Completely purge Alexander V. Vance identity payload and all sealed credentials from local enclave?')) {
+      showToast('Identity Record Purged');
+    }
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe pointer-events-none px-space-md mb-space-sm" data-active-classes="text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]"><div class="pointer-events-auto max-w-lg mx-auto h-16 rounded-xl bg-surface-container/80 backdrop-blur-2xl px-space-xs flex items-center justify-around shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="vault" href="#"><span class="material-symbols-outlined text-xl">shield</span><span class="font-micro text-micro">Vault</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="generator" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Generate</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg transition-all text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]" data-path="security" href="#"><span class="material-symbols-outlined text-xl">verified_user</span><span class="font-micro text-micro">Audit</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="keyboard" href="#"><span class="material-symbols-outlined text-xl">keyboard</span><span class="font-micro text-micro">Keys</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Config</span></a></div></nav></body></html>

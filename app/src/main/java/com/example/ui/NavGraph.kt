@@ -3,7 +3,9 @@ package com.example.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import com.example.database.CredentialPlain
 import androidx.compose.ui.Modifier
 import androidx.activity.compose.LocalActivity
 import androidx.fragment.app.FragmentActivity
@@ -243,7 +245,13 @@ fun AtomicVaultNavGraph(
             )
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId")
-            val existing = remember(itemId) { itemId?.let { viewModel.getItem(it) } }
+            // produceState, not remember { viewModel.getItem(..) }: the load
+            // is a SQLCipher read plus several AES-GCM decryptions, and
+            // running it inside composition blocked the frame that opens
+            // this screen.
+            val existing by produceState<CredentialPlain?>(initialValue = null, itemId) {
+                value = itemId?.let { viewModel.getItem(it) }
+            }
             com.example.ui.paymentcard.PaymentCardEditorScreen(
                 existing = existing,
                 onSave = { input ->
@@ -268,7 +276,9 @@ fun AtomicVaultNavGraph(
             )
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId")
-            val existing = remember(itemId) { itemId?.let { viewModel.getItem(it) } }
+            val existing by produceState<CredentialPlain?>(initialValue = null, itemId) {
+                value = itemId?.let { viewModel.getItem(it) }
+            }
             com.example.ui.identity.IdentityEditorScreen(
                 existing = existing,
                 onSave = { input ->

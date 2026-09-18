@@ -87,8 +87,15 @@ class BiometricGatedKeyStore(context: Context) {
         val ivB64 = prefs.getString(PREF_IV, null) ?: return null
         val iv = Base64.decode(ivB64, Base64.NO_WRAP)
         val key = androidKeyStore.getKey(KEY_ALIAS, null) ?: return null
-        return Cipher.getInstance(TRANSFORMATION).apply {
-            init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
+        return try {
+            Cipher.getInstance(TRANSFORMATION).apply {
+                init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
+            }
+        } catch (e: android.security.keystore.KeyPermanentlyInvalidatedException) {
+            clear()
+            null
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -127,6 +134,9 @@ class BiometricGatedKeyStore(context: Context) {
             cipher.doFinal(Base64.decode(wrappedB64, Base64.NO_WRAP))
         } catch (e: android.security.keystore.UserNotAuthenticatedException) {
             // Outside the grace window -- no recent biometric auth. Fail closed.
+            null
+        } catch (e: android.security.keystore.KeyPermanentlyInvalidatedException) {
+            clear()
             null
         } catch (e: Exception) {
             null

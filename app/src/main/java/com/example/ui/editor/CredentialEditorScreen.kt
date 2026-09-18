@@ -92,7 +92,7 @@ fun CredentialEditorScreen(
     itemId: String?,
     folders: List<FolderPlain>,
     allTags: List<com.example.database.TagPlain>,
-    onLoadItem: (String) -> CredentialPlain?,
+    onLoadItem: suspend (String) -> CredentialPlain?,
     onSave: (CredentialInput) -> Unit,
     onDelete: (String) -> Unit,
     onBack: () -> Unit,

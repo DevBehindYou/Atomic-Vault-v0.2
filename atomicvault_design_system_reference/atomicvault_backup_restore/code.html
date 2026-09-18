@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#131313;background-image:linear-gradient(to right,rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:64px 64px;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {"colors": {"background": "#131313","on-surface": "#e2e2e2","outline": "#8e9192","on-secondary-container": "#00311f","inverse-surface": "#e2e2e2","on-tertiary": "#67001b","surface-dim": "#131313","inverse-primary": "#5d5f5f","on-background": "#e2e2e2","outline-variant": "#444748","surface-container-high": "#2a2a2a","on-surface-variant": "#c4c7c8","on-primary-container": "#636565","on-tertiary-fixed-variant": "#92002a","inverse-on-surface": "#303030","secondary-container": "#00a572","surface": "#131313","on-primary-fixed-variant": "#454747","surface-container": "#1f1f1f","on-error-container": "#ffdad6","on-error": "#690005","tertiary-fixed-dim": "#ffb2b7","error-container": "#93000a","secondary": "#4edea3","on-secondary-fixed-variant": "#005236","secondary-fixed": "#6ffbbe","primary": "#ffffff","tertiary-container": "#ffdadb","surface-bright": "#393939","surface-container-low": "#1b1b1b","surface-tint": "#c6c6c7","primary-fixed": "#e2e2e2","on-secondary-fixed": "#002113","on-tertiary-fixed": "#40000d","primary-fixed-dim": "#c6c6c7","surface-container-lowest": "#0e0e0e","tertiary": "#ffffff","on-primary": "#2f3131","primary-container": "#e2e2e2","on-primary-fixed": "#1a1c1c","on-tertiary-container": "#c51640","surface-variant": "#353535","secondary-fixed-dim": "#4edea3","tertiary-fixed": "#ffdadb","on-secondary": "#003824","error": "#ffb4ab","surface-container-highest": "#353535"},"borderRadius": {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px"},"spacing": {"space-xs": "0.25rem","space-xxl": "2rem","space-sm": "0.5rem","gutter": "1rem","space-lg": "1rem","margin": "1rem","space-xl": "1.5rem","space-md": "0.75rem"},"fontFamily": {"headline-sm": ["Inter"],"headline-lg": ["Inter"],"caption": ["Inter"],"body-md": ["Inter"],"label-md": ["Inter"],"body-lg": ["Inter"],"label-lg": ["Inter"],"headline-md": ["Inter"],"micro": ["Inter"]},"fontSize": {"headline-sm": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],"headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],"caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],"body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],"label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600"}],"body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],"label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],"headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],"micro": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-surface-bright selection:text-primary"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe"><div class="h-20 px-space-lg flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md min-w-0"><div class="relative flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-secondary animate-pulse absolute -top-0.5 -right-0.5 z-10"></div><span class="material-symbols-outlined text-primary text-2xl">lock</span></div><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">AtomicVault</span><span class="material-symbols-outlined text-secondary text-base">verified_user</span></div><span class="font-micro text-micro text-on-surface-variant truncate uppercase">Zero-Knowledge · Encrypted AES-256-GCM</span></div></div><div class="flex items-center gap-space-xs shrink-0"><a aria-label="Security Audit" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="audit-view" href="#"><span class="material-symbols-outlined text-xl">security</span></a><a aria-label="Settings" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="vault-settings" href="#"><span class="material-symbols-outlined text-xl">settings</span></a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs ring-1 ring-outline/20" src="https://lh3.googleusercontent.com/aida/AEtjO1UWVDPK8zPpZn80ri0MvKjEd8WiVJ4RhgT45rjqFHxwZfoWiuqEdCy_8TcjRw1IE_9AGM34mt9rJ0GNSrB3nJoOAtPcxSPH-0RvK7ku-VSznxmZRoHzJzWMYJ14o-d6h_qIvZBc5Ex-_Cr9wut20Vo2oEQI1uRyxPWfr6bPw0Mh9TS02BJ7QkKp2HScf4nNPViK0xg5AT_CYTy2xFEPpYdtx0EZNaYg0VHEAgGD4HcQUuppY1fx_pszRSM"/></div></div></header><main class="flex flex-col relative w-full px-space-lg pt-20 pb-32 bg-surface min-h-screen"><div class="flex flex-col w-full gap-space-lg">
+<!-- View Top Sub-Header (Context Navigation) -->
+<div class="flex items-center justify-between gap-space-sm pt-space-xs">
+<div class="flex items-center gap-space-md min-w-0">
+<button aria-label="Go back" class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface hover:text-primary transition-all active:scale-95 shadow-sm" type="button">
+<span class="material-symbols-outlined text-xl">arrow_back</span>
+</button>
+<div class="flex flex-col min-w-0">
+<h1 class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">Backup &amp; Restore</h1>
+<span class="font-micro text-micro text-secondary tracking-wider uppercase font-semibold">Offline Cryptographic Archive</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/20 text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-micro text-micro font-bold tracking-widest uppercase">Air-Gap</span>
+</div>
+</div>
+<!-- Segmented Vault Selector Switcher -->
+<div class="p-1 rounded-xl bg-surface-container-lowest flex items-center gap-1 shadow-inner relative" role="tablist">
+<button aria-selected="true" class="flex-1 py-2.5 px-3 rounded-lg font-label-md text-label-md text-primary bg-surface-container-high shadow-md transition-all flex items-center justify-center gap-1.5" id="tab-btn-create" onclick="switchBackupTab('create')" role="tab" type="button">
+<span class="material-symbols-outlined text-base">archive</span>
+<span>Create (.vault)</span>
+</button>
+<button aria-selected="false" class="flex-1 py-2.5 px-3 rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all flex items-center justify-center gap-1.5" id="tab-btn-restore" onclick="switchBackupTab('restore')" role="tab" type="button">
+<span class="material-symbols-outlined text-base">unarchive</span>
+<span>Restore Vault</span>
+</button>
+</div>
+<!-- TAB PANEL 1: CREATE BACKUP -->
+<div class="flex flex-col gap-space-lg" id="panel-create">
+<!-- Notice Informational Card -->
+<div class="rounded-xl bg-surface-container-low p-space-md flex items-start gap-space-md shadow-sm relative overflow-hidden">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary shrink-0 shadow-inner">
+<span class="material-symbols-outlined text-xl">vpn_key_alert</span>
+</div>
+<div class="flex flex-col min-w-0 pr-1">
+<span class="font-label-md text-label-md text-primary">Isolated Export Authority</span>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5">
+          Export is protected by an independent, dedicated export passphrase — <span class="text-primary font-semibold">explicitly NOT your master password</span>. Keep this phrase safe for offline decryptions.
+        </p>
+</div>
+</div>
+<!-- Passphrase Inputs Group -->
+<div class="flex flex-col gap-space-md rounded-xl bg-surface-container-low p-space-md shadow-sm">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-primary" for="export-passphrase">Dedicated Passphrase</label>
+<span class="font-micro text-micro text-secondary font-bold uppercase tracking-wider" id="entropy-badge">High Entropy · 256-bit</span>
+</div>
+<div class="relative flex items-center">
+<input class="w-full h-12 bg-surface-container-highest text-primary font-body-md text-body-md rounded-xl pl-3.5 pr-11 focus:outline-none focus:bg-surface-bright transition-all" id="export-passphrase" oninput="calculateEntropy(this.value)" placeholder="Enter dedicated export passphrase" type="password" value="vault#k89!qL0_tau81"/>
+<button aria-label="Toggle passphrase visibility" class="absolute right-3 w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" onclick="togglePassVisibility('export-passphrase', 'toggle-icon-1')" type="button">
+<span class="material-symbols-outlined text-lg" id="toggle-icon-1">visibility</span>
+</button>
+</div>
+<!-- Tactical Entropy Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex gap-1 h-1.5 w-full">
+<div class="flex-1 bg-secondary rounded-full"></div>
+<div class="flex-1 bg-secondary rounded-full"></div>
+<div class="flex-1 bg-secondary rounded-full"></div>
+<div class="flex-1 bg-secondary rounded-full"></div>
+<div class="flex-1 bg-secondary/30 rounded-full" id="entropy-bar-5"></div>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-micro text-micro">Blake3 Key Derivation Salted</span>
+<span class="font-micro text-micro font-semibold text-primary">94/100 Strong</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 pt-space-xs">
+<label class="font-label-md text-label-md text-primary" for="confirm-passphrase">Confirm Dedicated Passphrase</label>
+<div class="relative flex items-center">
+<input class="w-full h-12 bg-surface-container-highest text-primary font-body-md text-body-md rounded-xl pl-3.5 pr-11 focus:outline-none focus:bg-surface-bright transition-all" id="confirm-passphrase" placeholder="Re-enter export passphrase" type="password" value="vault#k89!qL0_tau81"/>
+<button aria-label="Toggle confirmation visibility" class="absolute right-3 w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" onclick="togglePassVisibility('confirm-passphrase', 'toggle-icon-2')" type="button">
+<span class="material-symbols-outlined text-lg" id="toggle-icon-2">visibility</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Archive Options Checklist -->
+<div class="flex flex-col gap-space-sm">
+<span class="font-micro text-micro uppercase tracking-wider text-on-surface-variant font-bold px-1">Archive Parameters</span>
+<div class="flex flex-col gap-2 rounded-xl bg-surface-container-low p-space-sm shadow-sm">
+<!-- Toggle 1 -->
+<label class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-high/60 cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-space-md min-w-0 pr-2">
+<span class="material-symbols-outlined text-primary text-xl">label</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary">Custom tags &amp; metadata</span>
+<span class="font-caption text-caption text-on-surface-variant truncate">Retains folder associations and tag filters</span>
+</div>
+</div>
+<input checked="" class="w-5 h-5 accent-secondary cursor-pointer rounded" type="checkbox"/>
+</label>
+<!-- Toggle 2 -->
+<label class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-high/60 cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-space-md min-w-0 pr-2">
+<span class="material-symbols-outlined text-primary text-xl">grid_view</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary">Vault partitions structure</span>
+<span class="font-caption text-caption text-on-surface-variant truncate">Keeps Isolated, Work, and Personal spaces intact</span>
+</div>
+</div>
+<input checked="" class="w-5 h-5 accent-secondary cursor-pointer rounded" type="checkbox"/>
+</label>
+<!-- Toggle 3 -->
+<label class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-high/60 cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-space-md min-w-0 pr-2">
+<span class="material-symbols-outlined text-secondary text-xl">verified</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary">Blake3 hash seal</span>
+<span class="font-caption text-caption text-on-surface-variant truncate">Tamper-evident verification header checksum</span>
+</div>
+</div>
+<input checked="" class="w-5 h-5 accent-secondary cursor-pointer rounded" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Primary CTA Button -->
+<button class="w-full h-12 min-h-[48px] rounded-xl bg-primary text-on-primary font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.99] transition-all shadow-md" onclick="triggerExportNotice()" type="button">
+<span>Generate &amp; Export .vault File</span>
+<span class="material-symbols-outlined text-lg font-bold">arrow_forward</span>
+</button>
+</div>
+<!-- TAB PANEL 2: RESTORE VAULT -->
+<div class="flex flex-col gap-space-lg" id="panel-restore">
+<!-- Destructive Warning Card -->
+<div class="rounded-xl bg-surface-container-low p-space-md flex flex-col gap-space-sm shadow-sm relative overflow-hidden">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-error-container text-error flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-xl">warning</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-error">Overwriting Risk Precaution</span>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5">
+            Restoring an archive will overwrite local cache. Verify your backup file authenticity before proceeding.
+          </p>
+</div>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-high text-on-surface-variant font-micro text-micro flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-outline">info</span>
+<span>A rolling snapshot of the current vault is saved automatically.</span>
+</div>
+</div>
+<!-- File Drop / Select Area -->
+<div class="rounded-xl bg-surface-container-low p-space-xl flex flex-col items-center justify-center text-center gap-space-md shadow-sm">
+<div class="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-primary shadow-inner">
+<span class="material-symbols-outlined text-3xl">upload_file</span>
+</div>
+<div class="flex flex-col items-center gap-1 max-w-xs">
+<span class="font-headline-sm text-headline-sm text-primary">Import Encrypted Archive</span>
+<p class="font-caption text-caption text-on-surface-variant">Compatible with official AtomicVault .vault bundles sealed with Argon2id + Blake3.</p>
+</div>
+<!-- Outlined Button -->
+<button class="w-full max-w-xs h-12 min-h-[48px] rounded-xl bg-surface-container-high text-primary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-bright active:scale-[0.99] transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-xl">folder_open</span>
+<span>Select .vault Archive to Restore</span>
+</button>
+</div>
+<!-- Verification Checkbox Guard -->
+<label class="flex items-start gap-space-md p-space-md rounded-xl bg-surface-container-low shadow-sm cursor-pointer hover:bg-surface-container-high/40 transition-colors">
+<input class="w-5 h-5 mt-0.5 accent-secondary cursor-pointer rounded" id="restore-confirm" type="checkbox"/>
+<span class="font-caption text-caption text-on-surface-variant">
+        I acknowledge that this action will merge or supersede conflicting entries with cryptographic precedence.
+      </span>
+</label>
+</div>
+<!-- Technical Audit Specifications Card -->
+<div class="rounded-xl bg-surface-container-low p-space-md flex flex-col gap-2.5 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro uppercase tracking-wider text-on-surface-variant font-bold">Export Audit Spec</span>
+<span class="font-micro text-micro text-secondary font-mono">SPEC-V2.8</span>
+</div>
+<div class="grid grid-cols-2 gap-2 text-on-surface-variant">
+<div class="p-2 rounded-lg bg-surface-container-high flex flex-col">
+<span class="font-micro text-micro">Cipher</span>
+<span class="font-label-md text-label-md text-primary truncate">AES-256-GCM + XCha</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-high flex flex-col">
+<span class="font-micro text-micro">Digest Function</span>
+<span class="font-label-md text-label-md text-primary truncate">Blake3-256</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-high flex flex-col">
+<span class="font-micro text-micro">Salt Entropy</span>
+<span class="font-label-md text-label-md text-primary truncate">32 Bytes (CSPRNG)</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-high flex flex-col">
+<span class="font-micro text-micro">KDF Iterations</span>
+<span class="font-label-md text-label-md text-primary truncate">64MB · 3 Passes</span>
+</div>
+</div>
+</div>
+<!-- Attestation Security Footer -->
+<div class="flex items-center justify-center gap-space-xs py-space-sm text-center">
+<span class="material-symbols-outlined text-secondary text-base">leak_remove</span>
+<p class="font-micro text-micro text-on-surface-variant uppercase tracking-wider font-semibold">
+      Air-gapped export. Zero bytes transmitted over network.
+    </p>
+</div>
+</div>
+<script>
+  function switchBackupTab(tab) {
+    const btnCreate = document.getElementById('tab-btn-create');
+    const btnRestore = document.getElementById('tab-btn-restore');
+    const panelCreate = document.getElementById('panel-create');
+    const panelRestore = document.getElementById('panel-restore');
+
+    if (!btnCreate || !btnRestore || !panelCreate || !panelRestore) return;
+
+    if (tab === 'create') {
+      btnCreate.className = 'flex-1 py-2.5 px-3 rounded-lg font-label-md text-label-md text-primary bg-surface-container-high shadow-md transition-all flex items-center justify-center gap-1.5';
+      btnCreate.setAttribute('aria-selected', 'true');
+      btnRestore.className = 'flex-1 py-2.5 px-3 rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all flex items-center justify-center gap-1.5';
+      btnRestore.setAttribute('aria-selected', 'false');
+      panelCreate.classList.remove('hidden');
+      panelRestore.classList.add('hidden');
+    } else {
+      btnRestore.className = 'flex-1 py-2.5 px-3 rounded-lg font-label-md text-label-md text-primary bg-surface-container-high shadow-md transition-all flex items-center justify-center gap-1.5';
+      btnRestore.setAttribute('aria-selected', 'true');
+      btnCreate.className = 'flex-1 py-2.5 px-3 rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all flex items-center justify-center gap-1.5';
+      btnCreate.setAttribute('aria-selected', 'false');
+      panelCreate.classList.add('hidden');
+      panelRestore.classList.remove('hidden');
+    }
+  }
+
+  function togglePassVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!input || !icon) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.textContent = 'visibility_off';
+    } else {
+      input.type = 'password';
+      icon.textContent = 'visibility';
+    }
+  }
+
+  function calculateEntropy(val) {
+    const badge = document.getElementById('entropy-badge');
+    const bar5 = document.getElementById('entropy-bar-5');
+    if (!badge || !bar5) return;
+    if (val.length < 8) {
+      badge.textContent = 'Weak · Minimum 8 chars';
+      badge.className = 'font-micro text-micro text-error font-bold uppercase tracking-wider';
+      bar5.className = 'flex-1 bg-surface-bright rounded-full';
+    } else {
+      badge.textContent = 'High Entropy · 256-bit';
+      badge.className = 'font-micro text-micro text-secondary font-bold uppercase tracking-wider';
+      bar5.className = 'flex-1 bg-secondary rounded-full';
+    }
+  }
+
+  function triggerExportNotice() {
+    const pass = document.getElementById('export-passphrase').value;
+    const confirm = document.getElementById('confirm-passphrase').value;
+    if (pass !== confirm) {
+      alert('Passphrases do not match. Please verify your entries.');
+      return;
+    }
+    const filename = 'AtomicVault_Backup_' + new Date().toISOString().slice(0,10) + '.vault';
+    alert('Cryptographic archive generated successfully.\nFile: ' + filename + '\nReady for air-gapped download.');
+  }
+
+  // Initial state setup
+  switchBackupTab('create');
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe pointer-events-none px-space-md mb-space-sm" data-active-classes="text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]"><div class="pointer-events-auto max-w-lg mx-auto h-16 rounded-xl bg-surface-container/80 backdrop-blur-2xl px-space-xs flex items-center justify-around shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="vault" href="#"><span class="material-symbols-outlined text-xl">shield</span><span class="font-micro text-micro">Vault</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg transition-all text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]" data-path="generator" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Generate</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="security" href="#"><span class="material-symbols-outlined text-xl">verified_user</span><span class="font-micro text-micro">Audit</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="keyboard" href="#"><span class="material-symbols-outlined text-xl">keyboard</span><span class="font-micro text-micro">Keys</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Config</span></a></div></nav></body></html>

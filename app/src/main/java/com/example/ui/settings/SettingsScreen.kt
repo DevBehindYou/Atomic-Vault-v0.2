@@ -451,6 +451,24 @@ fun SettingsScreen(
 
             var showKeyboardDisclosure by remember { mutableStateOf(false) }
 
+            // Check if keyboard is enabled
+            val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            var isKeyboardEnabled by remember { 
+                mutableStateOf(imm.enabledInputMethodList.any { it.packageName == context.packageName }) 
+            }
+            
+            // Refresh on resume
+            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+            androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+                val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                    if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                        isKeyboardEnabled = imm.enabledInputMethodList.any { it.packageName == context.packageName }
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+            }
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(AtomicRadius.lg),
@@ -467,11 +485,17 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.height(AtomicSpacing.sm))
                     TextButton(
-                        onClick = { showKeyboardDisclosure = true },
+                        onClick = { 
+                            if (isKeyboardEnabled) {
+                                imm.showInputMethodPicker()
+                            } else {
+                                showKeyboardDisclosure = true 
+                            }
+                        },
                         modifier = Modifier.testTag("open_keyboard_settings_button")
                     ) {
                         Text(
-                            text = "Enable Atomic Keyboard →",
+                            text = if (isKeyboardEnabled) "Select Atomic Keyboard →" else "Enable Atomic Keyboard →",
                             color = AtomicColors.Accent,
                             fontSize = AtomicFontSize.label
                         )
@@ -486,8 +510,10 @@ fun SettingsScreen(
                         "It does not upload what you type, save ordinary keystrokes, use typed text for " +
                         "advertising, or send typing to analytics. It only stores something when you " +
                         "explicitly save it to AtomicVault. Fields it detects as passwords/PINs/OTPs are " +
-                        "flagged with a Shield indicator.",
+                        "flagged with a Shield indicator. The keyboard has no internet permission at all " +
+                        "\u2014 it's not just unused, it isn't in the app's manifest.",
                     confirmLabel = "I understand, continue",
+                    dismissLabel = "Keep default keyboard",
                     onConfirm = {
                         showKeyboardDisclosure = false
                         try {

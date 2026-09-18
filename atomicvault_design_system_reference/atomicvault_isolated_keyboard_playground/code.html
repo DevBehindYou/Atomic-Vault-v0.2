@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#131313;background-image:linear-gradient(to right,rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:64px 64px;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {"colors": {"background": "#131313","on-surface": "#e2e2e2","outline": "#8e9192","on-secondary-container": "#00311f","inverse-surface": "#e2e2e2","on-tertiary": "#67001b","surface-dim": "#131313","inverse-primary": "#5d5f5f","on-background": "#e2e2e2","outline-variant": "#444748","surface-container-high": "#2a2a2a","on-surface-variant": "#c4c7c8","on-primary-container": "#636565","on-tertiary-fixed-variant": "#92002a","inverse-on-surface": "#303030","secondary-container": "#00a572","surface": "#131313","on-primary-fixed-variant": "#454747","surface-container": "#1f1f1f","on-error-container": "#ffdad6","on-error": "#690005","tertiary-fixed-dim": "#ffb2b7","error-container": "#93000a","secondary": "#4edea3","on-secondary-fixed-variant": "#005236","secondary-fixed": "#6ffbbe","primary": "#ffffff","tertiary-container": "#ffdadb","surface-bright": "#393939","surface-container-low": "#1b1b1b","surface-tint": "#c6c6c7","primary-fixed": "#e2e2e2","on-secondary-fixed": "#002113","on-tertiary-fixed": "#40000d","primary-fixed-dim": "#c6c6c7","surface-container-lowest": "#0e0e0e","tertiary": "#ffffff","on-primary": "#2f3131","primary-container": "#e2e2e2","on-primary-fixed": "#1a1c1c","on-tertiary-container": "#c51640","surface-variant": "#353535","secondary-fixed-dim": "#4edea3","tertiary-fixed": "#ffdadb","on-secondary": "#003824","error": "#ffb4ab","surface-container-highest": "#353535"},"borderRadius": {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px"},"spacing": {"space-xs": "0.25rem","space-xxl": "2rem","space-sm": "0.5rem","gutter": "1rem","space-lg": "1rem","margin": "1rem","space-xl": "1.5rem","space-md": "0.75rem"},"fontFamily": {"headline-sm": ["Inter"],"headline-lg": ["Inter"],"caption": ["Inter"],"body-md": ["Inter"],"label-md": ["Inter"],"body-lg": ["Inter"],"label-lg": ["Inter"],"headline-md": ["Inter"],"micro": ["Inter"]},"fontSize": {"headline-sm": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],"headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],"caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],"body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],"label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600"}],"body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],"label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],"headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],"micro": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-surface-bright selection:text-primary"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe"><div class="h-20 px-space-lg flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md min-w-0"><div class="relative flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-secondary animate-pulse absolute -top-0.5 -right-0.5 z-10"></div><span class="material-symbols-outlined text-primary text-2xl">lock</span></div><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">AtomicVault</span><span class="material-symbols-outlined text-secondary text-base">verified_user</span></div><span class="font-micro text-micro text-on-surface-variant truncate uppercase">Zero-Knowledge · Encrypted AES-256-GCM</span></div></div><div class="flex items-center gap-space-xs shrink-0"><a aria-label="Security Audit" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="audit-view" href="#"><span class="material-symbols-outlined text-xl">security</span></a><a aria-label="Settings" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="vault-settings" href="#"><span class="material-symbols-outlined text-xl">settings</span></a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs ring-1 ring-outline/20" src="https://lh3.googleusercontent.com/aida/AEtjO1UWVDPK8zPpZn80ri0MvKjEd8WiVJ4RhgT45rjqFHxwZfoWiuqEdCy_8TcjRw1IE_9AGM34mt9rJ0GNSrB3nJoOAtPcxSPH-0RvK7ku-VSznxmZRoHzJzWMYJ14o-d6h_qIvZBc5Ex-_Cr9wut20Vo2oEQI1uRyxPWfr6bPw0Mh9TS02BJ7QkKp2HScf4nNPViK0xg5AT_CYTy2xFEPpYdtx0EZNaYg0VHEAgGD4HcQUuppY1fx_pszRSM"/></div></div></header><main class="flex flex-col relative w-full px-space-lg pt-20 pb-32 bg-surface min-h-screen"><div class="flex flex-col w-full max-w-lg mx-auto gap-space-lg">
+<!-- Top Sandbox Nav & Enclave Status -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<div class="flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<button aria-label="Return to Configuration" class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary shadow-sm active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-lg">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-primary">Isolated IME Playground</span>
+<span class="font-micro text-micro text-secondary tracking-widest uppercase">Air-Gapped Sandbox · Zero-Telemetry</span>
+</div>
+</div>
+<button class="flex items-center gap-space-xs px-space-md py-1.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright text-on-surface transition-all text-caption font-caption shadow-sm active:scale-95" id="flush-buffer-btn" title="Flush Enclave Keystrokes" type="button">
+<span class="material-symbols-outlined text-sm text-secondary">mop</span>
+<span>Flush</span>
+</button>
+</div>
+<!-- Enclave State Pill -->
+<div class="flex items-center justify-between px-space-md py-space-xs rounded-full bg-surface-container-lowest shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]">
+<div class="flex items-center gap-space-xs min-w-0">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_#4edea3] animate-pulse"></span>
+<span class="font-micro text-micro text-secondary truncate uppercase tracking-wider">Runtime Enclave #7729 · Air-Gap Shielded</span>
+</div>
+<span class="font-micro text-micro text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-secondary">wifi_off</span>
+        NET ISOLATED
+      </span>
+</div>
+</div>
+<!-- Section 1: Real-Time Acoustic & Thermal Evasion Monitor (Live Telemetry HUD) -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-low p-space-md shadow-xl">
+<!-- Ambient glowing subtle gradient overlay -->
+<div class="absolute inset-0 bg-gradient-to-br from-secondary/5 via-transparent to-surface-bright/5 pointer-events-none"></div>
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-base">sensors</span>
+<span class="font-label-md text-label-md text-primary uppercase tracking-wider">Side-Channel Attenuation Matrix</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-secondary font-micro text-micro tracking-widest">REALTIME</span>
+</div>
+<!-- Telemetry Grid -->
+<div class="grid grid-cols-2 gap-space-sm mb-space-md">
+<!-- Jitter Entropy -->
+<div class="flex flex-col p-space-sm rounded-lg bg-surface-container-lowest">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Key Jitter Entropy</span>
+<span class="font-label-md text-label-md text-primary mt-0.5">±4.2px Dynamic Offset</span>
+<span class="font-micro text-micro text-secondary flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs">verified</span> Anti-Thermal ON
+        </span>
+</div>
+<!-- Bus Latency -->
+<div class="flex flex-col p-space-sm rounded-lg bg-surface-container-lowest">
+<span class="font-micro text-micro text-on-surface-variant uppercase">StrongBox Bus Latency</span>
+<span class="font-label-md text-label-md text-primary mt-0.5">0.4ms Polling</span>
+<span class="font-micro text-micro text-secondary flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs">lock</span> 0.000% Leaked
+        </span>
+</div>
+</div>
+<!-- Acoustic Masking & Synthetic Audio Waveform Simulator -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-on-surface-variant">Acoustic Masking: Pink-Noise Impulse</span>
+<span class="font-micro text-micro text-secondary">Active (48kHz)</span>
+</div>
+<!-- SVG Simulated Realtime Waveform -->
+<div class="h-6 w-full flex items-center justify-between gap-0.5 px-1 py-0.5">
+<div class="w-1 bg-secondary rounded-full h-3 animate-pulse"></div>
+<div class="w-1 bg-secondary/80 rounded-full h-5"></div>
+<div class="w-1 bg-secondary rounded-full h-2"></div>
+<div class="w-1 bg-secondary/60 rounded-full h-4"></div>
+<div class="w-1 bg-secondary rounded-full h-6 animate-pulse"></div>
+<div class="w-1 bg-secondary/70 rounded-full h-3"></div>
+<div class="w-1 bg-secondary rounded-full h-5"></div>
+<div class="w-1 bg-secondary/90 rounded-full h-2 animate-pulse"></div>
+<div class="w-1 bg-secondary rounded-full h-4"></div>
+<div class="w-1 bg-secondary/50 rounded-full h-6"></div>
+<div class="w-1 bg-secondary rounded-full h-3 animate-pulse"></div>
+<div class="w-1 bg-secondary/80 rounded-full h-5"></div>
+<div class="w-1 bg-secondary rounded-full h-4"></div>
+<div class="w-1 bg-secondary/70 rounded-full h-2 animate-pulse"></div>
+<div class="w-1 bg-secondary rounded-full h-5"></div>
+<div class="w-1 bg-secondary/90 rounded-full h-3"></div>
+<div class="w-1 bg-secondary rounded-full h-6 animate-pulse"></div>
+<div class="w-1 bg-secondary/60 rounded-full h-4"></div>
+<div class="w-1 bg-secondary rounded-full h-2"></div>
+<div class="w-1 bg-secondary/80 rounded-full h-4 animate-pulse"></div>
+</div>
+</div>
+</div>
+<!-- Section 2: Interactive Testing Input Targets -->
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg text-primary">Isolation Test Fields</span>
+<span class="font-micro text-micro text-on-surface-variant">TOUCH TARGET ACTIVE</span>
+</div>
+<!-- 1. Masked Master Password Field -->
+<div class="flex flex-col gap-1.5 p-space-md rounded-xl bg-surface-container shadow-md">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface flex items-center gap-1.5" for="master-input">
+<span class="material-symbols-outlined text-sm text-secondary">key</span>
+          Master Entropy Target
+        </label>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-micro text-micro font-bold">112-BIT OPTIMAL</span>
+</div>
+<div class="relative flex items-center rounded-lg bg-surface-container-lowest px-space-md py-space-sm shadow-inner">
+<input class="w-full bg-transparent text-primary font-mono text-body-lg tracking-widest outline-none pr-8 selection:bg-surface-bright" id="master-input" readonly="" type="password" value="K9#xV!99pL•q@"/>
+<button class="absolute right-3 text-on-surface-variant hover:text-primary transition-colors" id="toggle-reveal-btn" type="button">
+<span class="material-symbols-outlined text-lg" id="eye-icon">visibility</span>
+</button>
+</div>
+<!-- Entropy Bar Meter -->
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest overflow-hidden flex">
+<div class="h-full bg-secondary w-11/12 rounded-full shadow-[0_0_8px_#4edea3]"></div>
+</div>
+</div>
+<!-- 2. Symbol & Passphrase Field -->
+<div class="flex flex-col gap-1.5 p-space-md rounded-xl bg-surface-container shadow-md">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface flex items-center gap-1.5" for="symbol-input">
+<span class="material-symbols-outlined text-sm text-secondary">data_object</span>
+          Pinned Brackets &amp; Passphrase
+        </label>
+<span class="font-micro text-micro text-on-surface-variant">AUTO-ESCAPE ON</span>
+</div>
+<div class="relative flex items-center rounded-lg bg-surface-container-lowest px-space-md py-space-sm shadow-inner">
+<input class="w-full bg-transparent text-primary font-mono text-body-md tracking-wider outline-none selection:bg-surface-bright" id="symbol-input" readonly="" type="text" value="[vault_key:Ω#4412]"/>
+<span class="material-symbols-outlined text-secondary text-base ml-2">check_circle</span>
+</div>
+</div>
+<!-- 3. Numeric PIN & Crypt-Pad Test Field -->
+<div class="flex flex-col gap-1.5 p-space-md rounded-xl bg-surface-container shadow-md">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-secondary">pin</span>
+          Scrambled PIN Verifier
+        </span>
+<span class="font-micro text-micro text-secondary">SHUFFLE ACTIVE</span>
+</div>
+<div class="flex items-center justify-center gap-space-md py-space-sm rounded-lg bg-surface-container-lowest shadow-inner">
+<div class="w-3.5 h-3.5 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></div>
+<div class="w-3.5 h-3.5 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></div>
+<div class="w-3.5 h-3.5 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></div>
+<div class="w-3.5 h-3.5 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></div>
+<div class="w-3.5 h-3.5 rounded-full bg-surface-container-highest"></div>
+<div class="w-3.5 h-3.5 rounded-full bg-surface-container-highest"></div>
+</div>
+</div>
+</div>
+<!-- Section 3: Live Liquid Glass On-Screen Keyboard (IME Simulator) -->
+<div class="flex flex-col w-full rounded-2xl bg-surface-container-low/90 backdrop-blur-2xl p-space-sm shadow-2xl mt-space-xs relative overflow-hidden">
+<!-- Top Glass specular rim highlight subtle overlay -->
+<div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+<!-- Keyboard Layer Selector Tabs -->
+<div class="flex items-center justify-between gap-1 p-1 mb-2 rounded-xl bg-surface-container-lowest">
+<button class="flex-1 py-1 text-center rounded-lg bg-surface-bright text-primary font-micro text-micro shadow-sm font-semibold" type="button">QWERTY</button>
+<button class="flex-1 py-1 text-center rounded-lg text-on-surface-variant hover:text-primary font-micro text-micro transition-colors" type="button">?123 / Sym</button>
+<button class="flex-1 py-1 text-center rounded-lg text-on-surface-variant hover:text-primary font-micro text-micro transition-colors" type="button">Crypt-Pad</button>
+<button class="flex-1 py-1 text-center rounded-lg text-on-surface-variant hover:text-primary font-micro text-micro transition-colors" type="button">Hex / B64</button>
+</div>
+<!-- Persistent High-Entropy Symbol Ribbon -->
+<div class="flex items-center justify-between gap-1 px-1 py-1.5 mb-1.5 rounded-lg bg-surface-container-highest/60 overflow-x-auto">
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">!</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">@</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">#</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">$</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">%</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">&amp;</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">*</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">[</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">]</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">{</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-high text-secondary font-mono font-bold text-caption active:scale-90 transition-transform" type="button">}</button>
+</div>
+<!-- Dedicated Persistent 5th Row: Numbers 0-9 (with Slashed Zero & Distinguishable 1) -->
+<div class="grid grid-cols-10 gap-1 mb-1">
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">1</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">2</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">3</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">4</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">5</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">6</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">7</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">8</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">9</button>
+<button class="h-10 rounded-lg bg-surface-container-high text-primary font-mono text-body-md font-semibold flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm relative" type="button">
+<span class="relative">0<span class="absolute inset-0 flex items-center justify-center font-normal text-secondary opacity-60">/</span></span>
+</button>
+</div>
+<!-- Alpha Row 1: Q-P -->
+<div class="grid grid-cols-10 gap-1 mb-1">
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">Q</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">W</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">E</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">R</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">T</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">Y</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">U</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">I</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">O</button>
+<button class="h-10 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">P</button>
+</div>
+<!-- Alpha Row 2: A-L -->
+<div class="flex justify-center gap-1 mb-1 px-2">
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">A</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">S</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">D</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">F</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">G</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">H</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">J</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">K</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">L</button>
+</div>
+<!-- Alpha Row 3: Shift, Z-M, Backspace -->
+<div class="flex items-center gap-1 mb-1">
+<button aria-label="Shift Key" class="h-10 w-12 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-lg">arrow_upward</span>
+</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">Z</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">X</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">C</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">V</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">B</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">N</button>
+<button class="h-10 flex-1 rounded-lg bg-surface-container text-primary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">M</button>
+<button aria-label="Backspace" class="h-10 w-12 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-lg">backspace</span>
+</button>
+</div>
+<!-- Bottom Action Row: Modifiers, Space, Return/Shield -->
+<div class="flex items-center gap-1">
+<button class="h-11 w-12 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">
+        123
+      </button>
+<button aria-label="Microphone Disabled" class="h-11 w-10 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-base opacity-40">mic_off</span>
+</button>
+<!-- Air-Gapped Spacebar -->
+<button class="h-11 flex-1 rounded-lg bg-surface-container text-on-surface-variant font-label-md text-label-md flex items-center justify-center gap-1 active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm border-t border-white/20" type="button">
+<span class="material-symbols-outlined text-sm text-secondary">security</span>
+<span class="text-caption font-caption tracking-widest text-primary">AIR-GAPPED SPACE</span>
+</button>
+<button aria-label="Symbols" class="h-11 w-10 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center active:bg-surface-bright active:translate-y-0.5 transition-all shadow-sm" type="button">
+        #&amp;=
+      </button>
+<!-- Shield / Commit Action Key -->
+<button aria-label="Done Commit" class="h-11 w-14 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center active:scale-95 transition-transform shadow-[0_0_12px_#00a572]" type="button">
+<span class="material-symbols-outlined text-xl font-bold">verified_user</span>
+</button>
+</div>
+</div>
+<!-- Section 4: Sandbox Inspection & Verification Actions -->
+<div class="flex flex-col gap-space-sm mt-space-xs">
+<!-- Buffer Auto-wipe notice -->
+<div class="flex items-center justify-between px-space-md py-2 rounded-xl bg-surface-container-lowest text-caption font-caption text-on-surface-variant shadow-inner">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-base text-secondary animate-pulse">timer</span>
+<span>Keystroke Buffer Auto-Wipe:</span>
+</div>
+<span class="font-mono text-secondary font-semibold" id="wipe-timer">28s remaining</span>
+</div>
+<!-- Adversarial Snoop Simulation Test Button -->
+<button class="w-full flex items-center justify-center gap-space-xs py-space-md px-space-lg rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-label-lg text-label-lg shadow-sm transition-all active:scale-[0.99]" id="snoop-test-btn" type="button">
+<span class="material-symbols-outlined text-lg text-secondary">bug_report</span>
+<span>Simulate Adversarial Keylogger Snoop</span>
+</button>
+<!-- Primary Commit / Return Profile Button -->
+<button class="w-full flex items-center justify-center gap-space-xs py-space-md px-space-lg rounded-xl bg-primary text-on-primary font-label-lg text-label-lg shadow-lg hover:opacity-90 active:scale-[0.99] transition-all" type="button">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+<span>Commit Profile &amp; Return to Config</span>
+</button>
+</div>
+</div>
+<!-- Interactive Client-side Script for Playground interactions -->
+<script>
+  (function() {
+    const snoopBtn = document.getElementById('snoop-test-btn');
+    const wipeTimer = document.getElementById('wipe-timer');
+    const flushBtn = document.getElementById('flush-buffer-btn');
+    const revealBtn = document.getElementById('toggle-reveal-btn');
+    const masterInput = document.getElementById('master-input');
+    const eyeIcon = document.getElementById('eye-icon');
+
+    // Toggle Masked Input Reveal
+    if (revealBtn && masterInput && eyeIcon) {
+      revealBtn.addEventListener('click', () => {
+        const isPassword = masterInput.getAttribute('type') === 'password';
+        masterInput.setAttribute('type', isPassword ? 'text' : 'password');
+        eyeIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
+      });
+    }
+
+    // Flush Buffer Action with tactile feedback
+    if (flushBtn) {
+      flushBtn.addEventListener('click', () => {
+        const originalHtml = flushBtn.innerHTML;
+        flushBtn.innerHTML = '<span class="material-symbols-outlined text-sm text-secondary">check</span> <span>Cleared</span>';
+        setTimeout(() => {
+          flushBtn.innerHTML = originalHtml;
+        }, 1200);
+      });
+    }
+
+    // Simulate Snoop Test
+    if (snoopBtn) {
+      snoopBtn.addEventListener('click', () => {
+        snoopBtn.disabled = true;
+        snoopBtn.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin text-secondary">sync</span> <span>Injecting Snoop Attack Probe...</span>';
+        
+        setTimeout(() => {
+          snoopBtn.innerHTML = '<span class="material-symbols-outlined text-lg text-secondary">verified</span> <span>Probe Blocked: 0 Keystrokes Leaked!</span>';
+          snoopBtn.classList.add('bg-secondary-container', 'text-on-secondary-container');
+          
+          setTimeout(() => {
+            snoopBtn.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+            snoopBtn.innerHTML = '<span class="material-symbols-outlined text-lg text-secondary">bug_report</span> <span>Simulate Adversarial Keylogger Snoop</span>';
+            snoopBtn.disabled = false;
+          }, 2400);
+        }, 900);
+      });
+    }
+
+    // Countdown Timer Loop
+    let countdown = 30;
+    setInterval(() => {
+      countdown = countdown <= 1 ? 30 : countdown - 1;
+      if (wipeTimer) {
+        wipeTimer.textContent = countdown + 's remaining';
+      }
+    }, 1000);
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe pointer-events-none px-space-md mb-space-sm" data-active-classes="text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]"><div class="pointer-events-auto max-w-lg mx-auto h-16 rounded-xl bg-surface-container/80 backdrop-blur-2xl px-space-xs flex items-center justify-around shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="vault" href="#"><span class="material-symbols-outlined text-xl">shield</span><span class="font-micro text-micro">Vault</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="generator" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Generate</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg transition-all text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]" data-path="security" href="#"><span class="material-symbols-outlined text-xl">verified_user</span><span class="font-micro text-micro">Audit</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="keyboard" href="#"><span class="material-symbols-outlined text-xl">keyboard</span><span class="font-micro text-micro">Keys</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Config</span></a></div></nav></body></html>

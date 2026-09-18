@@ -4,15 +4,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -51,9 +61,12 @@ fun UnlockScreen(
     // its own separate (non-crypto-bound) prompt, or the biometric check
     // stops being cryptographically tied to the key at all.
 
+    var hasAttemptedBiometric by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+
     // Auto-trigger biometric unlock on screen launch if biometrics are armed
-    LaunchedEffect(Unit) {
-        if (uiState.biometricArmed) {
+    LaunchedEffect(uiState.biometricArmed) {
+        if (uiState.biometricArmed && !hasAttemptedBiometric) {
+            hasAttemptedBiometric = true
             onUnlockWithBiometric()
         }
     }
@@ -69,11 +82,41 @@ fun UnlockScreen(
     ) {
         Spacer(modifier = Modifier.height(AtomicSpacing.xl))
 
+        com.example.ui.components.LiquidGlassSurface(
+            modifier = Modifier.size(56.dp),
+            variant = com.example.ui.components.GlassVariant.Card,
+            shape = androidx.compose.foundation.shape.CircleShape,
+            contentPadding = 0.dp
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Shield,
+                    contentDescription = null,
+                    tint = AtomicColors.Foreground,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+
         Text(
             text = "Unlock AtomicVault",
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = AtomicFontWeight.bold
+        )
+
+        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+
+        Text(
+            text = "Your master password encrypts everything. It is never stored and cannot be recovered.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = AtomicColors.TextMuted,
+            modifier = Modifier.padding(horizontal = AtomicSpacing.md)
         )
 
         Spacer(modifier = Modifier.height(AtomicSpacing.xl))
@@ -95,23 +138,44 @@ fun UnlockScreen(
             variant = com.example.ui.components.GlassVariant.Interactive,
             contentPadding = AtomicSpacing.md
         ) {
-            Box(
+            Row(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.CenterStart
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (password.isEmpty()) {
-                    Text(
-                        text = "Master password",
-                        color = AtomicColors.TextMuted,
-                        fontSize = AtomicFontSize.body
-                    )
-                } else {
-                    Text(
-                        text = "•".repeat(password.length),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = AtomicFontSize.title,
-                        letterSpacing = 4.sp
-                    )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    if (password.isEmpty()) {
+                        Text(
+                            text = "Master password",
+                            color = AtomicColors.TextMuted,
+                            fontSize = AtomicFontSize.body
+                        )
+                    } else {
+                        Text(
+                            text = "•".repeat(password.length),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = AtomicFontSize.title,
+                            letterSpacing = 4.sp,
+                            maxLines = 1
+                        )
+                    }
+                }
+
+                if (password.isNotEmpty()) {
+                    IconButton(
+                        onClick = { password = "" },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .semantics { contentDescription = "Clear password" }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = null,
+                            tint = AtomicColors.TextMuted
+                        )
+                    }
                 }
             }
         }
@@ -128,6 +192,36 @@ fun UnlockScreen(
 
         Spacer(modifier = Modifier.height(AtomicSpacing.lg))
 
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AtomicSpacing.sm),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Shield,
+                contentDescription = null,
+                tint = AtomicColors.Success,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(AtomicSpacing.xs))
+            Text(
+                text = "ATOMIC SHIELD",
+                color = AtomicColors.TextMuted,
+                fontSize = AtomicFontSize.micro,
+                fontWeight = AtomicFontWeight.bold
+            )
+            Text(
+                text = " \u00b7 in-app isolated input \u00b7 zero telemetry",
+                color = AtomicColors.TextMuted,
+                fontSize = AtomicFontSize.micro,
+                fontWeight = AtomicFontWeight.regular
+            )
+        }
+
+        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+
         // Custom Liquid Glass Keyboard
         com.example.ui.components.LiquidGlassKeyboard(
             onKeyPress = { password += it },
@@ -142,6 +236,15 @@ fun UnlockScreen(
                 }
             },
             modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+
+        Text(
+            text = "Keystrokes never leave memory or touch a 3rd-party keyboard.",
+            color = AtomicColors.TextMuted,
+            fontSize = AtomicFontSize.caption,
+            modifier = Modifier.padding(horizontal = AtomicSpacing.lg)
         )
 
         Spacer(modifier = Modifier.height(AtomicSpacing.xl))

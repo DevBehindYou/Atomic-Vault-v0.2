@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -193,11 +194,27 @@ fun PasswordGeneratorPanel(
             Spacer(modifier = Modifier.height(AtomicSpacing.md))
 
             // Character Class Toggles in exact order
-            GeneratorToggleRow("Lowercase (a-z)", lower) { lower = it }
-            GeneratorToggleRow("Uppercase (A-Z)", upper) { upper = it }
-            GeneratorToggleRow("Digits (0-9)", digits) { digits = it }
-            GeneratorToggleRow("Symbols (!@#$)", symbols) { symbols = it }
-            GeneratorToggleRow("Avoid ambiguous", avoidAmbiguous) { avoidAmbiguous = it }
+            GeneratorToggleRow("Lowercase (a-z)", lower, subtitle = "a through z") { lower = it }
+            GeneratorToggleRow("Uppercase (A-Z)", upper, subtitle = "A through Z") { upper = it }
+            GeneratorToggleRow("Digits (0-9)", digits, subtitle = "0 through 9") { digits = it }
+            GeneratorToggleRow(
+                "Symbols (!@#$)",
+                symbols,
+                subtitle = "!@#\$%^&* and other standard symbols"
+            ) { symbols = it }
+            GeneratorToggleRow(
+                "Avoid ambiguous",
+                avoidAmbiguous,
+                subtitle = "Excludes O, 0, o, I, l, 1, and other lookalikes"
+            ) { avoidAmbiguous = it }
+
+            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+
+            Text(
+                text = "Generated locally with a cryptographically secure random source (unbiased rejection sampling, not naive modulo) \u2014 nothing here is ever written to disk or sent anywhere.",
+                fontSize = AtomicFontSize.caption,
+                color = AtomicColors.TextMuted
+            )
 
             Spacer(modifier = Modifier.height(AtomicSpacing.lg))
 
@@ -210,7 +227,7 @@ fun PasswordGeneratorPanel(
                     onClick = { regenerate() },
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
+                        .defaultMinSize(minHeight = 48.dp)
                         .testTag("regenerate_password_button"),
                     shape = RoundedCornerShape(AtomicRadius.md),
                     border = ButtonDefaults.outlinedButtonBorder.copy(
@@ -230,7 +247,7 @@ fun PasswordGeneratorPanel(
                     enabled = generatedPassword.isNotEmpty(),
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
+                        .defaultMinSize(minHeight = 48.dp)
                         .testTag("use_password_button"),
                     shape = RoundedCornerShape(AtomicRadius.md),
                     colors = ButtonDefaults.buttonColors(
@@ -253,6 +270,7 @@ fun PasswordGeneratorPanel(
 private fun GeneratorToggleRow(
     label: String,
     checked: Boolean,
+    subtitle: String? = null,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
@@ -262,11 +280,20 @@ private fun GeneratorToggleRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = label,
-            fontSize = AtomicFontSize.label,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontSize = AtomicFontSize.label,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    fontSize = AtomicFontSize.caption,
+                    color = AtomicColors.TextMuted
+                )
+            }
+        }
         AtomicSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange

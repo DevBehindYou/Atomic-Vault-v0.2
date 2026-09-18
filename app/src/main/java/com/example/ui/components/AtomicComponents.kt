@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -174,7 +175,7 @@ fun AtomicPrimaryButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .defaultMinSize(minHeight = 48.dp)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         enabled = enabled && !busy,
         shape = RoundedCornerShape(AtomicRadius.md),
@@ -212,7 +213,7 @@ fun AtomicOutlinedButton(
     OutlinedButton(
         onClick = onClick,
         modifier = modifier
-            .height(48.dp)
+            .defaultMinSize(minHeight = 48.dp)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         enabled = enabled,
         shape = RoundedCornerShape(AtomicRadius.md),
@@ -244,7 +245,7 @@ fun AtomicDestructiveButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .defaultMinSize(minHeight = 48.dp)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         enabled = enabled,
         shape = RoundedCornerShape(AtomicRadius.md),

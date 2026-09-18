@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,7 +36,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,11 +62,13 @@ import com.example.ui.theme.AtomicSpacing
 @Composable
 fun SecurityDashboardScreen(
     integrityWarnings: List<String>,
-    onLoadAllCredentials: () -> List<CredentialPlain>,
+    onLoadAllCredentials: suspend () -> List<CredentialPlain>,
     onItemClick: (String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scope = rememberCoroutineScope()
+
     var report by remember {
         mutableStateOf(
             VaultSecurityReport(
@@ -174,6 +180,27 @@ fun SecurityDashboardScreen(
                         )
                     }
                 }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = AtomicSpacing.md)
+                        .testTag("device_integrity_ok_banner"),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Verified,
+                        contentDescription = null,
+                        tint = AtomicColors.Success,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "No root, debugger, or custom ROM signature detected on this device.",
+                        fontSize = AtomicFontSize.caption,
+                        color = AtomicColors.TextMuted
+                    )
+                }
             }
 
             // Health Score Card
@@ -208,13 +235,37 @@ fun SecurityDashboardScreen(
                     )
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-
-                    Text(
-                        text = "${report.reusedCount} reused · ${report.weakCount} weak · ${report.emptyCount} empty · ${report.totalCount} total",
-                        fontSize = AtomicFontSize.caption,
-                        color = AtomicColors.TextMuted
-                    )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(AtomicSpacing.md))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
+            ) {
+                StatChip(label = "REUSED", value = "${report.reusedCount}", modifier = Modifier.weight(1f))
+                StatChip(label = "WEAK", value = "${report.weakCount}", modifier = Modifier.weight(1f))
+                StatChip(label = "EMPTY", value = "${report.emptyCount}", modifier = Modifier.weight(1f))
+                StatChip(label = "TOTAL", value = "${report.totalCount}", modifier = Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+
+            androidx.compose.material3.OutlinedButton(
+                onClick = {
+                    scope.launch {
+                        val items = onLoadAllCredentials()
+                        report = PasswordAnalysis.analyzeVault(items)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 48.dp)
+                    .testTag("rescan_vault_button"),
+                shape = RoundedCornerShape(AtomicRadius.md)
+            ) {
+                Text(text = "Re-scan vault", fontSize = AtomicFontSize.label, fontWeight = AtomicFontWeight.medium)
             }
 
             Spacer(modifier = Modifier.height(AtomicSpacing.lg))
@@ -304,5 +355,29 @@ private fun FindingRowItem(
                 IssueBadge(issue = issue)
             }
         }
+    }
+}
+
+@Composable
+private fun StatChip(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(AtomicRadius.md))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(AtomicSpacing.sm),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value,
+            fontSize = AtomicFontSize.heading,
+            fontWeight = AtomicFontWeight.bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            fontSize = AtomicFontSize.micro,
+            color = AtomicColors.TextMuted,
+            letterSpacing = 0.5.sp
+        )
     }
 }

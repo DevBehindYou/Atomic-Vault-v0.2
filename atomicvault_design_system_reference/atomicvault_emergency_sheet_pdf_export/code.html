@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#131313;background-image:linear-gradient(to right,rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:64px 64px;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {"colors": {"background": "#131313","on-surface": "#e2e2e2","outline": "#8e9192","on-secondary-container": "#00311f","inverse-surface": "#e2e2e2","on-tertiary": "#67001b","surface-dim": "#131313","inverse-primary": "#5d5f5f","on-background": "#e2e2e2","outline-variant": "#444748","surface-container-high": "#2a2a2a","on-surface-variant": "#c4c7c8","on-primary-container": "#636565","on-tertiary-fixed-variant": "#92002a","inverse-on-surface": "#303030","secondary-container": "#00a572","surface": "#131313","on-primary-fixed-variant": "#454747","surface-container": "#1f1f1f","on-error-container": "#ffdad6","on-error": "#690005","tertiary-fixed-dim": "#ffb2b7","error-container": "#93000a","secondary": "#4edea3","on-secondary-fixed-variant": "#005236","secondary-fixed": "#6ffbbe","primary": "#ffffff","tertiary-container": "#ffdadb","surface-bright": "#393939","surface-container-low": "#1b1b1b","surface-tint": "#c6c6c7","primary-fixed": "#e2e2e2","on-secondary-fixed": "#002113","on-tertiary-fixed": "#40000d","primary-fixed-dim": "#c6c6c7","surface-container-lowest": "#0e0e0e","tertiary": "#ffffff","on-primary": "#2f3131","primary-container": "#e2e2e2","on-primary-fixed": "#1a1c1c","on-tertiary-container": "#c51640","surface-variant": "#353535","secondary-fixed-dim": "#4edea3","tertiary-fixed": "#ffdadb","on-secondary": "#003824","error": "#ffb4ab","surface-container-highest": "#353535"},"borderRadius": {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px"},"spacing": {"space-xs": "0.25rem","space-xxl": "2rem","space-sm": "0.5rem","gutter": "1rem","space-lg": "1rem","margin": "1rem","space-xl": "1.5rem","space-md": "0.75rem"},"fontFamily": {"headline-sm": ["Inter"],"headline-lg": ["Inter"],"caption": ["Inter"],"body-md": ["Inter"],"label-md": ["Inter"],"body-lg": ["Inter"],"label-lg": ["Inter"],"headline-md": ["Inter"],"micro": ["Inter"]},"fontSize": {"headline-sm": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],"headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],"caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],"body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],"label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600"}],"body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],"label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],"headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],"micro": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-surface-bright selection:text-primary"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe"><div class="h-20 px-space-lg flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md min-w-0"><div class="relative flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-secondary animate-pulse absolute -top-0.5 -right-0.5 z-10"></div><span class="material-symbols-outlined text-primary text-2xl">lock</span></div><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">AtomicVault</span><span class="material-symbols-outlined text-secondary text-base">verified_user</span></div><span class="font-micro text-micro text-on-surface-variant truncate uppercase">Zero-Knowledge · Encrypted AES-256-GCM</span></div></div><div class="flex items-center gap-space-xs shrink-0"><a aria-label="Security Audit" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="audit-view" href="#"><span class="material-symbols-outlined text-xl">security</span></a><a aria-label="Settings" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="vault-settings" href="#"><span class="material-symbols-outlined text-xl">settings</span></a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs ring-1 ring-outline/20" src="https://lh3.googleusercontent.com/aida/AEtjO1UWVDPK8zPpZn80ri0MvKjEd8WiVJ4RhgT45rjqFHxwZfoWiuqEdCy_8TcjRw1IE_9AGM34mt9rJ0GNSrB3nJoOAtPcxSPH-0RvK7ku-VSznxmZRoHzJzWMYJ14o-d6h_qIvZBc5Ex-_Cr9wut20Vo2oEQI1uRyxPWfr6bPw0Mh9TS02BJ7QkKp2HScf4nNPViK0xg5AT_CYTy2xFEPpYdtx0EZNaYg0VHEAgGD4HcQUuppY1fx_pszRSM"/></div></div></header><main class="flex flex-col relative w-full px-space-lg pt-20 pb-32 bg-surface min-h-screen"><div class="flex flex-col w-full gap-space-lg">
+<!-- Top Navigation & Context Bar -->
+<div class="flex items-center justify-between w-full">
+<button aria-label="Go Back" class="w-12 h-12 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-bright text-primary transition-all active:scale-95 shadow-sm" type="button">
+<span class="material-symbols-outlined text-headline-md">arrow_back</span>
+</button>
+<div class="flex flex-col items-center text-center min-w-0 px-space-xs">
+<h1 class="font-headline-sm text-headline-sm text-primary truncate tracking-tight">Cryptographic Emergency Sheet</h1>
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-wider">Air-Gapped Paper Backup Archive</span>
+</div>
+<button aria-label="Print Document" class="w-12 h-12 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-bright text-primary transition-all active:scale-95 shadow-sm" id="trigger-quick-print" type="button">
+<span class="material-symbols-outlined text-headline-md">print</span>
+</button>
+</div>
+<!-- Offline Status Capsule -->
+<div class="flex items-center justify-between px-space-md py-space-xs rounded-full bg-surface-container-low shadow-sm">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-secondary animate-ping"></span>
+<span class="font-micro text-micro text-secondary uppercase tracking-widest">Offline Generation</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-micro">wifi_off</span>
+<span class="font-micro text-micro text-on-surface-variant uppercase">Zero Network Egress</span>
+</div>
+</div>
+<!-- Educational Banner -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container p-space-md shadow-md">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-bright flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-headline-md">description</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<span class="font-label-lg text-label-lg text-primary">Cold Storage Manifest</span>
+<p class="font-caption text-caption text-on-surface-variant leading-relaxed">
+          Physical cold-storage document containing cryptographic Shamir shard reconstruction instructions, zero-knowledge seed checksums, and emergency contact PGP public fingerprints.
+        </p>
+</div>
+</div>
+</div>
+<!-- Cryptographic Document Preview (High-Contrast Air-Gapped Simulation) -->
+<div class="relative w-full rounded-xl bg-surface-container-lowest p-space-md shadow-xl flex flex-col gap-space-md overflow-hidden">
+<!-- Optical Watermark Pattern -->
+<div class="absolute -right-6 -bottom-6 w-36 h-36 opacity-5 pointer-events-none flex items-center justify-center">
+<span class="material-symbols-outlined text-[140px] text-primary">verified</span>
+</div>
+<!-- Technical Header Strip -->
+<div class="flex flex-col gap-1 pb-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-secondary uppercase tracking-wider font-semibold">Spec SLIP-0039 · Shamir Shard 01/03</span>
+<span class="font-micro text-micro text-on-surface-variant font-mono">ID: SHARD-9F71B-2024</span>
+</div>
+<span class="font-label-md text-label-md text-primary tracking-tight uppercase">AtomicVault Secure Recovery Sheet</span>
+</div>
+<!-- QR Matrix Module & Finder Patterns -->
+<div class="flex flex-col items-center justify-center p-space-md rounded-xl bg-surface-container-low gap-space-sm">
+<div class="relative p-space-xs bg-primary rounded-lg shadow-sm">
+<svg class="w-48 h-48" fill="none" viewbox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+<!-- Outer Positioning Boxes -->
+<rect fill="#131313" height="40" rx="3" width="40" x="8" y="8"></rect>
+<rect fill="#ffffff" height="28" width="28" x="14" y="14"></rect>
+<rect fill="#131313" height="16" width="16" x="20" y="20"></rect>
+<rect fill="#131313" height="40" rx="3" width="40" x="112" y="8"></rect>
+<rect fill="#ffffff" height="28" width="28" x="118" y="14"></rect>
+<rect fill="#131313" height="16" width="16" x="124" y="20"></rect>
+<rect fill="#131313" height="40" rx="3" width="40" x="8" y="112"></rect>
+<rect fill="#ffffff" height="28" width="28" x="14" y="118"></rect>
+<rect fill="#131313" height="16" width="16" x="20" y="124"></rect>
+<!-- High-entropy procedural matrix blocks -->
+<path d="M56 12h4v8h-4zM68 12h8v4h-8zM84 12h4v4h-4zM96 12h8v8h-8zM60 24h12v4H60zM80 24h8v8h-8zM100 24h4v4h-4zM56 36h4v8h-4zM68 36h8v4h-8zM92 36h12v4H92zM12 56h8v4h-8zM28 56h4v8h-4zM40 56h8v4h-8zM56 56h12v4H56zM76 56h8v4h-8zM92 56h4v4h-4zM108 56h8v4h-8zM128 56h4v8h-4zM140 56h8v4h-8zM20 68h12v4H20zM40 68h4v8h-4zM56 68h8v4h-8zM72 68h4v4h-4zM84 68h12v4H84zM104 68h8v8h-8zM120 68h16v4h-16zM144 68h4v8h-4zM12 80h4v12h-4zM24 80h8v4h-8zM40 80h12v4H40zM60 80h8v8h-8zM80 80h4v4h-4zM92 80h8v4h-8zM112 80h12v4h-12zM132 80h8v8h-8zM148 80h4v4h-4zM16 100h8v4h-8zM36 100h8v8h-8zM56 100h4v4h-4zM68 100h12v4H68zM92 100h4v8h-4zM104 100h8v4h-8zM124 100h12v4h-12zM144 100h8v4h-8zM56 116h8v4h-8zM72 116h4v8h-4zM88 116h12v4H88zM108 116h8v4h-8zM124 116h4v4h-4zM136 116h12v4h-12zM60 128h12v4H60zM80 128h4v8h-4zM96 128h12v4H96zM120 128h8v4h-8zM140 128h4v8h-4zM56 144h4v8h-4zM68 144h12v4H68zM88 144h8v4h-8zM104 144h4v4h-4zM116 144h12v8h-12zM136 144h16v4h-16z" fill="#131313"></path>
+<circle cx="80" cy="80" fill="#131313" r="3"></circle>
+</svg>
+</div>
+<div class="flex flex-col items-center text-center">
+<span class="font-micro text-micro text-primary uppercase font-semibold tracking-wider">Shard Alpha Payload (256-Bit Entropy)</span>
+<span class="font-micro text-micro text-on-surface-variant">Standard High-Density 2D Micro-Matrix</span>
+</div>
+</div>
+<!-- SHA-256 Checksum Fingerprint Section -->
+<div class="flex flex-col gap-1 p-space-sm rounded-lg bg-surface-container">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-wider">SHA-256 Cryptographic Checksum</span>
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-surface-container-high cursor-pointer hover:bg-surface-bright transition-colors" id="verify-pill">
+<span class="material-symbols-outlined text-secondary text-micro">check_circle</span>
+<span class="font-micro text-micro text-secondary uppercase font-semibold">Integrity Verified</span>
+</div>
+</div>
+<p class="font-caption text-caption text-primary break-all font-mono tracking-tight select-all">
+        e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      </p>
+</div>
+<!-- 12-Word Shard Recovery Mnemonic Matrix (3x4 Mobile Grid) -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-primary uppercase font-semibold tracking-wider">SLIP-0039 Shard Words</span>
+<span class="font-micro text-micro text-on-surface-variant font-mono">12 WORDS · INDEXED</span>
+</div>
+<div class="grid grid-cols-3 gap-space-xs w-full">
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">01</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">velvet</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">02</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">orbital</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">03</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">obsidian</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">04</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">cipher</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">05</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">atomic</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">06</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">granite</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">07</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">glacier</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">08</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">vector</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">09</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">phantom</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">10</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">shield</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">11</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">matrix</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-xs py-1.5 rounded-lg bg-surface-container-high min-w-0">
+<span class="font-micro text-micro text-on-surface-variant font-mono">12</span>
+<span class="font-body-md text-body-md text-primary font-mono truncate">secure</span>
+</div>
+</div>
+</div>
+<!-- Safety Checklist Box -->
+<div class="flex flex-col gap-space-xs p-space-md rounded-lg bg-surface-container">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-error text-body-md">lock_open</span>
+<span class="font-label-md text-label-md text-error uppercase">Physical Storage Protocol</span>
+</div>
+<ul class="flex flex-col gap-1 font-caption text-caption text-on-surface-variant">
+<li class="flex items-start gap-2">
+<span class="text-primary font-bold">1.</span>
+<span>Never capture photo, video, or scan to cloud storage.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-primary font-bold">2.</span>
+<span>Seal inside tamper-evident UV-resistant envelope.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-primary font-bold">3.</span>
+<span>Deposit in certified fireproof safe or bank security box.</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Interactive Air-Gap Sandbox Feedback Overlay (Default Hidden) -->
+<div class="hidden flex-col gap-space-sm p-space-md rounded-xl bg-surface-container-high shadow-xl animate-fade-in" id="sandbox-modal">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary">camera</span>
+<span class="font-label-lg text-label-lg text-primary">Air-Gapped Scanner Sandbox</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary" id="close-sandbox" type="button">
+<span class="material-symbols-outlined text-headline-sm">close</span>
+</button>
+</div>
+<p class="font-caption text-caption text-on-surface-variant">
+      Camera optical recognition active in sandboxed zero-permission mode. Point at the printed sheet to verify redundancy without uploading data.
+    </p>
+<div class="w-full h-24 rounded-lg bg-surface-container-lowest flex flex-col items-center justify-center gap-1">
+<span class="material-symbols-outlined text-secondary animate-pulse text-headline-lg">qr_code_scanner</span>
+<span class="font-micro text-micro text-on-surface-variant">Simulating Local Vision Pipeline...</span>
+</div>
+</div>
+<!-- Actions Bar -->
+<div class="flex flex-col gap-space-xs w-full pt-space-xs">
+<button class="w-full h-12 flex items-center justify-center gap-space-xs rounded-xl bg-primary text-on-primary hover:opacity-95 active:scale-[0.99] transition-all shadow-md" id="btn-print" type="button">
+<span class="material-symbols-outlined text-headline-sm">print</span>
+<span class="font-label-lg text-label-lg font-bold tracking-tight">Print / Save Signed PDF (.pdf)</span>
+</button>
+<button class="w-full h-12 flex items-center justify-center gap-space-xs rounded-xl bg-surface-container text-primary hover:bg-surface-container-high active:scale-[0.99] transition-all shadow-sm" id="btn-sandbox" type="button">
+<span class="material-symbols-outlined text-headline-sm">document_scanner</span>
+<span class="font-label-lg text-label-lg font-semibold">Test Paper Scan in Sandbox</span>
+</button>
+</div>
+</div>
+<script>
+  (function() {
+    const btnPrint = document.getElementById('btn-print');
+    const quickPrint = document.getElementById('trigger-quick-print');
+    const btnSandbox = document.getElementById('btn-sandbox');
+    const sandboxModal = document.getElementById('sandbox-modal');
+    const closeSandbox = document.getElementById('close-sandbox');
+    const verifyPill = document.getElementById('verify-pill');
+
+    function triggerPrintAction() {
+      const originalText = btnPrint.innerHTML;
+      btnPrint.innerHTML = '<span class="material-symbols-outlined animate-spin text-headline-sm">progress_activity</span><span class="font-label-lg text-label-lg font-bold">Compiling Air-Gapped PDF...</span>';
+      setTimeout(() => {
+        btnPrint.innerHTML = '<span class="material-symbols-outlined text-headline-sm">check</span><span class="font-label-lg text-label-lg font-bold">Generated & Ready to Print</span>';
+        setTimeout(() => {
+          btnPrint.innerHTML = originalText;
+        }, 2200);
+      }, 900);
+    }
+
+    if (btnPrint) btnPrint.addEventListener('click', triggerPrintAction);
+    if (quickPrint) quickPrint.addEventListener('click', triggerPrintAction);
+
+    if (btnSandbox && sandboxModal) {
+      btnSandbox.addEventListener('click', () => {
+        sandboxModal.classList.remove('hidden');
+        sandboxModal.classList.add('flex');
+        sandboxModal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+
+    if (closeSandbox && sandboxModal) {
+      closeSandbox.addEventListener('click', () => {
+        sandboxModal.classList.add('hidden');
+        sandboxModal.classList.remove('flex');
+      });
+    }
+
+    if (verifyPill) {
+      verifyPill.addEventListener('click', () => {
+        const textSpan = verifyPill.querySelector('span:last-child');
+        if (textSpan) {
+          const original = textSpan.innerText;
+          textSpan.innerText = 'COPIED 256-BIT CHECKSUM';
+          setTimeout(() => {
+            textSpan.innerText = original;
+          }, 1800);
+        }
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe pointer-events-none px-space-md mb-space-sm" data-active-classes="text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]"><div class="pointer-events-auto max-w-lg mx-auto h-16 rounded-xl bg-surface-container/80 backdrop-blur-2xl px-space-xs flex items-center justify-around shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="vault" href="#"><span class="material-symbols-outlined text-xl">shield</span><span class="font-micro text-micro">Vault</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg transition-all text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]" data-path="generator" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Generate</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="security" href="#"><span class="material-symbols-outlined text-xl">verified_user</span><span class="font-micro text-micro">Audit</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="keyboard" href="#"><span class="material-symbols-outlined text-xl">keyboard</span><span class="font-micro text-micro">Keys</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Config</span></a></div></nav></body></html>

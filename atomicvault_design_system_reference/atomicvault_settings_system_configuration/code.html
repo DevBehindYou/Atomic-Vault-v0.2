@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#131313;background-image:linear-gradient(to right,rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:64px 64px;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {"colors": {"background": "#131313","on-surface": "#e2e2e2","outline": "#8e9192","on-secondary-container": "#00311f","inverse-surface": "#e2e2e2","on-tertiary": "#67001b","surface-dim": "#131313","inverse-primary": "#5d5f5f","on-background": "#e2e2e2","outline-variant": "#444748","surface-container-high": "#2a2a2a","on-surface-variant": "#c4c7c8","on-primary-container": "#636565","on-tertiary-fixed-variant": "#92002a","inverse-on-surface": "#303030","secondary-container": "#00a572","surface": "#131313","on-primary-fixed-variant": "#454747","surface-container": "#1f1f1f","on-error-container": "#ffdad6","on-error": "#690005","tertiary-fixed-dim": "#ffb2b7","error-container": "#93000a","secondary": "#4edea3","on-secondary-fixed-variant": "#005236","secondary-fixed": "#6ffbbe","primary": "#ffffff","tertiary-container": "#ffdadb","surface-bright": "#393939","surface-container-low": "#1b1b1b","surface-tint": "#c6c6c7","primary-fixed": "#e2e2e2","on-secondary-fixed": "#002113","on-tertiary-fixed": "#40000d","primary-fixed-dim": "#c6c6c7","surface-container-lowest": "#0e0e0e","tertiary": "#ffffff","on-primary": "#2f3131","primary-container": "#e2e2e2","on-primary-fixed": "#1a1c1c","on-tertiary-container": "#c51640","surface-variant": "#353535","secondary-fixed-dim": "#4edea3","tertiary-fixed": "#ffdadb","on-secondary": "#003824","error": "#ffb4ab","surface-container-highest": "#353535"},"borderRadius": {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px"},"spacing": {"space-xs": "0.25rem","space-xxl": "2rem","space-sm": "0.5rem","gutter": "1rem","space-lg": "1rem","margin": "1rem","space-xl": "1.5rem","space-md": "0.75rem"},"fontFamily": {"headline-sm": ["Inter"],"headline-lg": ["Inter"],"caption": ["Inter"],"body-md": ["Inter"],"label-md": ["Inter"],"body-lg": ["Inter"],"label-lg": ["Inter"],"headline-md": ["Inter"],"micro": ["Inter"]},"fontSize": {"headline-sm": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],"headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],"caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],"body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],"label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600"}],"body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],"label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],"headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],"micro": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-surface-bright selection:text-primary"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe"><div class="h-20 px-space-lg flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md min-w-0"><div class="relative flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-secondary animate-pulse absolute -top-0.5 -right-0.5 z-10"></div><span class="material-symbols-outlined text-primary text-2xl">lock</span></div><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">AtomicVault</span><span class="material-symbols-outlined text-secondary text-base">verified_user</span></div><span class="font-micro text-micro text-on-surface-variant truncate uppercase">Zero-Knowledge · Encrypted AES-256-GCM</span></div></div><div class="flex items-center gap-space-xs shrink-0"><a aria-label="Security Audit" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="audit-view" href="#"><span class="material-symbols-outlined text-xl">security</span></a><a aria-label="Settings" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="vault-settings" href="#"><span class="material-symbols-outlined text-xl">settings</span></a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs ring-1 ring-outline/20" src="https://lh3.googleusercontent.com/aida/AEtjO1UWVDPK8zPpZn80ri0MvKjEd8WiVJ4RhgT45rjqFHxwZfoWiuqEdCy_8TcjRw1IE_9AGM34mt9rJ0GNSrB3nJoOAtPcxSPH-0RvK7ku-VSznxmZRoHzJzWMYJ14o-d6h_qIvZBc5Ex-_Cr9wut20Vo2oEQI1uRyxPWfr6bPw0Mh9TS02BJ7QkKp2HScf4nNPViK0xg5AT_CYTy2xFEPpYdtx0EZNaYg0VHEAgGD4HcQUuppY1fx_pszRSM"/></div></div></header><main class="flex flex-col relative w-full px-space-lg pt-20 pb-32 bg-surface min-h-screen"><div class="flex flex-col w-full space-y-space-xl pb-12 select-none">
+<!-- TOP CONTEXT BANNER & STATUS BADGE -->
+<section class="flex flex-col gap-space-sm pt-space-xs">
+<div class="flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center relative overflow-hidden shadow-md">
+<img alt="AtomicVault Cryptographic Core" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UWVDPK8zPpZn80ri0MvKjEd8WiVJ4RhgT45rjqFHxwZfoWiuqEdCy_8TcjRw1IE_9AGM34mt9rJ0GNSrB3nJoOAtPcxSPH-0RvK7ku-VSznxmZRoHzJzWMYJ14o-d6h_qIvZBc5Ex-_Cr9wut20Vo2oEQI1uRyxPWfr6bPw0Mh9TS02BJ7QkKp2HScf4nNPViK0xg5AT_CYTy2xFEPpYdtx0EZNaYg0VHEAgGD4HcQUuppY1fx_pszRSM"/>
+<div class="absolute inset-0 bg-primary/5 pointer-events-none"></div>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-lg text-headline-lg text-primary tracking-tight">Settings &amp; System</span>
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-widest">Config · Zero-Knowledge Preferences</span>
+</div>
+</div>
+</div>
+<!-- Vault Armed Status Pill Indicator -->
+<div class="flex items-center justify-between px-space-md py-2.5 rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="font-micro text-micro text-primary uppercase tracking-wider font-semibold truncate">Vault Armed · Biometric Key Active</span>
+</div>
+<span class="font-micro text-micro text-secondary font-semibold uppercase px-2 py-0.5 rounded-full bg-secondary/10">AES-256-GCM</span>
+</div>
+</section>
+<!-- §1 ATOMIC KEYBOARD & SYSTEM IME (HERO LIQUID GLASS SURFACE) -->
+<section class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<span class="font-micro text-micro text-outline uppercase tracking-wider font-semibold">§1 Atomic Keyboard &amp; System IME</span>
+<span class="font-micro text-micro text-secondary font-semibold uppercase">Hardware Bound</span>
+</div>
+<!-- LiquidGlassSurface Card -->
+<div class="relative rounded-2xl p-space-lg bg-surface-container/70 backdrop-blur-2xl shadow-xl flex flex-col gap-space-md overflow-hidden">
+<!-- Top Specular Rim Reflection -->
+<div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+<!-- Headline row with IME badge -->
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-bright/40 flex items-center justify-center text-primary shadow-inner">
+<span class="material-symbols-outlined text-xl">keyboard</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-primary">Atomic Glass Keyboard</span>
+<span class="font-caption text-caption text-on-surface-variant">Isolated cryptographic input bus</span>
+</div>
+</div>
+<span class="font-micro text-micro text-primary px-2.5 py-1 rounded-full bg-surface-bright/80 font-semibold tracking-wider uppercase shadow-sm">Air-Gapped IME</span>
+</div>
+<!-- 3-State Live Status Tracker Banner -->
+<div class="p-space-md rounded-xl bg-surface-container-high/90 flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-on-surface-variant uppercase font-semibold">Step 1 of 2: Disclosure &amp; Consent</span>
+<span class="font-micro text-micro text-secondary font-semibold uppercase">Verification Staged</span>
+</div>
+<!-- Interactive Step Button -->
+<button class="w-full h-11 px-space-md rounded-xl bg-primary text-on-primary font-label-lg text-label-lg flex items-center justify-between shadow-lg active:scale-[0.99] transition-transform" type="button">
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-lg">shield_with_heart</span>
+            Enable Atomic Keyboard
+          </span>
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+<!-- Secondary System Status Notification -->
+<div class="flex items-center gap-space-xs text-on-surface-variant pt-space-xs">
+<span class="material-symbols-outlined text-sm text-secondary">check_circle</span>
+<span class="font-caption text-caption text-on-surface-variant">Runtime Sandbox Verified · No Network Permissions Granted</span>
+</div>
+</div>
+<!-- Embedded Informed Consent & Privacy Guarantee Card -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest/80 flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-sm text-secondary">lock</span>
+<span class="font-label-md text-label-md text-primary font-semibold">Informed Consent &amp; Privacy Guarantee</span>
+</div>
+<p class="font-caption text-caption text-on-surface-variant leading-relaxed">
+          Atomic Keyboard can technically receive text while it's your active keyboard. It does not upload what you type, save ordinary keystrokes, use typed text for advertising, or send typing to analytics. It only stores something when you explicitly save it to AtomicVault. Fields it detects as passwords/PINs/OTPs are flagged with a Shield indicator.
+        </p>
+</div>
+<!-- Toggles in IME section -->
+<div class="flex flex-col gap-space-sm divide-y divide-surface-bright/30">
+<!-- Shield Mode Toggle -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex flex-col pr-space-md">
+<span class="font-label-lg text-label-lg text-primary">Auto-Shield Password Fields</span>
+<span class="font-caption text-caption text-on-surface-variant">Obscures touch preview overlays on sensitive inputs</span>
+</div>
+<!-- Custom AtomicSwitch ON -->
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-[52px] h-[30px] bg-surface-container-highest rounded-full peer peer-checked:bg-secondary transition-colors duration-200 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-primary peer-checked:after:bg-on-secondary after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px] shadow-inner"></div>
+</label>
+</div>
+<!-- Biometric Suggestions Toggle -->
+<div class="flex items-center justify-between pt-space-sm">
+<div class="flex flex-col pr-space-md">
+<span class="font-label-lg text-label-lg text-primary">Biometric Suggestion Strip</span>
+<span class="font-caption text-caption text-on-surface-variant">Surface passkey matches directly above top alpha row</span>
+</div>
+<!-- Custom AtomicSwitch ON -->
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-[52px] h-[30px] bg-surface-container-highest rounded-full peer peer-checked:bg-secondary transition-colors duration-200 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-primary peer-checked:after:bg-on-secondary after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px] shadow-inner"></div>
+</label>
+</div>
+</div>
+<!-- Action: Keyboard Layout button -->
+<button class="w-full h-11 px-space-md rounded-xl bg-surface-bright/30 hover:bg-surface-bright/50 text-primary font-label-md text-label-md flex items-center justify-between transition-colors shadow-sm" type="button">
+<span class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-base">tune</span>
+          Configure Keyboard Layout &amp; Symbols
+        </span>
+<span class="material-symbols-outlined text-base">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- §2 SECURITY & BIOMETRIC LOCKING -->
+<section class="flex flex-col gap-space-sm">
+<div class="px-space-xs">
+<span class="font-micro text-micro text-outline uppercase tracking-wider font-semibold">§2 Security &amp; Biometric Locking</span>
+</div>
+<div class="rounded-xl p-space-md bg-surface-container/60 shadow-md flex flex-col gap-space-md">
+<!-- Biometric Unlock Toggle -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col pr-space-md">
+<span class="font-label-lg text-label-lg text-primary">Biometric Unlock</span>
+<span class="font-caption text-caption text-on-surface-variant">Class 3 Hardware Biometric (Face / Fingerprint)</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-[52px] h-[30px] bg-surface-container-highest rounded-full peer peer-checked:bg-secondary transition-colors duration-200 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-primary peer-checked:after:bg-on-secondary after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></div>
+</label>
+</div>
+<!-- Auto-Lock Timeout FilterChipPills Row -->
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<span class="font-label-md text-label-md text-primary">Auto-Lock Timeout</span>
+<div class="flex items-center gap-space-xs overflow-x-auto py-1">
+<button class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md whitespace-nowrap hover:text-primary" type="button">Immediately</button>
+<button class="px-3.5 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md whitespace-nowrap shadow-md font-semibold" type="button">1 min</button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md whitespace-nowrap hover:text-primary" type="button">5 mins</button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md whitespace-nowrap hover:text-primary" type="button">15 mins</button>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md whitespace-nowrap hover:text-primary" type="button">Never</button>
+</div>
+</div>
+<!-- Clear Clipboard Automatically Choice Pills -->
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-primary">Clear Clipboard Automatically</span>
+<span class="font-micro text-micro text-secondary font-semibold">Purges RAM</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="flex-1 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md text-center shadow-md font-semibold" type="button">30 seconds</button>
+<button class="flex-1 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md text-center hover:text-primary" type="button">60s</button>
+<button class="flex-1 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md text-center hover:text-primary" type="button">Never</button>
+</div>
+</div>
+<!-- FLAG_SECURE Enforcement Toggle -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex flex-col pr-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-lg text-label-lg text-primary">FLAG_SECURE Enforcement</span>
+<span class="material-symbols-outlined text-sm text-secondary">verified</span>
+</div>
+<span class="font-caption text-caption text-on-surface-variant">Blocks OS screen capture and task switcher previews</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-[52px] h-[30px] bg-surface-container-highest rounded-full peer peer-checked:bg-secondary transition-colors duration-200 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-primary peer-checked:after:bg-on-secondary after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- §3 AUTOFILL SERVICE -->
+<section class="flex flex-col gap-space-sm">
+<div class="px-space-xs">
+<span class="font-micro text-micro text-outline uppercase tracking-wider font-semibold">§3 Autofill Service</span>
+</div>
+<div class="rounded-xl p-space-md bg-surface-container/60 shadow-md flex flex-col gap-space-md">
+<!-- Android Autofill Header with Armed status pill -->
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-primary">Android Autofill Integration</span>
+<span class="font-caption text-caption text-on-surface-variant">Primary zero-trust credential injector (Recommended over IME)</span>
+</div>
+<span class="font-micro text-micro text-primary px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold tracking-wider shrink-0 uppercase">Armed &amp; Bound</span>
+</div>
+<!-- Autofill Provider Toggle -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex flex-col pr-space-md">
+<span class="font-label-lg text-label-lg text-primary">Autofill Framework Provider</span>
+<span class="font-caption text-caption text-on-surface-variant">Register AtomicVault as system credential delegate</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-[52px] h-[30px] bg-surface-container-highest rounded-full peer peer-checked:bg-secondary transition-colors duration-200 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-primary peer-checked:after:bg-on-secondary after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></div>
+</label>
+</div>
+<!-- Require Biometrics for Every Autofill Toggle -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex flex-col pr-space-md">
+<span class="font-label-lg text-label-lg text-primary">Require Biometrics for Every Autofill</span>
+<span class="font-caption text-caption text-on-surface-variant">Zero-passkey caching; re-evaluates hardware key on each invocation</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-[52px] h-[30px] bg-surface-container-highest rounded-full peer peer-checked:bg-secondary transition-colors duration-200 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-primary peer-checked:after:bg-on-secondary after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- §4 APPEARANCE & THEME -->
+<section class="flex flex-col gap-space-sm">
+<div class="px-space-xs">
+<span class="font-micro text-micro text-outline uppercase tracking-wider font-semibold">§4 Appearance &amp; Optical Theme</span>
+</div>
+<div class="rounded-xl p-space-md bg-surface-container/60 shadow-md flex flex-col gap-space-md">
+<!-- Dark Palette True Black -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col pr-space-md">
+<span class="font-label-lg text-label-lg text-primary">Dark Palette (True Black)</span>
+<span class="font-caption text-caption text-on-surface-variant">Engineered for OLED zero-emission and contrast</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-[52px] h-[30px] bg-surface-container-highest rounded-full peer peer-checked:bg-secondary transition-colors duration-200 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-primary peer-checked:after:bg-on-secondary after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></div>
+</label>
+</div>
+<!-- Ambient Optical Grid -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex flex-col pr-space-md">
+<span class="font-label-lg text-label-lg text-primary">Ambient Optical Grid (64dp)</span>
+<span class="font-caption text-caption text-on-surface-variant">Vault precision calibration background matrix</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-[52px] h-[30px] bg-surface-container-highest rounded-full peer peer-checked:bg-secondary transition-colors duration-200 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-primary peer-checked:after:bg-on-secondary after:rounded-full after:h-6 after:w-6 after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- §5 TOOLS & CRYPTOGRAPHIC DATA -->
+<section class="flex flex-col gap-space-sm">
+<div class="px-space-xs">
+<span class="font-micro text-micro text-outline uppercase tracking-wider font-semibold">§5 Tools &amp; Cryptographic Attestation</span>
+</div>
+<div class="rounded-xl bg-surface-container/60 shadow-md divide-y divide-surface-bright/20 overflow-hidden">
+<!-- Row 1: Privacy Proof -->
+<a class="flex items-center justify-between p-space-md hover:bg-surface-bright/20 transition-colors" href="#">
+<div class="flex items-center gap-space-md min-w-0">
+<span class="material-symbols-outlined text-secondary text-xl shrink-0">verified_user</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">Privacy Proof &amp; Real-time Audit</span>
+<span class="font-caption text-caption text-on-surface-variant truncate">100% Cryptographic Attestation</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-lg shrink-0">chevron_right</span>
+</a>
+<!-- Row 2: Tamper-Evident Timeline -->
+<a class="flex items-center justify-between p-space-md hover:bg-surface-bright/20 transition-colors" href="#">
+<div class="flex items-center gap-space-md min-w-0">
+<span class="material-symbols-outlined text-primary text-xl shrink-0">history_edu</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">Tamper-Evident Security Timeline</span>
+<span class="font-caption text-caption text-on-surface-variant truncate">Ledger Intact · Hash Block #10,482</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-lg shrink-0">chevron_right</span>
+</a>
+<!-- Row 3: Encrypted Backup & Restore -->
+<a class="flex items-center justify-between p-space-md hover:bg-surface-bright/20 transition-colors" href="#">
+<div class="flex items-center gap-space-md min-w-0">
+<span class="material-symbols-outlined text-primary text-xl shrink-0">cloud_sync</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">Encrypted Backup &amp; Restore</span>
+<span class="font-caption text-caption text-on-surface-variant truncate">Passphrase-protected .vault export</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-lg shrink-0">chevron_right</span>
+</a>
+<!-- Row 4: Password Entropy Generator -->
+<a class="flex items-center justify-between p-space-md hover:bg-surface-bright/20 transition-colors" href="#">
+<div class="flex items-center gap-space-md min-w-0">
+<span class="material-symbols-outlined text-secondary text-xl shrink-0">casino</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">Password Entropy Generator</span>
+<span class="font-caption text-caption text-on-surface-variant truncate">Open CSPRNG high-density engine</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-lg shrink-0">chevron_right</span>
+</a>
+</div>
+</section>
+<!-- §6 VAULT PARTITIONS & TAXONOMY -->
+<section class="flex flex-col gap-space-sm">
+<div class="px-space-xs">
+<span class="font-micro text-micro text-outline uppercase tracking-wider font-semibold">§6 Vault Partitions &amp; Taxonomy</span>
+</div>
+<div class="rounded-xl p-space-md bg-surface-container/60 shadow-md flex flex-col gap-space-md">
+<!-- Partitions -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-primary">Manage Vault Partitions</span>
+<span class="font-micro text-micro text-on-surface-variant">42 Keys Stored</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-xs pt-1">
+<div class="px-3 py-1.5 rounded-full bg-surface-bright/60 text-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Personal (18)
+          </div>
+<div class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5 hover:text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+            Work (14)
+          </div>
+<div class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md flex items-center gap-1.5 hover:text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Financial (10)
+          </div>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-bright/80 text-primary font-label-md text-label-md flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm">add</span>
+            New Partition
+          </button>
+</div>
+</div>
+<!-- Cryptographic Tags -->
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<span class="font-label-md text-label-md text-primary">Manage Cryptographic Tags</span>
+<div class="flex flex-wrap items-center gap-space-xs pt-1">
+<span class="px-2.5 py-1 rounded-md bg-surface-bright/40 text-on-surface font-caption text-caption">2FA Active</span>
+<span class="px-2.5 py-1 rounded-md bg-surface-bright/40 text-on-surface font-caption text-caption">High Security</span>
+<span class="px-2.5 py-1 rounded-md bg-surface-bright/40 text-on-surface font-caption text-caption">DevOps</span>
+<span class="px-2.5 py-1 rounded-md bg-surface-bright/40 text-on-surface font-caption text-caption">Tax Filer</span>
+<button class="px-2.5 py-1 rounded-md bg-surface-container-highest text-primary font-caption text-caption flex items-center gap-0.5 hover:bg-surface-bright/80" type="button">
+<span class="material-symbols-outlined text-xs">add</span>
+            New Tag
+          </button>
+</div>
+</div>
+</div>
+</section>
+<!-- §7 DANGER ZONE / DESTRUCTIVE ACTIONS -->
+<section class="flex flex-col gap-space-sm">
+<div class="px-space-xs">
+<span class="font-micro text-micro text-error uppercase tracking-wider font-semibold">§7 Danger Zone · Irreversible Actions</span>
+</div>
+<div class="rounded-xl p-space-md bg-error-container/15 shadow-md flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm text-error">
+<span class="material-symbols-outlined text-xl">warning</span>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-error font-semibold">Cold Storage Emergency Protocols</span>
+<span class="font-caption text-caption text-on-surface-variant">Triggering these actions voids volatile in-memory master passkeys</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<!-- Lock Vault Immediately -->
+<button class="w-full h-11 px-space-md rounded-xl bg-surface-container-highest hover:bg-surface-bright text-primary font-label-md text-label-md flex items-center justify-center gap-space-sm transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-base">lock</span>
+          Lock Vault Immediately
+        </button>
+<!-- Purge Local Keystore & Wipe Vault Cache -->
+<button class="w-full h-11 px-space-md rounded-xl bg-error-container/30 hover:bg-error-container/50 text-error font-label-md text-label-md flex items-center justify-center gap-space-sm transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-base">delete_forever</span>
+          Purge Local Keystore &amp; Wipe Vault Cache
+        </button>
+</div>
+</div>
+</section>
+<!-- Cryptographic Hardware Attestation Footer Note -->
+<footer class="flex flex-col items-center justify-center text-center gap-1 pt-space-md pb-space-sm">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-xs text-secondary">memory</span>
+<span class="font-micro text-micro uppercase tracking-widest">Hardware Keystore: Android StrongBox Keystore 2.0</span>
+</div>
+<span class="font-micro text-micro text-outline">Deterministic Build Hash: d98a-f021-99bc-ae44</span>
+</footer>
+</div>
+<script>
+  // Dynamic switch tactile micro-interactions
+  document.querySelectorAll('input[type="checkbox"]').forEach(switchInput => {
+    switchInput.addEventListener('change', (e) => {
+      const parentCard = e.target.closest('section');
+      if (parentCard) {
+        parentCard.style.transition = 'transform 0.1s ease';
+        parentCard.style.transform = 'scale(0.998)';
+        setTimeout(() => {
+          parentCard.style.transform = 'scale(1)';
+        }, 100);
+      }
+    });
+  });
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe pointer-events-none px-space-md mb-space-sm" data-active-classes="text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]"><div class="pointer-events-auto max-w-lg mx-auto h-16 rounded-xl bg-surface-container/80 backdrop-blur-2xl px-space-xs flex items-center justify-around shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="vault" href="#"><span class="material-symbols-outlined text-xl">shield</span><span class="font-micro text-micro">Vault</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="generator" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Generate</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg transition-all text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]" data-path="security" href="#"><span class="material-symbols-outlined text-xl">verified_user</span><span class="font-micro text-micro">Audit</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="keyboard" href="#"><span class="material-symbols-outlined text-xl">keyboard</span><span class="font-micro text-micro">Keys</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Config</span></a></div></nav></body></html>

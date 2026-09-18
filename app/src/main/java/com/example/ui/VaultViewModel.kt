@@ -309,6 +309,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 status = VaultStatus.LOCKED,
                 previews = emptyList(),
                 folders = emptyList(),
+                // tags/tagFilter/settings were previously left populated on
+                // lock while previews and folders were cleared. Nothing here
+                // is a decrypted secret, but leaving a half-cleared vault in
+                // state meant the locked UI could still render real vault
+                // contents (tag names) and stale settings.
+                tags = emptyList(),
+                tagFilter = null,
+                settings = null,
                 query = "",
                 folderFilter = null,
                 error = null
@@ -384,8 +392,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getItem(id: String): CredentialPlain? {
-        return repository?.getItem(id)
+    /**
+     * Loads one full credential, including decrypting every field plus its
+     * custom fields and tags. That's real SQLCipher I/O and several
+     * AES-GCM operations, so it must not run on the main thread -- this
+     * was previously a plain synchronous call invoked straight from
+     * composition/LaunchedEffect, which janks the editor open on any
+     * sizeable item. Suspending here forces every caller onto a coroutine.
+     */
+    suspend fun getItem(id: String): CredentialPlain? = withContext(Dispatchers.IO) {
+        repository?.getItem(id)
     }
 
     fun createItem(input: CredentialInput, onDone: () -> Unit) {
@@ -549,9 +565,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getAllCredentialsForSecurity(): List<CredentialPlain> {
-        val repo = repository ?: return emptyList()
-        val export = repo.exportData()
-        return export.items
+    /**
+     * Decrypts EVERY credential in the vault for the security dashboard's
+     * reuse/weakness analysis. This is by far the heaviest read in the
+     * app -- one query per item plus an AES-GCM open per field -- so it
+     * suspends onto the IO dispatcher rather than blocking the frame it
+     * was called from.
+     */
+    suspend fun getAllCredentialsForSecurity(): List<CredentialPlain> = withContext(Dispatchers.IO) {
+        repository?.exportData()?.items ?: emptyList()
     }
 }

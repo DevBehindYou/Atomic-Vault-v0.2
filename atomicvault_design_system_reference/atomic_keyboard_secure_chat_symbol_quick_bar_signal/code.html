@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#131313;background-image:linear-gradient(to right,rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:64px 64px;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {"colors": {"background": "#131313","on-surface": "#e2e2e2","outline": "#8e9192","on-secondary-container": "#00311f","inverse-surface": "#e2e2e2","on-tertiary": "#67001b","surface-dim": "#131313","inverse-primary": "#5d5f5f","on-background": "#e2e2e2","outline-variant": "#444748","surface-container-high": "#2a2a2a","on-surface-variant": "#c4c7c8","on-primary-container": "#636565","on-tertiary-fixed-variant": "#92002a","inverse-on-surface": "#303030","secondary-container": "#00a572","surface": "#131313","on-primary-fixed-variant": "#454747","surface-container": "#1f1f1f","on-error-container": "#ffdad6","on-error": "#690005","tertiary-fixed-dim": "#ffb2b7","error-container": "#93000a","secondary": "#4edea3","on-secondary-fixed-variant": "#005236","secondary-fixed": "#6ffbbe","primary": "#ffffff","tertiary-container": "#ffdadb","surface-bright": "#393939","surface-container-low": "#1b1b1b","surface-tint": "#c6c6c7","primary-fixed": "#e2e2e2","on-secondary-fixed": "#002113","on-tertiary-fixed": "#40000d","primary-fixed-dim": "#c6c6c7","surface-container-lowest": "#0e0e0e","tertiary": "#ffffff","on-primary": "#2f3131","primary-container": "#e2e2e2","on-primary-fixed": "#1a1c1c","on-tertiary-container": "#c51640","surface-variant": "#353535","secondary-fixed-dim": "#4edea3","tertiary-fixed": "#ffdadb","on-secondary": "#003824","error": "#ffb4ab","surface-container-highest": "#353535"},"borderRadius": {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px"},"spacing": {"space-xs": "0.25rem","space-xxl": "2rem","space-sm": "0.5rem","gutter": "1rem","space-lg": "1rem","margin": "1rem","space-xl": "1.5rem","space-md": "0.75rem"},"fontFamily": {"headline-sm": ["Inter"],"headline-lg": ["Inter"],"caption": ["Inter"],"body-md": ["Inter"],"label-md": ["Inter"],"body-lg": ["Inter"],"label-lg": ["Inter"],"headline-md": ["Inter"],"micro": ["Inter"]},"fontSize": {"headline-sm": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],"headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],"caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],"body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],"label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600"}],"body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],"label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],"headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],"micro": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-surface-bright selection:text-primary"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe"><div class="h-20 px-space-lg flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md min-w-0"><div class="relative flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-secondary animate-pulse absolute -top-0.5 -right-0.5 z-10"></div><span class="material-symbols-outlined text-primary text-2xl">lock</span></div><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">AtomicVault</span><span class="material-symbols-outlined text-secondary text-base">verified_user</span></div><span class="font-micro text-micro text-on-surface-variant truncate uppercase">Zero-Knowledge · Encrypted AES-256-GCM</span></div></div><div class="flex items-center gap-space-xs shrink-0"><a aria-label="Security Audit" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="audit-view" href="#"><span class="material-symbols-outlined text-xl">security</span></a><a aria-label="Settings" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="vault-settings" href="#"><span class="material-symbols-outlined text-xl">settings</span></a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs ring-1 ring-outline/20" src="https://lh3.googleusercontent.com/aida/AEtjO1UWVDPK8zPpZn80ri0MvKjEd8WiVJ4RhgT45rjqFHxwZfoWiuqEdCy_8TcjRw1IE_9AGM34mt9rJ0GNSrB3nJoOAtPcxSPH-0RvK7ku-VSznxmZRoHzJzWMYJ14o-d6h_qIvZBc5Ex-_Cr9wut20Vo2oEQI1uRyxPWfr6bPw0Mh9TS02BJ7QkKp2HScf4nNPViK0xg5AT_CYTy2xFEPpYdtx0EZNaYg0VHEAgGD4HcQUuppY1fx_pszRSM"/></div></div></header><main class="flex flex-col relative w-full px-space-lg pt-20 pb-32 bg-surface min-h-screen"><div class="flex flex-col w-full max-w-lg mx-auto select-none pb-2">
+<!-- Encrypted Chat Top Bar -->
+<div class="flex items-center justify-between px-space-md py-space-sm bg-surface-container/90 backdrop-blur-2xl rounded-xl shadow-lg mb-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative shrink-0">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center font-headline-sm text-headline-sm text-primary overflow-hidden">
+<span class="font-headline-sm text-headline-sm text-secondary-fixed">SC</span>
+</div>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-secondary-fixed ring-2 ring-surface"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary truncate">Sarah Connor</span>
+<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;" title="Safety Number Verified">verified_user</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="font-micro text-micro tracking-wider uppercase text-secondary font-semibold">PGP: 0x3D11...84E</span>
+<span class="text-micro opacity-40">•</span>
+<span class="font-micro text-micro opacity-70">Ed25519</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Audio Call" class="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-bright/50 transition-colors">
+<span class="material-symbols-outlined text-xl">phone_in_talk</span>
+</button>
+<button aria-label="Secure Video Call" class="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-bright/50 transition-colors">
+<span class="material-symbols-outlined text-xl">videocam</span>
+</button>
+<button aria-label="Session Keys" class="w-9 h-9 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-bright/50 transition-colors">
+<span class="material-symbols-outlined text-xl">key</span>
+</button>
+</div>
+</div>
+<!-- Safety Number Banner -->
+<div class="flex items-center justify-between px-space-md py-1.5 bg-surface-container-low/80 backdrop-blur-md rounded-lg mb-space-sm shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-base">fingerprint</span>
+<span class="font-caption text-caption text-on-surface-variant">Session #9042 verified · PFS Ratchet Active</span>
+</div>
+<span class="font-micro text-micro text-secondary bg-secondary-container/40 px-2 py-0.5 rounded-full uppercase tracking-wider">Air-Gapped</span>
+</div>
+<!-- Chat Message Stream -->
+<div class="flex flex-col gap-space-md mb-space-md px-space-xs">
+<!-- Incoming Message -->
+<div class="flex flex-col max-w-[85%] self-start">
+<div class="bg-surface-container-high text-on-surface rounded-2xl rounded-tl-sm px-space-md py-space-sm shadow-md">
+<p class="font-body-md text-body-md leading-relaxed">Can you send over the encrypted server SSH passphrase and your latest Ed25519 public key?</p>
+</div>
+<div class="flex items-center gap-1.5 mt-1 px-1.5 text-on-surface-variant">
+<span class="font-micro text-micro opacity-80">11:42 AM</span>
+<span class="font-micro text-micro opacity-40">•</span>
+<span class="material-symbols-outlined text-secondary text-xs">lock</span>
+<span class="font-micro text-micro text-secondary">E2EE Verified</span>
+</div>
+</div>
+<!-- Outgoing Message -->
+<div class="flex flex-col max-w-[85%] self-end items-end">
+<div class="bg-surface-bright text-primary rounded-2xl rounded-tr-sm px-space-md py-space-sm shadow-md">
+<p class="font-body-md text-body-md leading-relaxed">Generating isolated high-entropy credential right now via Atomic Keyboard sandbox...</p>
+</div>
+<div class="flex items-center gap-1 mt-1 px-1.5 text-on-surface-variant">
+<span class="font-micro text-micro opacity-80">11:43 AM</span>
+<span class="material-symbols-outlined text-secondary text-sm">done_all</span>
+</div>
+</div>
+</div>
+<!-- Message Composer Field -->
+<div class="flex items-center gap-2 bg-surface-container px-space-md py-2.5 rounded-2xl shadow-inner mb-space-sm">
+<button aria-label="Add attachment" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary rounded-full">
+<span class="material-symbols-outlined text-xl">attach_file</span>
+</button>
+<div class="flex-1 flex items-center font-body-md text-body-md text-primary font-mono overflow-hidden">
+<span class="text-secondary font-bold select-none mr-1">[vault_key:</span>
+<span class="tracking-wide" id="input-display">Ω#4412|</span>
+<span class="w-2 h-4 bg-secondary ml-0.5 animate-pulse inline-block"></span>
+</div>
+<button aria-label="PGP signature stamp" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary rounded-full">
+<span class="material-symbols-outlined text-xl">enhanced_encryption</span>
+</button>
+<button aria-label="Record voice message" class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary rounded-full">
+<span class="material-symbols-outlined text-xl">mic</span>
+</button>
+</div>
+<!-- ATOMIC KEYBOARD ACCESSORY & CONTROL CHASSIS -->
+<div class="flex flex-col bg-surface-container-lowest/90 backdrop-blur-2xl rounded-2xl p-space-xs shadow-2xl overflow-hidden">
+<!-- Top Mode Switcher Bar -->
+<div class="flex items-center justify-between gap-1 px-1 py-1 bg-surface-container-low rounded-xl mb-space-xs overflow-x-auto">
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-on-surface-variant hover:text-primary transition-all font-label-md text-label-md">
+<span class="material-symbols-outlined text-sm">font_download</span>
+<span>Text</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-bright text-primary font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-sm text-secondary">token</span>
+<span>Symbols &amp; PGP</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-on-surface-variant hover:text-primary transition-all font-label-md text-label-md">
+<span class="material-symbols-outlined text-sm">password</span>
+<span>Entropy</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-on-surface-variant hover:text-primary transition-all font-label-md text-label-md">
+<span class="material-symbols-outlined text-sm">tag</span>
+<span>Hash Inject</span>
+</button>
+</div>
+<!-- Live Entropy & Quick-Inject Strip -->
+<div class="flex items-center justify-between bg-surface-container-high px-space-md py-1.5 rounded-xl mb-space-xs shadow-sm">
+<div class="flex items-center gap-2 min-w-0">
+<div class="w-2 h-2 rounded-full bg-secondary animate-ping"></div>
+<div class="flex flex-col min-w-0">
+<span class="font-micro text-micro text-on-surface-variant uppercase tracking-wider truncate">Hardware CSPRNG Isolated</span>
+<span class="font-micro text-micro font-mono text-secondary font-bold tracking-widest truncate" id="entropy-preview">xK8#mQ9!vP4$dL2@zN7^</span>
+</div>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md shadow-md active:scale-95 transition-transform shrink-0" id="btn-entropy-gen">
+<span class="material-symbols-outlined text-base">bolt</span>
+<span>Inject 24-char</span>
+</button>
+</div>
+<!-- Dedicated Symbol & Cryptographic Keypad Strip -->
+<div class="grid grid-cols-11 gap-1 mb-space-xs">
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-secondary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">[</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-secondary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">{</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-secondary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">}</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-secondary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">]</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-primary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">#</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-primary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">$</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-primary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">%</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-primary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">&amp;</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-primary flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">*</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-secondary-fixed flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">|</button>
+<button class="key-press h-10 rounded-lg bg-surface-container-high text-secondary-fixed flex items-center justify-center font-headline-sm text-headline-sm font-mono active:bg-surface-bright shadow-sm">~</button>
+</div>
+<!-- Secondary Symbol Strip -->
+<div class="grid grid-cols-10 gap-1 mb-space-xs">
+<button class="key-press h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm">`</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm">^</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm">_</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm">=</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm">+</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm">\</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-on-surface flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm">/</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-primary flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm font-bold" title="Slashed Zero">Ø</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-primary flex items-center justify-center font-label-lg text-label-lg font-mono active:bg-surface-bright shadow-sm font-bold" title="Serif numeral one">1</button>
+<button class="key-press h-9 rounded-lg bg-surface-container text-primary flex items-center justify-center font-label-lg text-label-lg font-serif active:bg-surface-bright shadow-sm font-bold" title="Capital I with Serifs">I</button>
+</div>
+<!-- Main QWERTY Key Rows (Liquid Glass Chassis Styling) -->
+<!-- Row 1: Q-P -->
+<div class="grid grid-cols-10 gap-1 mb-1">
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">Q</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">W</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">E</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">R</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">T</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">Y</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">U</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">I</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">O</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">P</button>
+</div>
+<!-- Row 2: A-L -->
+<div class="grid grid-cols-9 gap-1 px-2.5 mb-1">
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">A</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">S</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">D</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">F</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">G</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">H</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">J</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">K</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">L</button>
+</div>
+<!-- Row 3: Shift, Z-M, Backspace -->
+<div class="flex items-center gap-1 mb-1">
+<button aria-label="Shift Key" class="h-12 w-12 shrink-0 rounded-lg bg-surface-container text-on-surface flex items-center justify-center active:bg-surface-bright active:scale-95 transition-all shadow-sm">
+<span class="material-symbols-outlined text-xl">arrow_upward</span>
+</button>
+<div class="grid grid-cols-7 gap-1 flex-1">
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">Z</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">X</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">C</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">V</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">B</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">N</button>
+<button class="key-press h-12 rounded-lg bg-surface-container-high/90 text-primary font-headline-sm text-headline-sm active:bg-surface-bright active:scale-95 transition-all shadow-sm">M</button>
+</div>
+<button aria-label="Backspace Key" class="h-12 w-12 shrink-0 rounded-lg bg-surface-container text-on-surface flex items-center justify-center active:bg-surface-bright active:scale-95 transition-all shadow-sm" id="btn-backspace">
+<span class="material-symbols-outlined text-xl">backspace</span>
+</button>
+</div>
+<!-- Row 4: IME Switch, Spacebar, Send Action Key -->
+<div class="flex items-center gap-1.5 pt-0.5">
+<button class="h-12 px-3 rounded-lg bg-surface-container text-on-surface font-label-md text-label-md flex items-center justify-center active:bg-surface-bright shrink-0 shadow-sm">
+<span>?123</span>
+</button>
+<button aria-label="Emoji &amp; ASCII Art" class="h-12 w-10 rounded-lg bg-surface-container text-on-surface flex items-center justify-center active:bg-surface-bright shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-xl">sentiment_satisfied</span>
+</button>
+<!-- Spacebar with Security Indicator -->
+<button class="flex-1 h-12 rounded-lg bg-surface-container-high/80 px-2 flex flex-col items-center justify-center active:bg-surface-bright active:scale-[0.99] transition-all shadow-sm" id="btn-space">
+<span class="font-micro text-micro text-secondary font-bold tracking-widest uppercase flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          SIGNAL E2EE · IME AIR-GAP
+        </span>
+</button>
+<button class="key-press h-12 px-3 rounded-lg bg-surface-container text-primary font-label-md text-label-md flex items-center justify-center active:bg-surface-bright shrink-0 shadow-sm">
+<span>.</span>
+</button>
+<!-- Emerald Send Action Key -->
+<button aria-label="Send Encrypted Payload" class="h-12 w-14 rounded-lg bg-secondary text-on-secondary flex items-center justify-center font-headline-sm active:scale-95 transition-transform shrink-0 shadow-lg" id="btn-send">
+<span class="material-symbols-outlined text-2xl font-bold">send</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const inputDisplay = document.getElementById('input-display');
+    const entropyPreview = document.getElementById('entropy-preview');
+    const btnEntropyGen = document.getElementById('btn-entropy-gen');
+    const btnBackspace = document.getElementById('btn-backspace');
+    const btnSpace = document.getElementById('btn-space');
+    const btnSend = document.getElementById('btn-send');
+    const keys = document.querySelectorAll('.key-press');
+
+    function generateRandomToken() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*()_+=';
+      let result = '';
+      for (let i = 0; i < 20; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    if (btnEntropyGen && entropyPreview && inputDisplay) {
+      btnEntropyGen.addEventListener('click', () => {
+        const nextSecret = generateRandomToken();
+        entropyPreview.textContent = nextSecret;
+        inputDisplay.textContent = 'pgp:ed25519:' + nextSecret.substring(0, 10) + '...';
+      });
+    }
+
+    keys.forEach(k => {
+      k.addEventListener('click', () => {
+        if (!inputDisplay) return;
+        const char = k.innerText.trim();
+        if (char && char.length === 1) {
+          inputDisplay.textContent += char;
+        }
+      });
+    });
+
+    if (btnBackspace && inputDisplay) {
+      btnBackspace.addEventListener('click', () => {
+        if (inputDisplay.textContent.length > 0) {
+          inputDisplay.textContent = inputDisplay.textContent.slice(0, -1);
+        }
+      });
+    }
+
+    if (btnSpace && inputDisplay) {
+      btnSpace.addEventListener('click', () => {
+        inputDisplay.textContent += ' ';
+      });
+    }
+
+    if (btnSend && inputDisplay) {
+      btnSend.addEventListener('click', () => {
+        inputDisplay.textContent = 'Payload Encrypted & Sent ✓';
+        setTimeout(() => {
+          inputDisplay.textContent = '';
+        }, 1500);
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe pointer-events-none px-space-md mb-space-sm" data-active-classes="text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]"><div class="pointer-events-auto max-w-lg mx-auto h-16 rounded-xl bg-surface-container/80 backdrop-blur-2xl px-space-xs flex items-center justify-around shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="vault" href="#"><span class="material-symbols-outlined text-xl">shield</span><span class="font-micro text-micro">Vault</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg transition-all text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]" data-path="generator" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Generate</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="security" href="#"><span class="material-symbols-outlined text-xl">verified_user</span><span class="font-micro text-micro">Audit</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="keyboard" href="#"><span class="material-symbols-outlined text-xl">keyboard</span><span class="font-micro text-micro">Keys</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Config</span></a></div></nav></body></html>

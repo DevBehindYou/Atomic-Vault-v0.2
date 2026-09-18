@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;background-color:#131313;background-image:linear-gradient(to right,rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:64px 64px;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {"colors": {"background": "#131313","on-surface": "#e2e2e2","outline": "#8e9192","on-secondary-container": "#00311f","inverse-surface": "#e2e2e2","on-tertiary": "#67001b","surface-dim": "#131313","inverse-primary": "#5d5f5f","on-background": "#e2e2e2","outline-variant": "#444748","surface-container-high": "#2a2a2a","on-surface-variant": "#c4c7c8","on-primary-container": "#636565","on-tertiary-fixed-variant": "#92002a","inverse-on-surface": "#303030","secondary-container": "#00a572","surface": "#131313","on-primary-fixed-variant": "#454747","surface-container": "#1f1f1f","on-error-container": "#ffdad6","on-error": "#690005","tertiary-fixed-dim": "#ffb2b7","error-container": "#93000a","secondary": "#4edea3","on-secondary-fixed-variant": "#005236","secondary-fixed": "#6ffbbe","primary": "#ffffff","tertiary-container": "#ffdadb","surface-bright": "#393939","surface-container-low": "#1b1b1b","surface-tint": "#c6c6c7","primary-fixed": "#e2e2e2","on-secondary-fixed": "#002113","on-tertiary-fixed": "#40000d","primary-fixed-dim": "#c6c6c7","surface-container-lowest": "#0e0e0e","tertiary": "#ffffff","on-primary": "#2f3131","primary-container": "#e2e2e2","on-primary-fixed": "#1a1c1c","on-tertiary-container": "#c51640","surface-variant": "#353535","secondary-fixed-dim": "#4edea3","tertiary-fixed": "#ffdadb","on-secondary": "#003824","error": "#ffb4ab","surface-container-highest": "#353535"},"borderRadius": {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px"},"spacing": {"space-xs": "0.25rem","space-xxl": "2rem","space-sm": "0.5rem","gutter": "1rem","space-lg": "1rem","margin": "1rem","space-xl": "1.5rem","space-md": "0.75rem"},"fontFamily": {"headline-sm": ["Inter"],"headline-lg": ["Inter"],"caption": ["Inter"],"body-md": ["Inter"],"label-md": ["Inter"],"body-lg": ["Inter"],"label-lg": ["Inter"],"headline-md": ["Inter"],"micro": ["Inter"]},"fontSize": {"headline-sm": ["17px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],"headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],"caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],"body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],"label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600"}],"body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],"label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],"headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600"}],"micro": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen selection:bg-surface-bright selection:text-primary"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe"><div class="h-20 px-space-lg flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md min-w-0"><div class="relative flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-secondary animate-pulse absolute -top-0.5 -right-0.5 z-10"></div><span class="material-symbols-outlined text-primary text-2xl">lock</span></div><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">AtomicVault</span><span class="material-symbols-outlined text-secondary text-base">verified_user</span></div><span class="font-micro text-micro text-on-surface-variant truncate uppercase">Zero-Knowledge · Encrypted AES-256-GCM</span></div></div><div class="flex items-center gap-space-xs shrink-0"><a aria-label="Security Audit" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="audit-view" href="#"><span class="material-symbols-outlined text-xl">security</span></a><a aria-label="Settings" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" data-path="vault-settings" href="#"><span class="material-symbols-outlined text-xl">settings</span></a><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-space-xs ring-1 ring-outline/20" src="https://lh3.googleusercontent.com/aida/AEtjO1UWVDPK8zPpZn80ri0MvKjEd8WiVJ4RhgT45rjqFHxwZfoWiuqEdCy_8TcjRw1IE_9AGM34mt9rJ0GNSrB3nJoOAtPcxSPH-0RvK7ku-VSznxmZRoHzJzWMYJ14o-d6h_qIvZBc5Ex-_Cr9wut20Vo2oEQI1uRyxPWfr6bPw0Mh9TS02BJ7QkKp2HScf4nNPViK0xg5AT_CYTy2xFEPpYdtx0EZNaYg0VHEAgGD4HcQUuppY1fx_pszRSM"/></div></div></header><main class="flex flex-col relative w-full px-space-lg pt-20 pb-32 bg-surface min-h-screen"><div class="flex flex-col w-full max-w-lg mx-auto space-y-space-lg">
+<!-- Top Context & Navigation Bar -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-space-md min-w-0">
+<button aria-label="Go Back" class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-bright active:scale-95 transition-all shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15)]" type="button">
+<span class="material-symbols-outlined text-xl">arrow_back</span>
+</button>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate">Edit Credential</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-container/20 text-secondary text-micro font-micro tracking-widest uppercase">AES-256</span>
+</div>
+<span class="font-micro text-micro text-outline truncate uppercase">WORK · ENCRYPTED RECORD ID: #0482-GH</span>
+</div>
+</div>
+<button class="h-9 px-space-md rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.5),0_4px_12px_rgba(0,0,0,0.6)] hover:bg-primary-fixed active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-base">check</span>
+<span>Save</span>
+</button>
+</div>
+<!-- Identity Card (Liquid Glass Specular Frame) -->
+<div class="relative rounded-xl bg-surface-container/70 backdrop-blur-2xl p-space-lg shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.25),0_16px_32px_-8px_rgba(0,0,0,0.8)] overflow-hidden">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-secondary/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="relative w-14 h-14 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
+<span class="material-symbols-outlined text-3xl text-primary">terminal</span>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-micro text-on-secondary-container">domain</span>
+</span>
+</div>
+<div class="flex flex-col min-w-0">
+<label class="font-micro text-micro text-outline-variant uppercase tracking-wider">Item Label</label>
+<input class="bg-transparent font-headline-md text-headline-md text-primary tracking-tight focus:outline-none p-0 w-full truncate placeholder:text-outline-variant selection:bg-surface-bright" type="text" value="GitHub Enterprise"/>
+<span class="font-caption text-caption text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Production Organization Keys
+          </span>
+</div>
+</div>
+<!-- Star / Favorite Toggle -->
+<button aria-label="Toggle Favorite" class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-secondary hover:text-primary transition-colors shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1)] active:scale-95" id="star-toggle" type="button">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">star</span>
+</button>
+</div>
+</div>
+<!-- Core Credential Fields Section -->
+<div class="flex flex-col space-y-space-md">
+<div class="flex items-center justify-between px-space-xs">
+<span class="font-micro text-micro text-outline tracking-wider uppercase">Authentication Credentials</span>
+<span class="font-micro text-micro text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock</span>
+        Zero Knowledge
+      </span>
+</div>
+<!-- Username / Email Field -->
+<div class="rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md space-y-1.5 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15)] focus-within:shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.4)] transition-all">
+<div class="flex items-center justify-between">
+<label class="font-micro text-micro text-on-surface-variant uppercase tracking-wider">Username or Email</label>
+<span class="font-micro text-micro text-outline-variant">Unique Auth ID</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">alternate_email</span>
+<input class="w-full bg-transparent font-body-md text-body-md text-primary focus:outline-none placeholder:text-outline-variant" type="text" value="alex.v@atomicvault.internal"/>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-all" title="Copy Username" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Master Password Field with Live Entropy -->
+<div class="rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md space-y-space-sm shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15)]">
+<div class="flex items-center justify-between">
+<label class="font-micro text-micro text-on-surface-variant uppercase tracking-wider">Password</label>
+<button class="font-micro text-micro text-secondary hover:underline flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-xs">sync</span> Generate / Replace
+        </button>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-low rounded-lg p-space-sm shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.08)]">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">key</span>
+<input class="w-full bg-transparent font-body-md text-body-md text-primary tracking-widest focus:outline-none" id="password-input" type="password" value="mX9#kL8$qZ2!wV5@nC4&amp;"/>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" id="toggle-pw-btn" title="Toggle visibility" type="button">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-all" title="Copy Password" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+<!-- Entropy Meter Gauge -->
+<div class="space-y-1.5 pt-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-micro text-micro text-primary">128 bits Entropy</span>
+</div>
+<span class="font-micro text-micro text-secondary uppercase font-semibold">Maximum Cryptographic Strength</span>
+</div>
+<!-- Segmented Glass Track -->
+<div class="grid grid-cols-4 gap-1.5 h-1.5 w-full">
+<div class="h-full rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.5)]"></div>
+<div class="h-full rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.5)]"></div>
+<div class="h-full rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.5)]"></div>
+<div class="h-full rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.5)]"></div>
+</div>
+</div>
+</div>
+<!-- Website / URI Field -->
+<div class="rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-md space-y-1.5 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15)]">
+<div class="flex items-center justify-between">
+<label class="font-micro text-micro text-on-surface-variant uppercase tracking-wider">Website URL</label>
+<span class="font-micro text-micro text-outline-variant">Exact Domain Match</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">language</span>
+<input class="w-full bg-transparent font-body-md text-body-md text-primary focus:outline-none placeholder:text-outline-variant" type="url" value="https://github.com/enterprise"/>
+<a class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-all" href="https://github.com/enterprise" rel="noopener noreferrer" target="_blank" title="Launch Website">
+<span class="material-symbols-outlined text-base">open_in_new</span>
+</a>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-all" title="Copy URL" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Organization & Taxonomy Frame -->
+<div class="rounded-xl bg-surface-container/60 backdrop-blur-xl p-space-lg space-y-space-md shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15)]">
+<div class="flex items-center justify-between">
+<span class="font-micro text-micro text-outline tracking-wider uppercase">Folder &amp; Taxonomy</span>
+<span class="material-symbols-outlined text-outline-variant text-base">folder_supervised</span>
+</div>
+<!-- Folder Pills -->
+<div class="space-y-space-xs">
+<span class="font-micro text-micro text-on-surface-variant">Vault Partition</span>
+<div class="flex flex-wrap gap-space-xs">
+<button class="px-space-md py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.5)]" type="button">
+<span class="material-symbols-outlined text-sm">folder</span>
+          Work
+        </button>
+<button class="px-space-md py-1.5 rounded-full bg-surface-container-high text-on-surface hover:text-primary font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm text-outline-variant">folder</span>
+          Personal
+        </button>
+<button class="px-space-md py-1.5 rounded-full bg-surface-container-high text-on-surface hover:text-primary font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm text-outline-variant">account_balance</span>
+          Financial
+        </button>
+<button class="px-space-md py-1.5 rounded-full bg-surface-container-low text-outline hover:text-primary font-label-md text-label-md flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-sm">add</span>
+          New Folder
+        </button>
+</div>
+</div>
+<!-- Tag Chips -->
+<div class="space-y-space-xs pt-space-xs">
+<span class="font-micro text-micro text-on-surface-variant">Security Tags</span>
+<div class="flex flex-wrap gap-space-xs">
+<div class="px-space-md py-1 rounded-full bg-surface-bright flex items-center gap-1.5 text-primary text-micro font-micro shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          2FA Active
+        </div>
+<div class="px-space-md py-1 rounded-full bg-surface-bright flex items-center gap-1.5 text-primary text-micro font-micro shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]">
+<span class="material-symbols-outlined text-xs text-secondary">verified</span>
+          High Security
+        </div>
+<div class="px-space-md py-1 rounded-full bg-surface-container-high flex items-center gap-1.5 text-on-surface-variant text-micro font-micro">
+          DevOps
+        </div>
+<button class="px-space-md py-1 rounded-full bg-surface-container-low hover:bg-surface-container-high text-outline hover:text-primary text-micro font-micro flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-xs">add</span> Add Tag
+        </button>
+</div>
+</div>
+</div>
+<!-- Encrypted Custom Field Manager -->
+<div class="flex flex-col space-y-space-md">
+<div class="flex items-center justify-between px-space-xs">
+<div class="flex flex-col">
+<span class="font-micro text-micro text-outline tracking-wider uppercase">Encrypted Custom Fields (§4 Key/Value)</span>
+<span class="font-caption text-caption text-outline-variant">Arbitrary zero-knowledge key-value pairs encrypted with AES-256-GCM subkeys.</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-lg">enhanced_encryption</span>
+</div>
+<!-- Custom Field 1: TOTP Authenticator Seed & Live Ring -->
+<div class="rounded-xl bg-surface-container/70 backdrop-blur-xl p-space-md space-y-space-sm shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.18)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-base">timelapse</span>
+<span class="font-micro text-micro text-primary uppercase font-semibold">TOTP Authenticator Token</span>
+</div>
+<button class="text-outline hover:text-error transition-colors" title="Delete Field" type="button">
+<span class="material-symbols-outlined text-base">delete</span>
+</button>
+</div>
+<div class="grid grid-cols-1 gap-2">
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.06)]">
+<span class="font-caption text-caption text-on-surface-variant">Label:</span>
+<input class="bg-transparent font-body-md text-body-md text-primary text-right focus:outline-none" type="text" value="2FA Secret Key"/>
+</div>
+<div class="flex items-center justify-between bg-surface-container-low rounded-lg px-space-md py-2 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.06)]">
+<span class="font-caption text-caption text-on-surface-variant">Seed:</span>
+<span class="font-body-md text-body-md text-primary font-mono tracking-wider">JBSWY3DPEHPK3PXP</span>
+</div>
+</div>
+<!-- Live TOTP Code Pill Display -->
+<div class="flex items-center justify-between rounded-lg bg-surface-container-high/90 p-space-md shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.1)]">
+<div class="flex items-center gap-space-md">
+<!-- Live SVG Progress Ring for 28s remaining -->
+<div class="relative w-9 h-9 flex items-center justify-center shrink-0">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-lowest" cx="18" cy="18" fill="none" r="14" stroke-width="3"></circle>
+<circle class="stroke-secondary" cx="18" cy="18" fill="none" r="14" stroke-dasharray="88" stroke-dashoffset="12" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<span class="absolute font-micro text-micro text-secondary font-bold">28s</span>
+</div>
+<div class="flex flex-col">
+<span class="font-micro text-micro text-on-surface-variant uppercase">Current Code</span>
+<span class="font-headline-md text-headline-md text-primary font-mono tracking-widest font-bold">849 204</span>
+</div>
+</div>
+<button class="h-8 px-space-md rounded-lg bg-secondary-container text-on-secondary-container font-label-md text-label-md flex items-center gap-1 active:scale-95 transition-all shadow-[0_2px_8px_rgba(0,165,114,0.3)]" title="Copy One-Time Code" type="button">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+<span>Copy</span>
+</button>
+</div>
+</div>
+<!-- Custom Field 2: Personal Access Token (Masked API Token) -->
+<div class="rounded-xl bg-surface-container/70 backdrop-blur-xl p-space-md space-y-space-sm shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-base">code</span>
+<span class="font-micro text-micro text-on-surface-variant uppercase font-semibold">API Token / Secure Note</span>
+</div>
+<button class="text-outline hover:text-error transition-colors" title="Delete Field" type="button">
+<span class="material-symbols-outlined text-base">delete</span>
+</button>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="font-micro text-micro text-outline-variant uppercase">Personal Access Token (classic)</label>
+<span class="font-micro text-micro text-outline">Expires in 90d</span>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-low rounded-lg p-space-sm shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.06)]">
+<span class="font-body-md text-body-md text-primary font-mono tracking-widest w-full truncate">ghp_••••••••••••••••••••••••••••••••</span>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" title="Reveal" type="button">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-all" title="Copy Secret" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Custom Field 3: Hardware Security Key PIN -->
+<div class="rounded-xl bg-surface-container/70 backdrop-blur-xl p-space-md space-y-space-sm shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.15)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-base">memory</span>
+<span class="font-micro text-micro text-on-surface-variant uppercase font-semibold">Hardware Security Key PIN</span>
+</div>
+<button class="text-outline hover:text-error transition-colors" title="Delete Field" type="button">
+<span class="material-symbols-outlined text-base">delete</span>
+</button>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="font-micro text-micro text-outline-variant uppercase">YubiKey 5C NFC Master PIN</label>
+<span class="font-micro text-micro text-secondary">FIDO2 / U2F</span>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-low rounded-lg p-space-sm shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.06)]">
+<span class="font-body-md text-body-md text-primary font-mono tracking-widest w-full truncate">••••••••</span>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors" title="Reveal PIN" type="button">
+<span class="material-symbols-outlined text-base">visibility</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-all" title="Copy PIN" type="button">
+<span class="material-symbols-outlined text-base">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Custom Field Trigger Dropdown Button -->
+<div class="relative">
+<button class="w-full py-3 px-space-md rounded-xl bg-surface-container-low hover:bg-surface-container-high text-primary font-label-md text-label-md flex items-center justify-center gap-2 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.12)] transition-all active:scale-[0.99]" id="add-field-btn" type="button">
+<span class="material-symbols-outlined text-secondary text-lg">add_circle</span>
+<span>Add Encrypted Custom Field</span>
+<span class="material-symbols-outlined text-outline-variant text-base ml-auto">expand_more</span>
+</button>
+<!-- Dropdown Palette for Field Types -->
+<div class="hidden absolute top-full left-0 right-0 mt-2 z-20 rounded-xl bg-surface-container-high/95 backdrop-blur-2xl p-space-xs shadow-[0_16px_32px_rgba(0,0,0,0.8),inset_0_1px_1px_0_rgba(255,255,255,0.2)] space-y-0.5" id="field-type-menu">
+<button class="w-full flex items-center gap-2.5 px-space-md py-2 rounded-lg text-left text-on-surface hover:bg-surface-bright hover:text-primary text-body-md font-body-md transition-colors" type="button">
+<span class="material-symbols-outlined text-base text-outline">notes</span>
+<span>Text (Plaintext note / username variant)</span>
+</button>
+<button class="w-full flex items-center gap-2.5 px-space-md py-2 rounded-lg text-left text-on-surface hover:bg-surface-bright hover:text-primary text-body-md font-body-md transition-colors" type="button">
+<span class="material-symbols-outlined text-base text-outline">password</span>
+<span>Hidden / Masked Secret</span>
+</button>
+<button class="w-full flex items-center gap-2.5 px-space-md py-2 rounded-lg text-left text-on-surface hover:bg-surface-bright hover:text-primary text-body-md font-body-md transition-colors" type="button">
+<span class="material-symbols-outlined text-base text-secondary">timelapse</span>
+<span>TOTP Seed / 2FA Authenticator Key</span>
+</button>
+<button class="w-full flex items-center gap-2.5 px-space-md py-2 rounded-lg text-left text-on-surface hover:bg-surface-bright hover:text-primary text-body-md font-body-md transition-colors" type="button">
+<span class="material-symbols-outlined text-base text-outline">pin</span>
+<span>PIN Code (Numeric)</span>
+</button>
+<button class="w-full flex items-center gap-2.5 px-space-md py-2 rounded-lg text-left text-on-surface hover:bg-surface-bright hover:text-primary text-body-md font-body-md transition-colors" type="button">
+<span class="material-symbols-outlined text-base text-outline">emergency</span>
+<span>Emergency Recovery Codes</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Security Audit & History Bar -->
+<div class="rounded-xl bg-surface-container-low/90 backdrop-blur-xl p-space-md space-y-space-xs shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.08)]">
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-sm">history</span>
+<span class="font-micro text-micro text-outline">Audit Trail</span>
+</div>
+<span class="font-micro text-micro text-on-surface-variant">Updated today at 14:22 · Version 4</span>
+</div>
+<div class="flex items-center gap-2 pt-1">
+<div class="w-2 h-2 rounded-full bg-secondary shrink-0"></div>
+<span class="font-caption text-caption text-secondary">
+        Zero breaches detected in HIBP offline k-anonymity bloom filter.
+      </span>
+</div>
+</div>
+<!-- Bottom CTA Action Buttons -->
+<div class="flex flex-col space-y-space-sm pt-space-sm pb-space-lg">
+<button class="w-full h-12 rounded-xl bg-primary text-on-primary font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.6),0_12px_24px_-4px_rgba(0,0,0,0.8)] hover:bg-primary-fixed active:scale-[0.98] transition-all" type="button">
+<span class="material-symbols-outlined text-xl">save</span>
+<span>Save Changes</span>
+</button>
+<button class="w-full h-11 rounded-xl bg-error-container/20 text-error font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-error-container/30 active:scale-[0.98] transition-all shadow-[inset_0_1px_1px_0_rgba(255,180,171,0.15)]" type="button">
+<span class="material-symbols-outlined text-base">delete_forever</span>
+<span>Delete Credential</span>
+</button>
+</div>
+</div>
+<script>
+  // Quick micro-interactions for password reveal and field dropdown
+  const pwInput = document.getElementById('password-input');
+  const togglePwBtn = document.getElementById('toggle-pw-btn');
+  if (togglePwBtn && pwInput) {
+    togglePwBtn.addEventListener('click', () => {
+      const isPassword = pwInput.type === 'password';
+      pwInput.type = isPassword ? 'text' : 'password';
+      const icon = togglePwBtn.querySelector('.material-symbols-outlined');
+      if (icon) {
+        icon.textContent = isPassword ? 'visibility_off' : 'visibility';
+      }
+    });
+  }
+
+  const addFieldBtn = document.getElementById('add-field-btn');
+  const fieldTypeMenu = document.getElementById('field-type-menu');
+  if (addFieldBtn && fieldTypeMenu) {
+    addFieldBtn.addEventListener('click', () => {
+      fieldTypeMenu.classList.toggle('hidden');
+    });
+  }
+
+  const starBtn = document.getElementById('star-toggle');
+  if (starBtn) {
+    starBtn.addEventListener('click', () => {
+      const icon = starBtn.querySelector('.material-symbols-outlined');
+      const isFilled = icon.style.fontVariationSettings.includes('1');
+      icon.style.fontVariationSettings = isFilled ? "'FILL' 0" : "'FILL' 1";
+    });
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe pointer-events-none px-space-md mb-space-sm" data-active-classes="text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]"><div class="pointer-events-auto max-w-lg mx-auto h-16 rounded-xl bg-surface-container/80 backdrop-blur-2xl px-space-xs flex items-center justify-around shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)]"><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="vault" href="#"><span class="material-symbols-outlined text-xl">shield</span><span class="font-micro text-micro">Vault</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="generator" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Generate</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg transition-all text-primary bg-surface-bright/40 shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.2)]" data-path="security" href="#"><span class="material-symbols-outlined text-xl">verified_user</span><span class="font-micro text-micro">Audit</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="keyboard" href="#"><span class="material-symbols-outlined text-xl">keyboard</span><span class="font-micro text-micro">Keys</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" data-path="settings" href="#"><span class="material-symbols-outlined text-xl">tune</span><span class="font-micro text-micro">Config</span></a></div></nav></body></html>

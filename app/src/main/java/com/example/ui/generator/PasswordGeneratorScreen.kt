@@ -1,9 +1,13 @@
 package com.example.ui.generator
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,6 +29,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.security.ClipboardHelper
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
@@ -90,6 +96,25 @@ fun PasswordGeneratorScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(AtomicSpacing.lg)
         ) {
+            Row(
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = AtomicSpacing.md)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .background(AtomicColors.Success, androidx.compose.foundation.shape.CircleShape)
+                )
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(AtomicSpacing.xs))
+                Text(
+                    text = "CSPRNG \u00b7 UNBIASED REJECTION SAMPLING",
+                    fontSize = AtomicFontSize.micro,
+                    fontWeight = AtomicFontWeight.bold,
+                    color = AtomicColors.Success,
+                    letterSpacing = 1.sp
+                )
+            }
+
             PasswordGeneratorPanel(
                 onUsePassword = { generatedPassword ->
                     ClipboardHelper.copySensitive(context, "Generated Password", generatedPassword)

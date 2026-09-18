@@ -24,9 +24,29 @@ import com.example.database.CredentialInput
 import com.example.database.VaultDatabase
 import com.example.database.VaultRepositoryImpl
 import com.example.keystore.BiometricGatedKeyStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 class VaultAutofillService : AutofillService() {
+
+    // onFillRequest/onSaveRequest are platform callbacks invoked on the
+    // service's main thread. Both open a short-lived SQLCipher connection
+    // and run real queries -- previously done synchronously right there,
+    // which risks the OS treating a slow/loaded device's autofill
+    // response as an ANR and risks visibly stalling whatever OTHER app
+    // the user is actually in. Both callback types are explicitly
+    // designed to be completed asynchronously (that's what FillCallback/
+    // SaveCallback are for), so the real work now runs here instead.
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceJob.cancel()
+    }
 
     override fun onFillRequest(
         request: FillRequest,
@@ -49,29 +69,30 @@ class VaultAutofillService : AutofillService() {
         // comment. A null here means "outside the post-auth grace window,"
         // i.e. no recent biometric auth, so we correctly show nothing
         // rather than silently bypassing protection.
-        val dek = keyStore.tryRevealWithoutPrompt()
-        if (dek == null) {
-            callback.onSuccess(null)
-            return
-        }
+        serviceScope.launch {
+            val dek = keyStore.tryRevealWithoutPrompt()
+            if (dek == null) {
+                callback.onSuccess(null)
+                return@launch
+            }
 
-        val parsed = AssistStructureParser.parse(structure)
-        if (parsed.usernameId == null && parsed.passwordId == null) {
-            callback.onSuccess(null)
-            return
-        }
+            val parsed = AssistStructureParser.parse(structure)
+            if (parsed.usernameId == null && parsed.passwordId == null) {
+                callback.onSuccess(null)
+                return@launch
+            }
 
-        var db: net.sqlcipher.database.SQLiteDatabase? = null
-        try {
-            db = VaultDatabase.open(this, dek)
-            val openDb = db
+            var db: net.sqlcipher.database.SQLiteDatabase? = null
+            try {
+                db = VaultDatabase.open(this@VaultAutofillService, dek)
+                val openDb = db
 
             // Trust-level matching (see CredentialMatcher): only matches
             // at Level 2 (domain) or above are auto-offered. A Level 0
             // heuristic match alone is never automatically surfaced --
             // per the product review's explicit rule.
             val matches = CredentialMatcher.findAutoOfferMatches(
-                context = this,
+                context = this@VaultAutofillService,
                 db = openDb,
                 packageName = parsed.packageName,
                 webDomain = parsed.webDomain
@@ -79,7 +100,7 @@ class VaultAutofillService : AutofillService() {
 
             if (matches.isEmpty()) {
                 callback.onSuccess(null)
-                return
+                return@launch
             }
 
             // Inline suggestions (Android 11+): if the current IME asked
@@ -104,14 +125,14 @@ class VaultAutofillService : AutofillService() {
                     setTextViewText(android.R.id.text1, "AtomicVault: ${match.title}")
                 }
 
-                val authIntent = Intent(this, AutofillAuthActivity::class.java).apply {
+                val authIntent = Intent(this@VaultAutofillService, AutofillAuthActivity::class.java).apply {
                     putExtra("EXTRA_ITEM_ID", match.id)
                     putExtra("EXTRA_USERNAME_ID", parsed.usernameId)
                     putExtra("EXTRA_PASSWORD_ID", parsed.passwordId)
                 }
 
                 val pendingIntent = PendingIntent.getActivity(
-                    this,
+                    this@VaultAutofillService,
                     match.id.hashCode(),
                     authIntent,
                     PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
@@ -167,6 +188,7 @@ class VaultAutofillService : AutofillService() {
             // lockVault(). Without this, every single fill request leaks
             // one SQLCipher connection.
             db?.close()
+            }
         }
     }
 
@@ -217,56 +239,58 @@ class VaultAutofillService : AutofillService() {
         // tryRevealWithoutPrompt()'s doc comment. If we're outside the
         // window, decline the save rather than risk any partial/unsafe
         // path; the user can save manually from the app instead.
-        val dek = keyStore.tryRevealWithoutPrompt()
-        if (dek == null) {
-            callback.onSuccess()
-            return
-        }
-
-        val parsed = AssistStructureParser.parse(structure)
-        if (!parsed.savePasswordValue.isNullOrBlank()) {
-            var db: net.sqlcipher.database.SQLiteDatabase? = null
-            try {
-                db = VaultDatabase.open(this, dek)
-                val openDb = db
-                val repo = VaultRepositoryImpl(openDb, dek)
-                val title = parsed.webDomain ?: parsed.packageName ?: "Saved Login"
-
-                // Look for an existing item before creating a new one --
-                // previously this always inserted, so changing a
-                // password on an already-saved site silently produced a
-                // duplicate every time. Uses the SAME trust threshold as
-                // fill-time auto-offer (Level 2+) deliberately: a
-                // low-confidence Level 0 match here would risk silently
-                // overwriting a DIFFERENT site's credential, which is a
-                // worse outcome than an occasional duplicate.
-                val existingMatch = CredentialMatcher
-                    .findMatches(this, openDb, parsed.packageName, parsed.webDomain)
-                    .firstOrNull { it.trustLevel.score >= CredentialMatcher.MINIMUM_AUTO_OFFER_LEVEL.score }
-
-                val input = CredentialInput(
-                    title = title,
-                    username = parsed.saveUsernameValue ?: "",
-                    password = parsed.savePasswordValue,
-                    uriMatchPattern = parsed.webDomain,
-                    androidPackageName = parsed.packageName
-                )
-
-                if (existingMatch != null) {
-                    repo.updateItem(existingMatch.id, input)
-                } else {
-                    repo.createItem(input)
-                }
-            } catch (e: Exception) {
-                // Ignore save error
-            } finally {
-                java.util.Arrays.fill(dek, 0.toByte())
-                db?.close()
+        serviceScope.launch {
+            val dek = keyStore.tryRevealWithoutPrompt()
+            if (dek == null) {
+                callback.onSuccess()
+                return@launch
             }
-        } else {
-            java.util.Arrays.fill(dek, 0.toByte())
-        }
 
-        callback.onSuccess()
+            val parsed = AssistStructureParser.parse(structure)
+            if (!parsed.savePasswordValue.isNullOrBlank()) {
+                var db: net.sqlcipher.database.SQLiteDatabase? = null
+                try {
+                    db = VaultDatabase.open(this@VaultAutofillService, dek)
+                    val openDb = db
+                    val repo = VaultRepositoryImpl(openDb, dek)
+                    val title = parsed.webDomain ?: parsed.packageName ?: "Saved Login"
+
+                    // Look for an existing item before creating a new one --
+                    // previously this always inserted, so changing a
+                    // password on an already-saved site silently produced a
+                    // duplicate every time. Uses the SAME trust threshold as
+                    // fill-time auto-offer (Level 2+) deliberately: a
+                    // low-confidence Level 0 match here would risk silently
+                    // overwriting a DIFFERENT site's credential, which is a
+                    // worse outcome than an occasional duplicate.
+                    val existingMatch = CredentialMatcher
+                        .findMatches(this@VaultAutofillService, openDb, parsed.packageName, parsed.webDomain)
+                        .firstOrNull { it.trustLevel.score >= CredentialMatcher.MINIMUM_AUTO_OFFER_LEVEL.score }
+
+                    val input = CredentialInput(
+                        title = title,
+                        username = parsed.saveUsernameValue ?: "",
+                        password = parsed.savePasswordValue,
+                        uriMatchPattern = parsed.webDomain,
+                        androidPackageName = parsed.packageName
+                    )
+
+                    if (existingMatch != null) {
+                        repo.updateItem(existingMatch.id, input)
+                    } else {
+                        repo.createItem(input)
+                    }
+                } catch (e: Exception) {
+                    // Ignore save error
+                } finally {
+                    java.util.Arrays.fill(dek, 0.toByte())
+                    db?.close()
+                }
+            } else {
+                java.util.Arrays.fill(dek, 0.toByte())
+            }
+
+            callback.onSuccess()
+        }
     }
 }
