@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -164,8 +166,8 @@ private fun PrivacyCheckRow(check: PrivacyCheck) {
                 )
             }
             androidx.compose.material3.Icon(
-                imageVector = if (check.passed) androidx.compose.material.icons.Icons.Default.CheckCircle
-                else androidx.compose.material.icons.Icons.Default.Cancel,
+                imageVector = if (check.passed) Icons.Default.CheckCircle
+                else Icons.Default.Cancel,
                 contentDescription = if (check.passed) "Passed" else "Failed",
                 tint = if (check.passed) AtomicColors.Success else AtomicColors.Danger,
                 modifier = Modifier.size(22.dp)
