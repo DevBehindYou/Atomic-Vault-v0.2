@@ -90,7 +90,7 @@ class UiStressSnapshotTest {
     }
 
     @Test fun home() = snap("home") {
-        VaultHomeScreen(unlocked, {}, {}, {}, {}, {}, {}, {}, bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Vault, {}) })
+        VaultHomeScreen(unlocked, {}, {}, {}, {}, {}, {}, {}, {}, {}, bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Vault, {}) })
     }
 
     @Test fun security() = snap("security") {
@@ -111,7 +111,7 @@ class UiStressSnapshotTest {
             onUpdateAutoLock = {}, onUpdateBiometric = {}, onSetAutofillArmed = {},
             onCreateFolder = {}, onDeleteFolder = {}, onCreateTag = {}, onDeleteTag = {},
             onNavigateBackup = {},
-            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {},
+            onNavigatePrivacyProof = {},
             bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Settings, {}) }
         )
     }
@@ -151,6 +151,19 @@ class UiStressSnapshotTest {
 
     @Test fun payment_card() = snap("payment_card") {
         com.example.ui.paymentcard.PaymentCardEditorScreen(existing = null, onSave = {}, onBack = {})
+    }
+
+    @Test fun payment_card_edit() = snap("payment_card_edit") {
+        com.example.ui.paymentcard.PaymentCardEditorScreen(
+            existing = com.example.database.CredentialPlain(
+                id = "9", title = "Visa ending 4242", itemType = VaultItemType.PAYMENT_CARD,
+                customFields = listOf(
+                    com.example.database.CustomFieldPlain("a", "Cardholder Name", "Alex Vale", false),
+                    com.example.database.CustomFieldPlain("b", "Card Number", "4242424242424242", true)
+                )
+            ),
+            onSave = {}, onBack = {}, onDelete = {}
+        )
     }
 
     @Test fun identity() = snap("identity") {

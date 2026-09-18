@@ -117,7 +117,7 @@ class UiSnapshotTest {
         VaultHomeScreen(
             uiState = unlocked,
             onSearchChange = {}, onSelectFolder = {}, onSelectTag = {}, onItemClick = {},
-            onAddNewClick = {}, onLockClick = {}, onReload = {},
+            onAddNewClick = {}, onAddPaymentCard = {}, onAddIdentity = {}, onLockClick = {}, onReload = {},
             bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Vault, {}) }
         )
     }
@@ -129,7 +129,7 @@ class UiSnapshotTest {
             onUpdateAutoLock = {}, onUpdateBiometric = {}, onSetAutofillArmed = {},
             onCreateFolder = {}, onDeleteFolder = {}, onCreateTag = {}, onDeleteTag = {},
             onNavigateBackup = {},
-            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {},
+            onNavigatePrivacyProof = {},
             bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Settings, {}) }
         )
     }

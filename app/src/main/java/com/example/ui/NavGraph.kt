@@ -268,6 +268,8 @@ fun AtomicVaultNavGraph(
                 onAddNewClick = {
                     navController.navigate(Screen.Editor.createRoute(null))
                 },
+                onAddPaymentCard = { navController.navigate(Screen.PaymentCardEditor.createRoute(null)) },
+                onAddIdentity = { navController.navigate(Screen.IdentityEditor.createRoute(null)) },
                 onLockClick = {
                     viewModel.lockVault()
                     navController.navigate(Screen.Unlock.route) {
@@ -340,7 +342,8 @@ fun AtomicVaultNavGraph(
                             viewModel.createItem(input) { navController.popBackStack() }
                         }
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onDelete = { id -> viewModel.deleteItem(id) { navController.popBackStack() } }
                 )
             }
         }
@@ -367,7 +370,8 @@ fun AtomicVaultNavGraph(
                             viewModel.createItem(input) { navController.popBackStack() }
                         }
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onDelete = { id -> viewModel.deleteItem(id) { navController.popBackStack() } }
                 )
             }
         }
@@ -416,8 +420,6 @@ fun AtomicVaultNavGraph(
                 onDeleteTag = { id -> viewModel.deleteTag(id) },
                 onNavigateBackup = { navController.navigate(Screen.Backup.route) },
                 onNavigatePrivacyProof = { navController.navigate(Screen.PrivacyProof.route) },
-                onNavigateAddPaymentCard = { navController.navigate(Screen.PaymentCardEditor.createRoute(null)) },
-                onNavigateAddIdentity = { navController.navigate(Screen.IdentityEditor.createRoute(null)) },
                 bottomBar = { AtomicBottomNav(AtomicTab.Settings, { navigateTab(it) }) }
             )
         }

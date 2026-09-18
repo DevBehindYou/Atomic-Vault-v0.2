@@ -86,8 +86,6 @@ fun SettingsScreen(
     onDeleteTag: (String) -> Unit,
     onNavigateBackup: () -> Unit,
     onNavigatePrivacyProof: () -> Unit,
-    onNavigateAddPaymentCard: () -> Unit,
-    onNavigateAddIdentity: () -> Unit,
     modifier: Modifier = Modifier,
     bottomBar: @Composable () -> Unit = {}
 ) {
@@ -215,7 +213,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(AtomicSpacing.md)) {
                     Text(
-                        text = "Auto-lock timeout",
+                        text = "Lock after leaving the app",
                         fontSize = AtomicFontSize.label,
                         fontWeight = AtomicFontWeight.medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -232,10 +230,10 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
                     ) {
                         val timeouts = listOf(
-                            "1m" to 60,
-                            "5m" to 300,
-                            "15m" to 900,
-                            "Never" to 0
+                            "Immediately" to 0,
+                            "1 min" to 60,
+                            "5 min" to 300,
+                            "15 min" to 900
                         )
                         for ((label, seconds) in timeouts) {
                             FilterChipPill(
@@ -649,40 +647,6 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(AtomicSpacing.lg))
-
-            // NEW ITEM TYPES SECTION (Phase 5: same encryption pattern as
-            // Login items, no new crypto -- see Models.kt's VaultItemType
-            // doc comment)
-            SectionLabel(text = "Add to Vault")
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(AtomicRadius.lg),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = CardDefaults.outlinedCardBorder().copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
-                )
-            ) {
-                Column {
-                    SettingsNavigationRow(
-                        icon = Icons.Default.CreditCard,
-                        title = "Payment Card",
-                        subtitle = "Card number, expiry, and CVV, encrypted the same as a login",
-                        onClick = onNavigateAddPaymentCard,
-                        testTag = "nav_add_payment_card"
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                    SettingsNavigationRow(
-                        icon = Icons.Default.Person,
-                        title = "Identity",
-                        subtitle = "Name, email, phone, and address",
-                        onClick = onNavigateAddIdentity,
-                        testTag = "nav_add_identity"
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(AtomicSpacing.xl))
 

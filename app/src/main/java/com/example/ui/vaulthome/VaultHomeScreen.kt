@@ -24,9 +24,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +38,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,6 +74,8 @@ fun VaultHomeScreen(
     onSelectTag: (String?) -> Unit,
     onItemClick: (String) -> Unit,
     onAddNewClick: () -> Unit,
+    onAddPaymentCard: () -> Unit,
+    onAddIdentity: () -> Unit,
     onLockClick: () -> Unit,
     onReload: () -> Unit,
     modifier: Modifier = Modifier,
@@ -99,22 +108,37 @@ fun VaultHomeScreen(
         },
         bottomBar = bottomBar,
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddNewClick,
-                modifier = Modifier
-                    .padding(AtomicSpacing.lg)
-                    .size(56.dp)
-                    .semantics { contentDescription = "Add credential" }
-                    .testTag("fab_add_credential"),
-                shape = CircleShape,
-                containerColor = AtomicColors.Accent,
-                contentColor = AtomicColors.AccentText
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp)
-                )
+            // One + button, three kinds of record. Cards and identities used to be
+            // reachable only from a section buried at the bottom of Settings.
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                FloatingActionButton(
+                    onClick = { menuOpen = true },
+                    modifier = Modifier
+                        .padding(AtomicSpacing.lg)
+                        .size(56.dp)
+                        .semantics { contentDescription = "Add to vault" }
+                        .testTag("fab_add_credential"),
+                    shape = CircleShape,
+                    containerColor = AtomicColors.Accent,
+                    contentColor = AtomicColors.AccentText
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                DropdownMenu(
+                    expanded = menuOpen,
+                    onDismissRequest = { menuOpen = false },
+                    shape = RoundedCornerShape(AtomicRadius.lg),
+                    containerColor = AtomicColors.SurfaceStrong
+                ) {
+                    AddMenuItem("Login", Icons.Default.Key, "add_login") { menuOpen = false; onAddNewClick() }
+                    AddMenuItem("Payment card", Icons.Default.CreditCard, "add_payment_card") { menuOpen = false; onAddPaymentCard() }
+                    AddMenuItem("Identity", Icons.Default.Badge, "add_identity") { menuOpen = false; onAddIdentity() }
+                }
             }
         }
     ) { innerPadding ->
@@ -343,4 +367,19 @@ private fun ItemBadge(preview: CredentialPreview) {
             )
         }
     }
+}
+
+@Composable
+private fun AddMenuItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    testTag: String,
+    onClick: () -> Unit
+) {
+    DropdownMenuItem(
+        text = { Text(label, color = AtomicColors.Foreground, fontSize = AtomicFontSize.body) },
+        leadingIcon = { Icon(icon, contentDescription = null, tint = AtomicColors.TextBody) },
+        onClick = onClick,
+        modifier = Modifier.testTag(testTag)
+    )
 }

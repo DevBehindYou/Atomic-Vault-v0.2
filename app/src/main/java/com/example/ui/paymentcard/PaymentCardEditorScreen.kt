@@ -10,15 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,9 +21,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.example.database.CredentialInput
 import com.example.database.CustomFieldPlain
 import com.example.database.VaultItemType
+import com.example.ui.components.AtomicDestructiveButton
+import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.AtomicTopBar
+import com.example.ui.components.GlassVariant
+import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicSpacing
 
@@ -48,13 +44,13 @@ private const val LABEL_CVV = "CVV"
  * custom fields; everything else follows the same pattern already
  * proven by the credential editor.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentCardEditorScreen(
     existing: com.example.database.CredentialPlain?,
     onSave: (CredentialInput) -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDelete: ((String) -> Unit)? = null
 ) {
     fun fieldValue(label: String): String =
         existing?.customFields?.firstOrNull { it.label == label }?.value ?: ""
@@ -65,8 +61,24 @@ fun PaymentCardEditorScreen(
     var expiry by remember { mutableStateOf(fieldValue(LABEL_EXPIRY)) }
     var cvv by remember { mutableStateOf(fieldValue(LABEL_CVV)) }
     var notes by remember { mutableStateOf(existing?.notes ?: "") }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val canSave = title.isNotBlank() && cardNumber.isNotBlank()
+
+    if (showDeleteDialog && existing != null && onDelete != null) {
+        AtomicDialog(
+            title = "Delete payment card",
+            message = "This cannot be undone.",
+            confirmLabel = "Delete",
+            isDestructive = true,
+            confirmTestTag = "payment_card_delete_confirm",
+            onConfirm = {
+                showDeleteDialog = false
+                onDelete(existing.id)
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
+    }
 
     Scaffold(
         modifier = modifier,
@@ -83,61 +95,77 @@ fun PaymentCardEditorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = AtomicSpacing.md)
+                .padding(horizontal = AtomicSpacing.lg)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
         ) {
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+            Spacer(modifier = Modifier.height(AtomicSpacing.xs))
 
-            AtomicTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = "Nickname",
-                placeholder = "e.g. Chase Sapphire",
-                testTag = "payment_card_title"
-            )
-            AtomicTextField(
-                value = cardholder,
-                onValueChange = { cardholder = it },
-                label = "Cardholder Name",
-                testTag = "payment_card_holder"
-            )
-            AtomicTextField(
-                value = cardNumber,
-                onValueChange = { cardNumber = it },
-                label = "Card Number",
-                isPassword = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                testTag = "payment_card_number"
-            )
-            AtomicTextField(
-                value = expiry,
-                onValueChange = { expiry = it },
-                label = "Expiry (MM/YY)",
-                placeholder = "MM/YY",
-                testTag = "payment_card_expiry"
-            )
-            AtomicTextField(
-                value = cvv,
-                onValueChange = { cvv = it },
-                label = "CVV",
-                isPassword = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                testTag = "payment_card_cvv"
-            )
-            AtomicTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = "Notes",
-                singleLine = false,
-                minLines = 2,
-                testTag = "payment_card_notes"
-            )
+            LiquidGlassSurface(
+                modifier = Modifier.fillMaxWidth(),
+                variant = GlassVariant.Card,
+                contentPadding = AtomicSpacing.lg
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
+                ) {
+                    AtomicTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = "Nickname",
+                        placeholder = "e.g. Chase Sapphire",
+                        testTag = "payment_card_title"
+                    )
+                    AtomicTextField(
+                        value = cardholder,
+                        onValueChange = { cardholder = it },
+                        label = "Cardholder name",
+                        testTag = "payment_card_holder"
+                    )
+                    AtomicTextField(
+                        value = cardNumber,
+                        onValueChange = { cardNumber = it },
+                        label = "Card number",
+                        isPassword = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        testTag = "payment_card_number"
+                    )
+                    AtomicTextField(
+                        value = expiry,
+                        onValueChange = { expiry = it },
+                        label = "Expiry",
+                        placeholder = "MM/YY",
+                        testTag = "payment_card_expiry"
+                    )
+                    AtomicTextField(
+                        value = cvv,
+                        onValueChange = { cvv = it },
+                        label = "CVV",
+                        isPassword = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        testTag = "payment_card_cvv"
+                    )
+                }
+            }
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+            LiquidGlassSurface(
+                modifier = Modifier.fillMaxWidth(),
+                variant = GlassVariant.Card,
+                contentPadding = AtomicSpacing.lg
+            ) {
+                AtomicTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = "Notes",
+                    singleLine = false,
+                    minLines = 2,
+                    testTag = "payment_card_notes"
+                )
+            }
 
             AtomicPrimaryButton(
-                text = "Save",
+                text = if (existing != null) "Save changes" else "Save card",
                 enabled = canSave,
                 onClick = {
                     onSave(
@@ -146,6 +174,9 @@ fun PaymentCardEditorScreen(
                             title = title,
                             notes = notes,
                             itemType = VaultItemType.PAYMENT_CARD,
+                            // Keep the tags already on the card; the default is
+                            // an empty list, which used to drop them on every edit.
+                            tagIds = existing?.tags?.map { it.id } ?: emptyList(),
                             customFields = listOf(
                                 CustomFieldPlain(id = "", label = LABEL_CARDHOLDER, value = cardholder, isSensitive = false),
                                 CustomFieldPlain(id = "", label = LABEL_CARD_NUMBER, value = cardNumber, isSensitive = true),
@@ -157,6 +188,14 @@ fun PaymentCardEditorScreen(
                 },
                 testTag = "payment_card_save"
             )
+
+            if (existing != null && onDelete != null) {
+                AtomicDestructiveButton(
+                    text = "Delete card",
+                    onClick = { showDeleteDialog = true },
+                    testTag = "payment_card_delete"
+                )
+            }
 
             Spacer(modifier = Modifier.height(AtomicSpacing.xl))
         }
