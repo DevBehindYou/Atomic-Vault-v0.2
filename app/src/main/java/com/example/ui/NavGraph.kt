@@ -51,6 +51,27 @@ sealed class Screen(val route: String) {
     object SecurityTimeline : Screen("security_timeline")
 }
 
+private sealed interface ItemLoad {
+    data object Loading : ItemLoad
+    data class Ready(val item: CredentialPlain?) : ItemLoad
+}
+
+/**
+ * Loads [itemId] on the IO dispatcher (a SQLCipher read plus several AES-GCM
+ * decryptions must not run inside composition). A null [itemId] is a new
+ * item and is Ready immediately.
+ */
+@Composable
+private fun rememberItemLoad(viewModel: VaultViewModel, itemId: String?): ItemLoad {
+    val load by produceState<ItemLoad>(
+        initialValue = if (itemId == null) ItemLoad.Ready(null) else ItemLoad.Loading,
+        key1 = itemId
+    ) {
+        value = ItemLoad.Ready(itemId?.let { viewModel.getItem(it) })
+    }
+    return load
+}
+
 @Composable
 fun AtomicVaultNavGraph(
     navController: NavHostController,
@@ -64,10 +85,23 @@ fun AtomicVaultNavGraph(
     // sequence used by both Onboarding (initial opt-in) and Settings
     // (enabling it later). Requires a FragmentActivity context, which
     // MainActivity provides.
+    // One prompt at a time: a second tap (or the unlock screen's auto-prompt
+    // racing a manual tap) must not stack a second BiometricPrompt.
+    val biometricPromptActive = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
+
     fun armBiometricWithPrompt(onDone: (Boolean) -> Unit) {
-        val cipher = viewModel.beginBiometricArm()
         val act = activity
-        if (cipher == null || act == null) {
+        if (act == null || !biometricPromptActive.compareAndSet(false, true)) {
+            onDone(false)
+            return
+        }
+        val cipher = try {
+            viewModel.beginBiometricArm()
+        } catch (e: Exception) {
+            null
+        }
+        if (cipher == null) {
+            biometricPromptActive.set(false)
             onDone(false)
             return
         }
@@ -77,11 +111,23 @@ fun AtomicVaultNavGraph(
             title = "Enable biometric unlock",
             subtitle = "Confirm your fingerprint or face to protect quick unlock",
             onSuccess = { authedCipher ->
-                viewModel.completeBiometricArm(authedCipher)
-                onDone(true)
+                biometricPromptActive.set(false)
+                val armed = try {
+                    viewModel.completeBiometricArm(authedCipher)
+                    true
+                } catch (e: Exception) {
+                    false
+                }
+                onDone(armed)
             },
-            onError = { onDone(false) },
-            onCancel = { onDone(false) }
+            onError = {
+                biometricPromptActive.set(false)
+                onDone(false)
+            },
+            onCancel = {
+                biometricPromptActive.set(false)
+                onDone(false)
+            }
         )
     }
 
@@ -137,24 +183,43 @@ fun AtomicVaultNavGraph(
                     }
                 },
                 onUnlockWithBiometric = {
-                    val cipher = viewModel.prepareBiometricUnlockCipher()
                     val act = activity
-                    if (cipher != null && act != null) {
-                        AppBiometricManager.promptBiometricAuthForCrypto(
-                            activity = act,
-                            cipher = cipher,
-                            title = "Unlock AtomicVault",
-                            subtitle = "Authenticate using fingerprint or face to access your vault",
-                            onSuccess = { authedCipher ->
-                                viewModel.unlockWithBiometric(authedCipher) { success ->
-                                    if (success) {
-                                        navController.navigate(Screen.Home.route) {
-                                            popUpTo(Screen.Unlock.route) { inclusive = true }
+                    if (act != null && biometricPromptActive.compareAndSet(false, true)) {
+                        val cipher = viewModel.prepareBiometricUnlockCipher()
+                        if (cipher == null) {
+                            // Not armed any more (e.g. a new fingerprint was
+                            // enrolled and the Keystore invalidated the key).
+                            biometricPromptActive.set(false)
+                            viewModel.onBiometricUnavailable()
+                        } else {
+                            AppBiometricManager.promptBiometricAuthForCrypto(
+                                activity = act,
+                                cipher = cipher,
+                                title = "Unlock AtomicVault",
+                                subtitle = "Authenticate using fingerprint or face to access your vault",
+                                onSuccess = { authedCipher ->
+                                    biometricPromptActive.set(false)
+                                    viewModel.unlockWithBiometric(authedCipher) { success ->
+                                        if (success) {
+                                            navController.navigate(Screen.Home.route) {
+                                                popUpTo(Screen.Unlock.route) { inclusive = true }
+                                            }
+                                        } else {
+                                            viewModel.reportBiometricError(
+                                                "Biometric unlock failed. Use your master password."
+                                            )
                                         }
                                     }
-                                }
-                            }
-                        )
+                                },
+                                onError = { message ->
+                                    biometricPromptActive.set(false)
+                                    viewModel.reportBiometricError(message)
+                                },
+                                // Cancel / "Use Master Password": leave the
+                                // password field in front of the user, no error.
+                                onCancel = { biometricPromptActive.set(false) }
+                            )
+                        }
                     }
                 }
             )
@@ -245,24 +310,23 @@ fun AtomicVaultNavGraph(
             )
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId")
-            // produceState, not remember { viewModel.getItem(..) }: the load
-            // is a SQLCipher read plus several AES-GCM decryptions, and
-            // running it inside composition blocked the frame that opens
-            // this screen.
-            val existing by produceState<CredentialPlain?>(initialValue = null, itemId) {
-                value = itemId?.let { viewModel.getItem(it) }
+            val load = rememberItemLoad(viewModel, itemId)
+            // The editor seeds its form fields once from `existing`, so it
+            // must not compose until the load finishes -- otherwise an edit
+            // opens blank and saving would overwrite the stored card.
+            (load as? ItemLoad.Ready)?.let { ready ->
+                com.example.ui.paymentcard.PaymentCardEditorScreen(
+                    existing = ready.item,
+                    onSave = { input ->
+                        if (itemId != null) {
+                            viewModel.updateItem(itemId, input) { navController.popBackStack() }
+                        } else {
+                            viewModel.createItem(input) { navController.popBackStack() }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
             }
-            com.example.ui.paymentcard.PaymentCardEditorScreen(
-                existing = existing,
-                onSave = { input ->
-                    if (itemId != null) {
-                        viewModel.updateItem(itemId, input) { navController.popBackStack() }
-                    } else {
-                        viewModel.createItem(input) { navController.popBackStack() }
-                    }
-                },
-                onBack = { navController.popBackStack() }
-            )
         }
 
         composable(
@@ -276,20 +340,20 @@ fun AtomicVaultNavGraph(
             )
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId")
-            val existing by produceState<CredentialPlain?>(initialValue = null, itemId) {
-                value = itemId?.let { viewModel.getItem(it) }
+            val load = rememberItemLoad(viewModel, itemId)
+            (load as? ItemLoad.Ready)?.let { ready ->
+                com.example.ui.identity.IdentityEditorScreen(
+                    existing = ready.item,
+                    onSave = { input ->
+                        if (itemId != null) {
+                            viewModel.updateItem(itemId, input) { navController.popBackStack() }
+                        } else {
+                            viewModel.createItem(input) { navController.popBackStack() }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
             }
-            com.example.ui.identity.IdentityEditorScreen(
-                existing = existing,
-                onSave = { input ->
-                    if (itemId != null) {
-                        viewModel.updateItem(itemId, input) { navController.popBackStack() }
-                    } else {
-                        viewModel.createItem(input) { navController.popBackStack() }
-                    }
-                },
-                onBack = { navController.popBackStack() }
-            )
         }
 
         composable(Screen.Generator.route) {

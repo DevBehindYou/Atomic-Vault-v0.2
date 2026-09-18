@@ -24,6 +24,7 @@ import com.example.database.CredentialInput
 import com.example.database.VaultDatabase
 import com.example.database.VaultRepositoryImpl
 import com.example.keystore.BiometricGatedKeyStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -69,127 +70,132 @@ class VaultAutofillService : AutofillService() {
         // comment. A null here means "outside the post-auth grace window,"
         // i.e. no recent biometric auth, so we correctly show nothing
         // rather than silently bypassing protection.
-        serviceScope.launch {
+        val job = serviceScope.launch {
             val dek = keyStore.tryRevealWithoutPrompt()
             if (dek == null) {
                 callback.onSuccess(null)
                 return@launch
             }
 
-            val parsed = AssistStructureParser.parse(structure)
-            if (parsed.usernameId == null && parsed.passwordId == null) {
-                callback.onSuccess(null)
-                return@launch
-            }
-
             var db: net.sqlcipher.database.SQLiteDatabase? = null
             try {
+                // Parse inside the try so the DEK is zeroed in finally on
+                // every exit, including the early "nothing to fill" returns.
+                val parsed = AssistStructureParser.parse(structure)
+                if (parsed.usernameId == null && parsed.passwordId == null) {
+                    callback.onSuccess(null)
+                    return@launch
+                }
+
                 db = VaultDatabase.open(this@VaultAutofillService, dek)
                 val openDb = db
 
-            // Trust-level matching (see CredentialMatcher): only matches
-            // at Level 2 (domain) or above are auto-offered. A Level 0
-            // heuristic match alone is never automatically surfaced --
-            // per the product review's explicit rule.
-            val matches = CredentialMatcher.findAutoOfferMatches(
-                context = this@VaultAutofillService,
-                db = openDb,
-                packageName = parsed.packageName,
-                webDomain = parsed.webDomain
-            )
-
-            if (matches.isEmpty()) {
-                callback.onSuccess(null)
-                return@launch
-            }
-
-            // Inline suggestions (Android 11+): if the current IME asked
-            // for them, build an InlinePresentation for each dataset IN
-            // ADDITION to the existing RemoteViews dropdown presentation --
-            // same masked value, same setAuthentication() gate either
-            // way. This does NOT change when the real credential value
-            // becomes available; it only changes where the suggestion is
-            // visually offered. See the design plan's note on this.
-            val inlineSpecs: List<InlinePresentationSpec> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                request.inlineSuggestionsRequest?.inlinePresentationSpecs ?: emptyList()
-            } else emptyList()
-            val maxInline = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                request.inlineSuggestionsRequest?.maxSuggestionCount ?: 0
-            } else 0
-
-            val responseBuilder = FillResponse.Builder()
-            val offered = matches.take(5)
-
-            offered.forEachIndexed { index, match ->
-                val presentation = RemoteViews(packageName, android.R.layout.simple_list_item_1).apply {
-                    setTextViewText(android.R.id.text1, "AtomicVault: ${match.title}")
-                }
-
-                val authIntent = Intent(this@VaultAutofillService, AutofillAuthActivity::class.java).apply {
-                    putExtra("EXTRA_ITEM_ID", match.id)
-                    putExtra("EXTRA_USERNAME_ID", parsed.usernameId)
-                    putExtra("EXTRA_PASSWORD_ID", parsed.passwordId)
-                }
-
-                val pendingIntent = PendingIntent.getActivity(
-                    this@VaultAutofillService,
-                    match.id.hashCode(),
-                    authIntent,
-                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+                // Trust-level matching (see CredentialMatcher): only matches
+                // at Level 2 (domain) or above are auto-offered. A Level 0
+                // heuristic match alone is never automatically surfaced --
+                // per the product review's explicit rule.
+                val matches = CredentialMatcher.findAutoOfferMatches(
+                    context = this@VaultAutofillService,
+                    db = openDb,
+                    packageName = parsed.packageName,
+                    webDomain = parsed.webDomain
                 )
 
-                val inlinePresentation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && index < maxInline) {
-                    val spec = inlineSpecs.getOrNull(index) ?: inlineSpecs.lastOrNull()
-                    spec?.let { buildInlinePresentation(it, match.title, pendingIntent) }
-                } else null
-
-                val datasetBuilder = Dataset.Builder(presentation)
-                    .setAuthentication(pendingIntent.intentSender)
-
-                if (parsed.usernameId != null) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
-                        datasetBuilder.setValue(parsed.usernameId, null, null, presentation, inlinePresentation)
-                    } else {
-                        datasetBuilder.setValue(parsed.usernameId, null, presentation)
-                    }
-                }
-                if (parsed.passwordId != null) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
-                        datasetBuilder.setValue(parsed.passwordId, null, null, presentation, inlinePresentation)
-                    } else {
-                        datasetBuilder.setValue(parsed.passwordId, null, presentation)
-                    }
+                if (matches.isEmpty()) {
+                    callback.onSuccess(null)
+                    return@launch
                 }
 
-                responseBuilder.addDataset(datasetBuilder.build())
-            }
+                // Inline suggestions (Android 11+): if the current IME asked
+                // for them, build an InlinePresentation for each dataset IN
+                // ADDITION to the existing RemoteViews dropdown presentation --
+                // same masked value, same setAuthentication() gate either
+                // way. This does NOT change when the real credential value
+                // becomes available; it only changes where the suggestion is
+                // visually offered. See the design plan's note on this.
+                val inlineSpecs: List<InlinePresentationSpec> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    request.inlineSuggestionsRequest?.inlinePresentationSpecs ?: emptyList()
+                } else emptyList()
+                val maxInline = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    request.inlineSuggestionsRequest?.maxSuggestionCount ?: 0
+                } else 0
 
-            // Also set SaveInfo so user can save credentials
-            val saveRequiredIds = mutableListOf<android.view.autofill.AutofillId>()
-            if (parsed.passwordId != null) saveRequiredIds.add(parsed.passwordId)
-            if (parsed.usernameId != null) saveRequiredIds.add(parsed.usernameId)
+                val responseBuilder = FillResponse.Builder()
+                val offered = matches.take(5)
 
-            if (saveRequiredIds.isNotEmpty()) {
-                val saveInfo = SaveInfo.Builder(
-                    SaveInfo.SAVE_DATA_TYPE_PASSWORD,
-                    saveRequiredIds.toTypedArray()
-                ).build()
-                responseBuilder.setSaveInfo(saveInfo)
-            }
+                offered.forEachIndexed { index, match ->
+                    val presentation = RemoteViews(packageName, android.R.layout.simple_list_item_1).apply {
+                        setTextViewText(android.R.id.text1, "AtomicVault: ${match.title}")
+                    }
 
-            callback.onSuccess(responseBuilder.build())
-        } catch (e: Exception) {
-            callback.onSuccess(null)
-        } finally {
-            java.util.Arrays.fill(dek, 0.toByte())
-            // Every VaultDatabase.open() here is a short-lived, one-off
-            // connection -- unlike VaultViewModel's activeDb, which is
-            // held for the whole unlocked session and closed in
-            // lockVault(). Without this, every single fill request leaks
-            // one SQLCipher connection.
-            db?.close()
+                    val authIntent = Intent(this@VaultAutofillService, AutofillAuthActivity::class.java).apply {
+                        putExtra("EXTRA_ITEM_ID", match.id)
+                        putExtra("EXTRA_USERNAME_ID", parsed.usernameId)
+                        putExtra("EXTRA_PASSWORD_ID", parsed.passwordId)
+                    }
+
+                    val pendingIntent = PendingIntent.getActivity(
+                        this@VaultAutofillService,
+                        match.id.hashCode(),
+                        authIntent,
+                        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
+                    )
+
+                    val inlinePresentation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && index < maxInline) {
+                        val spec = inlineSpecs.getOrNull(index) ?: inlineSpecs.lastOrNull()
+                        spec?.let { buildInlinePresentation(it, match.title, pendingIntent) }
+                    } else null
+
+                    val datasetBuilder = Dataset.Builder(presentation)
+                        .setAuthentication(pendingIntent.intentSender)
+
+                    if (parsed.usernameId != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
+                            datasetBuilder.setValue(parsed.usernameId, null, null, presentation, inlinePresentation)
+                        } else {
+                            datasetBuilder.setValue(parsed.usernameId, null, presentation)
+                        }
+                    }
+                    if (parsed.passwordId != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
+                            datasetBuilder.setValue(parsed.passwordId, null, null, presentation, inlinePresentation)
+                        } else {
+                            datasetBuilder.setValue(parsed.passwordId, null, presentation)
+                        }
+                    }
+
+                    responseBuilder.addDataset(datasetBuilder.build())
+                }
+
+                // Also set SaveInfo so user can save credentials
+                val saveRequiredIds = mutableListOf<android.view.autofill.AutofillId>()
+                if (parsed.passwordId != null) saveRequiredIds.add(parsed.passwordId)
+                if (parsed.usernameId != null) saveRequiredIds.add(parsed.usernameId)
+
+                if (saveRequiredIds.isNotEmpty()) {
+                    val saveInfo = SaveInfo.Builder(
+                        SaveInfo.SAVE_DATA_TYPE_PASSWORD,
+                        saveRequiredIds.toTypedArray()
+                    ).build()
+                    responseBuilder.setSaveInfo(saveInfo)
+                }
+
+                callback.onSuccess(responseBuilder.build())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                callback.onSuccess(null)
+            } finally {
+                java.util.Arrays.fill(dek, 0.toByte())
+                // Every VaultDatabase.open() here is a short-lived, one-off
+                // connection -- unlike VaultViewModel's activeDb, which is
+                // held for the whole unlocked session and closed in
+                // lockVault(). Without this, every single fill request leaks
+                // one SQLCipher connection.
+                db?.close()
             }
         }
+        cancellationSignal.setOnCancelListener { job.cancel() }
     }
 
     /**
@@ -246,8 +252,14 @@ class VaultAutofillService : AutofillService() {
                 return@launch
             }
 
-            val parsed = AssistStructureParser.parse(structure)
-            if (!parsed.savePasswordValue.isNullOrBlank()) {
+            // A parse failure must still zero the DEK and complete the
+            // callback, otherwise the save UI never gets its response.
+            val parsed = try {
+                AssistStructureParser.parse(structure)
+            } catch (e: Exception) {
+                null
+            }
+            if (parsed != null && !parsed.savePasswordValue.isNullOrBlank()) {
                 var db: net.sqlcipher.database.SQLiteDatabase? = null
                 try {
                     db = VaultDatabase.open(this@VaultAutofillService, dek)

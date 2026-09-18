@@ -3,6 +3,7 @@ package com.example.keyboard
 import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.text.InputType
+import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.background
@@ -113,6 +114,16 @@ class AtomicVaultInputMethodService :
     }
 
     override fun onCreateInputView(): View {
+        // Compose resolves its lifecycle/saved-state owners by walking up to
+        // the ROOT of the window, not just the ComposeView. The IME window's
+        // decor view has none by default, so attaching them to the
+        // ComposeView alone can crash the keyboard the first time it is shown.
+        window?.window?.decorView?.let { decor ->
+            decor.setViewTreeLifecycleOwner(this)
+            decor.setViewTreeViewModelStoreOwner(this)
+            decor.setViewTreeSavedStateRegistryOwner(this)
+        }
+
         val view = ComposeView(this)
         view.setViewTreeLifecycleOwner(this)
         view.setViewTreeViewModelStoreOwner(this)
@@ -132,8 +143,10 @@ class AtomicVaultInputMethodService :
                     }
                     LiquidGlassKeyboard(
                         onKeyPress = { key -> currentInputConnection?.commitText(key, 1) },
-                        onBackspace = { currentInputConnection?.deleteSurroundingText(1, 0) },
-                        onEnter = { currentInputConnection?.performEditorAction(EditorInfo.IME_ACTION_DONE) }
+                        // Key events (not deleteSurroundingText) so a selection is
+                        // deleted as a whole and surrogate pairs are not split.
+                        onBackspace = { sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL) },
+                        onEnter = { handleEnter() }
                     )
                 }
             }
@@ -146,6 +159,10 @@ class AtomicVaultInputMethodService :
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        // onFinishInputView() paused the lifecycle; bring it back for the next field.
+        if (lifecycleRegistry.currentState == Lifecycle.State.STARTED) {
+            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        }
         currentPackageName = info?.packageName
         shieldActive = isSensitiveField(info)
         refreshSuggestions()
@@ -161,6 +178,25 @@ class AtomicVaultInputMethodService :
     override fun onDestroy() {
         super.onDestroy()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    }
+
+    /**
+     * Enter runs the field's own IME action (Search, Go, Send...) when it
+     * declares one, and otherwise types a real newline -- the previous
+     * unconditional IME_ACTION_DONE did nothing in multi-line fields.
+     */
+    private fun handleEnter() {
+        val imeOptions = currentInputEditorInfo?.imeOptions ?: 0
+        val action = imeOptions and EditorInfo.IME_MASK_ACTION
+        val actionSuppressed = (imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION) != 0
+        if (!actionSuppressed &&
+            action != EditorInfo.IME_ACTION_NONE &&
+            action != EditorInfo.IME_ACTION_UNSPECIFIED
+        ) {
+            currentInputConnection?.performEditorAction(action)
+        } else {
+            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+        }
     }
 
     /**

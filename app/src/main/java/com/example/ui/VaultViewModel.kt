@@ -488,6 +488,33 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Shows a biometric failure on the unlock screen without touching the keystore. */
+    fun reportBiometricError(message: String) {
+        _uiState.update { it.copy(error = message) }
+    }
+
+    /**
+     * Called when the unlock screen asked for a biometric Cipher and got
+     * none. Either the key is gone (a new fingerprint was enrolled, so the
+     * Keystore invalidated it) -- in which case the UI must stop offering
+     * biometrics -- or the key store failed transiently and stays armed.
+     */
+    fun onBiometricUnavailable() {
+        val stillArmed = keyStore.isArmed()
+        _uiState.update {
+            it.copy(
+                biometricArmed = stillArmed,
+                autofillArmed = stillArmed,
+                error = if (stillArmed) {
+                    "Biometric unlock is unavailable right now. Use your master password."
+                } else {
+                    "Biometric unlock was reset (your fingerprints changed). " +
+                        "Unlock with your master password, then turn it back on in Settings."
+                }
+            )
+        }
+    }
+
     /** Disarms biometric unlock and autofill reveal together (one shared key -- see keyStore's doc comment). */
     fun disableBiometric() {
         keyStore.clear()

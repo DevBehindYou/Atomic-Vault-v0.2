@@ -101,7 +101,10 @@ fun SettingsScreen(
     var tagToDelete by remember { mutableStateOf<com.example.database.TagPlain?>(null) }
 
     val autoLockSeconds = uiState.settings?.autoLockSeconds ?: 60
-    val biometricEnabled = uiState.settings?.biometricEnabled ?: uiState.biometricArmed
+    // Keystore state is the source of truth: the persisted setting can say
+    // "enabled" while the key was invalidated or purged, which would show a
+    // toggle that is on but cannot unlock anything.
+    val biometricEnabled = uiState.biometricArmed
 
     // New Folder Dialog
     if (showNewFolderDialog) {

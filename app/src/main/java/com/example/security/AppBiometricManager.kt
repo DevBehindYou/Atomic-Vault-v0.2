@@ -58,7 +58,8 @@ object AppBiometricManager {
         negativeButtonText: String = "Use Master Password",
         onSuccess: () -> Unit,
         onError: (String) -> Unit = {},
-        onCancel: () -> Unit = {}
+        onCancel: () -> Unit = {},
+        onAttemptFailed: () -> Unit = {}
     ) {
         val executor = ContextCompat.getMainExecutor(activity)
         val prompt = BiometricPrompt(
@@ -84,7 +85,11 @@ object AppBiometricManager {
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    onError("Authentication failed. Please try again.")
+                    // A single non-matching attempt (wrong finger, smudge). The
+                    // prompt stays open and lets the user retry, so this is NOT a
+                    // terminal error -- treating it as one used to dismiss the
+                    // caller's flow while the prompt was still on screen.
+                    onAttemptFailed()
                 }
             }
         )
@@ -114,7 +119,8 @@ object AppBiometricManager {
         negativeButtonText: String = "Use Master Password",
         onSuccess: (Cipher) -> Unit,
         onError: (String) -> Unit = {},
-        onCancel: () -> Unit = {}
+        onCancel: () -> Unit = {},
+        onAttemptFailed: () -> Unit = {}
     ) {
         val executor = ContextCompat.getMainExecutor(activity)
         val prompt = BiometricPrompt(
@@ -147,7 +153,11 @@ object AppBiometricManager {
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    onError("Authentication failed. Please try again.")
+                    // A single non-matching attempt (wrong finger, smudge). The
+                    // prompt stays open and lets the user retry, so this is NOT a
+                    // terminal error -- treating it as one used to dismiss the
+                    // caller's flow while the prompt was still on screen.
+                    onAttemptFailed()
                 }
             }
         )

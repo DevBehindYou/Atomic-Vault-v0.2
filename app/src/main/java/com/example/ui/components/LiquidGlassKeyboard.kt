@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,21 +39,26 @@ fun LiquidGlassKeyboard(
 ) {
     var isShiftActive by remember { mutableStateOf(false) }
     var isSymbolsActive by remember { mutableStateOf(false) }
+    var symbolsPage by remember { mutableIntStateOf(0) }
 
     val lettersRow1 = listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p")
     val lettersRow2 = listOf("a", "s", "d", "f", "g", "h", "j", "k", "l")
     val lettersRow3 = listOf("z", "x", "c", "v", "b", "n", "m")
-    
-    val symbolsRow1 = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0")
-    val symbolsRow2 = listOf("@", "#", "$", "%", "&", "-", "+", "(", ")")
-    val symbolsRow3 = listOf("*", "\"", "'", ":", ";", "!", "?")
 
-    val row1 = if (isSymbolsActive) symbolsRow1 else lettersRow1
-    val row2 = if (isSymbolsActive) symbolsRow2 else lettersRow2
-    val row3 = if (isSymbolsActive) symbolsRow3 else lettersRow3
+    val symbolRows = if (symbolsPage == 0) SYMBOLS_PAGE_1 else SYMBOLS_PAGE_2
+    val row1 = if (isSymbolsActive) symbolRows[0] else lettersRow1
+    val row2 = if (isSymbolsActive) symbolRows[1] else lettersRow2
+    val row3 = if (isSymbolsActive) symbolRows[2] else lettersRow3
 
-    val processKey: (String) -> String = { key -> 
-        if (!isSymbolsActive && isShiftActive) key.uppercase() else key 
+    val processKey: (String) -> String = { key ->
+        if (!isSymbolsActive && isShiftActive) key.uppercase() else key
+    }
+
+    // Shift is one-shot, like every system keyboard: it applies to the next
+    // key and then releases.
+    val pressKey: (String) -> Unit = { key ->
+        onKeyPress(processKey(key))
+        isShiftActive = false
     }
 
     Column(
@@ -71,7 +77,7 @@ fun LiquidGlassKeyboard(
                 KeyboardKey(
                     text = processKey(key),
                     modifier = Modifier.weight(1f),
-                    onClick = { onKeyPress(processKey(key)) }
+                    onClick = { pressKey(key) }
                 )
             }
         }
@@ -85,7 +91,7 @@ fun LiquidGlassKeyboard(
                 KeyboardKey(
                     text = processKey(key),
                     modifier = Modifier.weight(1f),
-                    onClick = { onKeyPress(processKey(key)) }
+                    onClick = { pressKey(key) }
                 )
             }
         }
@@ -95,19 +101,27 @@ fun LiquidGlassKeyboard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Shift
-            KeyboardIconKey(
-                icon = Icons.Filled.KeyboardCapslock,
-                isActive = isShiftActive,
-                modifier = Modifier.weight(1.5f),
-                onClick = { isShiftActive = !isShiftActive }
-            )
+            // Shift (letters) / second symbols page toggle (symbols)
+            if (isSymbolsActive) {
+                KeyboardKey(
+                    text = if (symbolsPage == 0) "=\\<" else "1/2",
+                    modifier = Modifier.weight(1.5f),
+                    onClick = { symbolsPage = if (symbolsPage == 0) 1 else 0 }
+                )
+            } else {
+                KeyboardIconKey(
+                    icon = Icons.Filled.KeyboardCapslock,
+                    isActive = isShiftActive,
+                    modifier = Modifier.weight(1.5f),
+                    onClick = { isShiftActive = !isShiftActive }
+                )
+            }
             
             row3.forEach { key ->
                 KeyboardKey(
                     text = processKey(key),
                     modifier = Modifier.weight(1f),
-                    onClick = { onKeyPress(processKey(key)) }
+                    onClick = { pressKey(key) }
                 )
             }
             
@@ -127,7 +141,10 @@ fun LiquidGlassKeyboard(
             KeyboardKey(
                 text = if (isSymbolsActive) "ABC" else "?123",
                 modifier = Modifier.weight(1.5f),
-                onClick = { isSymbolsActive = !isSymbolsActive }
+                onClick = {
+                    isSymbolsActive = !isSymbolsActive
+                    symbolsPage = 0
+                }
             )
             
             KeyboardKey(
@@ -157,6 +174,19 @@ fun LiquidGlassKeyboard(
         }
     }
 }
+
+private val SYMBOLS_PAGE_1 = listOf(
+    listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
+    listOf("@", "#", "$", "%", "&", "-", "+", "(", ")"),
+    listOf("*", "\"", "'", ":", ";", "!", "?")
+)
+
+// Everything a password or URL needs that page 1 lacks (_ = / \ etc.).
+private val SYMBOLS_PAGE_2 = listOf(
+    listOf("[", "]", "{", "}", "<", ">", "^", "~", "|", "\\"),
+    listOf("_", "=", "/", "`", "€", "£", "¥", "§", "°"),
+    listOf("…", "«", "»", "¿", "¡", "•", "±")
+)
 
 @Composable
 fun KeyboardKey(
