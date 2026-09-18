@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -286,28 +288,38 @@ fun FilterChipPill(
     val textColor = if (selected) AtomicColors.AccentText else MaterialTheme.colorScheme.onSurface
     val borderColor = if (selected) AtomicColors.Accent else MaterialTheme.colorScheme.outline
 
+    // Outer box is the touch target (48dp minimum, and it carries the selected
+    // state for screen readers); the inner box is the drawn chip.
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(AtomicRadius.pill))
-            .background(bg)
-            .border(1.dp, borderColor, RoundedCornerShape(AtomicRadius.pill))
-            .clickable(
+            .minimumInteractiveComponentSize()
+            .selectable(
+                selected = selected,
+                role = androidx.compose.ui.semantics.Role.Button,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = true),
+                indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.sm)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = label,
-            fontSize = AtomicFontSize.label,
-            fontWeight = if (selected) AtomicFontWeight.bold else AtomicFontWeight.regular,
-            color = textColor,
-            maxLines = 1,
-            softWrap = false
-        )
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(AtomicRadius.pill))
+                .background(bg)
+                .border(1.dp, borderColor, RoundedCornerShape(AtomicRadius.pill))
+                .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.sm),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                fontSize = AtomicFontSize.label,
+                fontWeight = if (selected) AtomicFontWeight.bold else AtomicFontWeight.regular,
+                color = textColor,
+                maxLines = 1,
+                softWrap = false
+            )
+        }
     }
 }
 
