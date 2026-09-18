@@ -135,7 +135,7 @@ fun BackupScreen(
         topBar = {
             AtomicTopBar(
                 title = "Backup & restore",
-                caption = "Encrypted export & import",
+                caption = "Encrypted export",
                 onBack = onBack,
                 backTestTag = "backup_back_button"
             )

@@ -125,7 +125,7 @@ fun SecurityTimelineScreen(
                     Spacer(modifier = Modifier.height(AtomicSpacing.sm))
                     Text(
                         text = "Chain verified \u2014 every entry below matches its recorded hash.",
-                        color = AtomicColors.TextMuted,
+                        color = AtomicColors.TextSecondary,
                         fontSize = AtomicFontSize.caption
                     )
                 }
@@ -152,8 +152,11 @@ fun SecurityTimelineScreen(
 @Composable
 private fun TimelineRow(entry: TrustLedgerEntry, previews: List<CredentialPreview>) {
     LiquidGlassSurface(variant = GlassVariant.Card, modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = resolveLabel(entry, previews),
                     color = AtomicColors.Foreground,
@@ -163,7 +166,7 @@ private fun TimelineRow(entry: TrustLedgerEntry, previews: List<CredentialPrevie
                 val authLabel = entry.authenticationType?.let { " \u2022 $it" } ?: ""
                 Text(
                     text = "${entry.source}$authLabel \u2022 ${entry.result}",
-                    color = AtomicColors.TextMuted,
+                    color = AtomicColors.TextSecondary,
                     fontSize = AtomicFontSize.caption
                 )
             }

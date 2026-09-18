@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -71,24 +73,25 @@ fun PrivacyProofScreen(
         ) {
             item {
                 Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-                LiquidGlassSurface(variant = GlassVariant.Glow, modifier = Modifier.fillMaxWidth()) {
+                LiquidGlassSurface(variant = GlassVariant.Card, modifier = Modifier.fillMaxWidth()) {
                     Column {
                         Text(
-                            text = "ATOMIC TRUST",
+                            text = "CHECKS PASSED",
                             fontSize = AtomicFontSize.micro,
                             fontWeight = AtomicFontWeight.bold,
-                            color = AtomicColors.TextMuted
+                            color = AtomicColors.TextSecondary,
+                            letterSpacing = 1.sp
                         )
                         Text(
                             text = "$passed / $total",
                             fontSize = AtomicFontSize.title,
                             fontWeight = AtomicFontWeight.bold,
-                            color = AtomicColors.Foreground
+                            color = if (passed == total) AtomicColors.Success else AtomicColors.Foreground
                         )
                         Text(
-                            text = "Score reflects the checks below directly -- nothing here is a separate, invented number.",
+                            text = "Each check below is run on this device. Nothing here is a separate, invented number.",
                             fontSize = AtomicFontSize.caption,
-                            color = AtomicColors.TextMuted
+                            color = AtomicColors.TextSecondary
                         )
                         if (chainBroken) {
                             Spacer(modifier = Modifier.height(AtomicSpacing.xs))
@@ -111,10 +114,16 @@ fun PrivacyProofScreen(
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
                     ) {
-                        Text("View Security Event Timeline", color = AtomicColors.Foreground, fontWeight = AtomicFontWeight.medium)
-                        Text("\u2192", color = AtomicColors.TextMuted)
+                        Text(
+                            text = "View security event timeline",
+                            color = AtomicColors.Foreground,
+                            fontWeight = AtomicFontWeight.medium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text("\u2192", color = AtomicColors.TextSecondary)
                     }
                 }
             }
@@ -131,12 +140,12 @@ fun PrivacyProofScreen(
 
 @Composable
 private fun PrivacyCheckRow(check: PrivacyCheck) {
-    LiquidGlassSurface(variant = GlassVariant.Subtle, modifier = Modifier.fillMaxWidth()) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+    LiquidGlassSurface(variant = GlassVariant.Card, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = check.label,
                     color = AtomicColors.Foreground,
@@ -144,20 +153,22 @@ private fun PrivacyCheckRow(check: PrivacyCheck) {
                     fontSize = AtomicFontSize.body
                 )
                 Text(
-                    text = if (check.passed) "\u2713" else "\u2715",
-                    color = if (check.passed) AtomicColors.Success else AtomicColors.Danger,
-                    fontWeight = AtomicFontWeight.bold
+                    text = check.detail,
+                    color = AtomicColors.TextSecondary,
+                    fontSize = AtomicFontSize.label
+                )
+                Text(
+                    text = if (check.isLiveCheck) "Live check" else "Build configuration",
+                    color = AtomicColors.TextMuted,
+                    fontSize = AtomicFontSize.micro
                 )
             }
-            Text(
-                text = check.detail,
-                color = AtomicColors.TextMuted,
-                fontSize = AtomicFontSize.caption
-            )
-            Text(
-                text = if (check.isLiveCheck) "Live check" else "Build configuration",
-                color = AtomicColors.TextMuted,
-                fontSize = AtomicFontSize.micro
+            androidx.compose.material3.Icon(
+                imageVector = if (check.passed) androidx.compose.material.icons.Icons.Default.CheckCircle
+                else androidx.compose.material.icons.Icons.Default.Cancel,
+                contentDescription = if (check.passed) "Passed" else "Failed",
+                tint = if (check.passed) AtomicColors.Success else AtomicColors.Danger,
+                modifier = Modifier.size(22.dp)
             )
         }
     }
