@@ -15,10 +15,13 @@ object AtomicRadius {
     val pill = 999.dp
 }
 
+// Material components read these slots for their default shapes. AlertDialog
+// and bottom sheets use extraLarge, so it must be the 24dp sheet radius --
+// it used to be the 999dp pill, which turned every dialog into a blob.
 val AtomicShapes = Shapes(
     extraSmall = RoundedCornerShape(AtomicRadius.sm),
     small = RoundedCornerShape(AtomicRadius.md),
     medium = RoundedCornerShape(AtomicRadius.lg),
-    large = RoundedCornerShape(AtomicRadius.lg),
-    extraLarge = RoundedCornerShape(AtomicRadius.pill)
+    large = RoundedCornerShape(AtomicRadius.xl),
+    extraLarge = RoundedCornerShape(AtomicRadius.sheet)
 )

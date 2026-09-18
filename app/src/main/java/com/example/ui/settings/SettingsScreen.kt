@@ -513,13 +513,10 @@ fun SettingsScreen(
             if (showKeyboardDisclosure) {
                 AtomicDialog(
                     title = "Before you enable this",
-                    message = "Atomic Keyboard can technically receive text while it's your active keyboard. " +
-                        "It does not upload what you type, save ordinary keystrokes, use typed text for " +
-                        "advertising, or send typing to analytics. It only stores something when you " +
-                        "explicitly save it to AtomicVault. Fields it detects as passwords/PINs/OTPs are " +
-                        "flagged with a Shield indicator. The keyboard has no internet permission at all " +
-                        "\u2014 it's not just unused, it isn't in the app's manifest.",
-                    confirmLabel = "I understand, continue",
+                    message = "While it is your active keyboard, Atomic Keyboard can see what you type. " +
+                        "It never uploads or stores ordinary keystrokes, and the app has no internet " +
+                        "permission at all. It only saves something when you explicitly save it to AtomicVault.",
+                    confirmLabel = "Continue",
                     dismissLabel = "Keep default keyboard",
                     onConfirm = {
                         showKeyboardDisclosure = false

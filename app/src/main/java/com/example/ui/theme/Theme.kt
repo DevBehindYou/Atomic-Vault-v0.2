@@ -50,7 +50,20 @@ fun AtomicVaultTheme(content: @Composable () -> Unit) {
             error = AtomicColors.Danger,
             onError = AtomicColors.Foreground,
             errorContainer = AtomicColors.DangerLight,
-            onErrorContainer = AtomicColors.Danger
+            onErrorContainer = AtomicColors.Danger,
+            // Surface tiers: dialogs use surfaceContainerHigh, menus and
+            // sheets the others. Left unset, Material fills these with its
+            // own purple-tinted greys, which is what dialogs showed.
+            surfaceTint = androidx.compose.ui.graphics.Color.Transparent,
+            surfaceDim = AtomicColors.Background,
+            surfaceBright = AtomicColors.SurfaceStrong,
+            surfaceContainerLowest = AtomicColors.Background,
+            surfaceContainerLow = AtomicColors.GlassFill,
+            surfaceContainer = AtomicColors.FieldFill,
+            surfaceContainerHigh = AtomicColors.SurfaceStrong,
+            surfaceContainerHighest = AtomicColors.SurfaceStrong,
+            inverseSurface = AtomicColors.Foreground,
+            inverseOnSurface = AtomicColors.Background
         )
     } else {
         lightColorScheme(
@@ -71,7 +84,20 @@ fun AtomicVaultTheme(content: @Composable () -> Unit) {
             error = AtomicColors.Danger,
             onError = AtomicColors.Foreground,
             errorContainer = AtomicColors.DangerLight,
-            onErrorContainer = AtomicColors.Danger
+            onErrorContainer = AtomicColors.Danger,
+            // Surface tiers: dialogs use surfaceContainerHigh, menus and
+            // sheets the others. Left unset, Material fills these with its
+            // own purple-tinted greys, which is what dialogs showed.
+            surfaceTint = androidx.compose.ui.graphics.Color.Transparent,
+            surfaceDim = AtomicColors.Background,
+            surfaceBright = AtomicColors.SurfaceStrong,
+            surfaceContainerLowest = AtomicColors.Background,
+            surfaceContainerLow = AtomicColors.GlassFill,
+            surfaceContainer = AtomicColors.FieldFill,
+            surfaceContainerHigh = AtomicColors.SurfaceStrong,
+            surfaceContainerHighest = AtomicColors.SurfaceStrong,
+            inverseSurface = AtomicColors.Foreground,
+            inverseOnSurface = AtomicColors.Background
         )
     }
 

@@ -1,14 +1,11 @@
 package com.example.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,16 +16,14 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
+import com.example.ui.theme.AtomicRadius
 import com.example.ui.theme.AtomicSpacing
 
 /**
- * Liquid Glass styled confirmation dialog -- for confirm-delete,
- * confirm-folder-delete, and similar moments (design plan Sec 5). Real
- * backdrop blur behind this is Tier 1/2 work (needs the Haze dependency
- * and the tiered refraction system from the design plan's roadmap, not
- * yet wired into this project) -- for now this uses a dimmed scrim, which
- * is the correct Tier 3 fallback the design plan itself specifies, not a
- * placeholder to feel bad about.
+ * Confirmation dialog for confirm-delete and similar moments. A dimmed scrim
+ * behind a 24dp sheet. Buttons are stacked full width: the confirm button is
+ * already fillMaxWidth, so beside a second button it took whatever width was
+ * left and long labels wrapped one character per line.
  */
 @Composable
 fun AtomicDialog(
@@ -50,7 +45,8 @@ fun AtomicDialog(
                 .padding(AtomicSpacing.xl)
                 .fillMaxWidth(),
             variant = GlassVariant.Floating,
-            contentPadding = AtomicSpacing.lg
+            shape = RoundedCornerShape(AtomicRadius.sheet),
+            contentPadding = AtomicSpacing.xl
         ) {
             Column {
                 Text(
@@ -64,35 +60,25 @@ fun AtomicDialog(
 
                 Text(
                     text = message,
-                    fontSize = AtomicFontSize.body,
-                    color = AtomicColors.TextMuted
+                    fontSize = AtomicFontSize.label,
+                    color = AtomicColors.TextBody
                 )
 
-                Spacer(modifier = Modifier.height(AtomicSpacing.lg))
+                Spacer(modifier = Modifier.height(AtomicSpacing.xl))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    AtomicOutlinedButton(
-                        text = dismissLabel,
-                        onClick = onDismiss
-                    )
-
-                    Spacer(modifier = Modifier.width(AtomicSpacing.sm))
-
-                    if (isDestructive) {
-                        AtomicDestructiveButton(
-                            text = confirmLabel,
-                            onClick = onConfirm
-                        )
-                    } else {
-                        AtomicPrimaryButton(
-                            text = confirmLabel,
-                            onClick = onConfirm
-                        )
-                    }
+                if (isDestructive) {
+                    AtomicDestructiveButton(text = confirmLabel, onClick = onConfirm)
+                } else {
+                    AtomicPrimaryButton(text = confirmLabel, onClick = onConfirm)
                 }
+
+                Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+
+                AtomicOutlinedButton(
+                    text = dismissLabel,
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
