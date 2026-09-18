@@ -1,11 +1,11 @@
 package com.example.ui.vaulthome
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,19 +21,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -47,9 +46,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.database.CredentialPreview
+import com.example.database.VaultItemType
 import com.example.ui.VaultUiState
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.FilterChipPill
+import com.example.ui.components.GlassVariant
+import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
@@ -117,31 +119,26 @@ fun VaultHomeScreen(
                     fontWeight = AtomicFontWeight.bold
                 )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
-                ) {
-                    TextButton(
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
                         onClick = onSettingsClick,
                         modifier = Modifier.testTag("home_settings_button")
                     ) {
-                        Text(
-                            text = "Settings",
-                            color = AtomicColors.Accent,
-                            fontSize = AtomicFontSize.body,
-                            fontWeight = AtomicFontWeight.medium
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
 
-                    TextButton(
+                    IconButton(
                         onClick = onLockClick,
                         modifier = Modifier.testTag("home_lock_button")
                     ) {
-                        Text(
-                            text = "Lock",
-                            color = AtomicColors.Accent,
-                            fontSize = AtomicFontSize.body,
-                            fontWeight = AtomicFontWeight.medium
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Lock vault",
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -240,34 +237,22 @@ fun VaultHomeScreen(
                     )
                 }
             } else {
-                Card(
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    shape = RoundedCornerShape(AtomicRadius.lg),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
-                    )
+                    verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm),
+                    // Room below the last entry so the add button never covers it.
+                    contentPadding = PaddingValues(bottom = 88.dp)
                 ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(
-                            items = uiState.previews,
-                            key = { it.id }
-                        ) { preview ->
-                            CredentialRowItem(
-                                preview = preview,
-                                onClick = { onItemClick(preview.id) }
-                            )
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                                thickness = 1.dp
-                            )
-                        }
+                    items(
+                        items = uiState.previews,
+                        key = { it.id }
+                    ) { preview ->
+                        CredentialRowItem(
+                            preview = preview,
+                            onClick = { onItemClick(preview.id) }
+                        )
                     }
                 }
             }
@@ -280,58 +265,104 @@ private fun CredentialRowItem(
     preview: CredentialPreview,
     onClick: () -> Unit
 ) {
-    Row(
+    val subtitle = when {
+        preview.username.isNotEmpty() -> preview.username
+        preview.itemType == VaultItemType.PAYMENT_CARD -> "Payment card"
+        preview.itemType == VaultItemType.IDENTITY -> "Identity"
+        preview.itemType == VaultItemType.SECURE_NOTE -> "Secure note"
+        else -> ""
+    }
+
+    LiquidGlassSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.md)
             .testTag("credential_row_${preview.id}"),
-        verticalAlignment = Alignment.CenterVertically
+        variant = GlassVariant.Card,
+        contentPadding = AtomicSpacing.md,
+        onClick = onClick
     ) {
-        Column(
-            modifier = Modifier.weight(1f)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
         ) {
-            Text(
-                text = preview.title,
-                fontSize = AtomicFontSize.heading,
-                fontWeight = AtomicFontWeight.medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            ItemBadge(preview)
 
-            if (preview.username.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(2.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = preview.username,
-                    fontSize = AtomicFontSize.label,
-                    color = AtomicColors.TextMuted,
+                    text = preview.title,
+                    fontSize = AtomicFontSize.heading,
+                    fontWeight = AtomicFontWeight.medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-            }
 
-            if (preview.tags.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    for (tag in preview.tags.take(3)) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(AtomicRadius.sm))
-                                .background(AtomicColors.GlassFill)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = tag.name,
-                                fontSize = AtomicFontSize.micro,
-                                color = AtomicColors.TextMuted
-                            )
+                if (subtitle.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = subtitle,
+                        fontSize = AtomicFontSize.label,
+                        color = AtomicColors.TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                if (preview.tags.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        for (tag in preview.tags.take(3)) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(AtomicRadius.sm))
+                                    .background(AtomicColors.SurfaceStrong)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = tag.name,
+                                    fontSize = AtomicFontSize.micro,
+                                    color = AtomicColors.TextSecondary
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+/** First letter for logins; an icon for the other record types so they read apart at a glance. */
+@Composable
+private fun ItemBadge(preview: CredentialPreview) {
+    val icon = when (preview.itemType) {
+        VaultItemType.PAYMENT_CARD -> Icons.Default.CreditCard
+        VaultItemType.IDENTITY -> Icons.Default.Badge
+        VaultItemType.SECURE_NOTE -> Icons.Default.Description
+        VaultItemType.LOGIN -> null
+    }
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(AtomicRadius.md))
+            .background(AtomicColors.FieldFill),
+        contentAlignment = Alignment.Center
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = AtomicColors.TextBody,
+                modifier = Modifier.size(20.dp)
+            )
+        } else {
+            Text(
+                text = preview.title.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "?",
+                fontSize = AtomicFontSize.heading,
+                fontWeight = AtomicFontWeight.bold,
+                color = AtomicColors.TextBody
+            )
         }
     }
 }

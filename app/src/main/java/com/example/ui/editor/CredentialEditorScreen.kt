@@ -332,7 +332,8 @@ fun CredentialEditorScreen(
                 // Toggle inline password generator
                 TextButton(
                     onClick = { showGenerator = !showGenerator },
-                    modifier = Modifier.testTag("toggle_inline_generator_button")
+                    modifier = Modifier.testTag("toggle_inline_generator_button"),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                 ) {
                     Text(
                         text = if (showGenerator) "Hide generator" else "Generate password",
@@ -470,7 +471,8 @@ fun CredentialEditorScreen(
                         )
                     )
                 },
-                modifier = Modifier.testTag("add_custom_field_button")
+                modifier = Modifier.testTag("add_custom_field_button"),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
             ) {
                 Text(
                     text = "+ Add custom field",

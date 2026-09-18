@@ -354,16 +354,18 @@ fun SettingsScreen(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
                     ) {
-                        Column {
+                        // weight(1f): without it a long description pushed the
+                        // switch off the right edge of the card.
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Dark theme",
                                 fontSize = AtomicFontSize.body,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Both themes stay high-contrast; Liquid Glass surfaces keep the same opacity and blur in either",
+                                text = "Turn off for the light palette.",
                                 fontSize = AtomicFontSize.caption,
                                 color = AtomicColors.TextMuted
                             )
@@ -435,7 +437,8 @@ fun SettingsScreen(
                                     context.startActivity(Intent(Settings.ACTION_SETTINGS))
                                 }
                             },
-                            modifier = Modifier.testTag("open_system_autofill_settings_button")
+                            modifier = Modifier.testTag("open_system_autofill_settings_button"),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                         ) {
                             Text(
                                 text = "Open system autofill settings →",
@@ -482,7 +485,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(AtomicSpacing.md)) {
                     Text(
-                        text = "A secondary, optional way to fill credentials directly from the keyboard. Autofill above is the recommended default -- enabling a system keyboard is a bigger ask, since an active keyboard can technically see everything typed while it's selected.",
+                        text = "Optional. Fills credentials from the keyboard. Autofill is the recommended way: an active keyboard can see everything typed while it is selected.",
                         fontSize = AtomicFontSize.caption,
                         color = AtomicColors.TextMuted
                     )
@@ -495,7 +498,8 @@ fun SettingsScreen(
                                 showKeyboardDisclosure = true 
                             }
                         },
-                        modifier = Modifier.testTag("open_keyboard_settings_button")
+                        modifier = Modifier.testTag("open_keyboard_settings_button"),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                     ) {
                         Text(
                             text = if (isKeyboardEnabled) "Select Atomic Keyboard →" else "Enable Atomic Keyboard →",
@@ -593,7 +597,8 @@ fun SettingsScreen(
 
                     TextButton(
                         onClick = { showNewFolderDialog = true },
-                        modifier = Modifier.testTag("add_folder_button")
+                        modifier = Modifier.testTag("add_folder_button"),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                     ) {
                         Text(
                             text = "+ New folder",
@@ -662,7 +667,8 @@ fun SettingsScreen(
 
                     TextButton(
                         onClick = { showNewTagDialog = true },
-                        modifier = Modifier.testTag("add_tag_button")
+                        modifier = Modifier.testTag("add_tag_button"),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                     ) {
                         Text(
                             text = "+ New tag",
