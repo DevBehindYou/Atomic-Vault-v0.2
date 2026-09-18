@@ -14,15 +14,12 @@ data class RevealedCredential(val username: String, val password: String)
  * EXTRA_AUTHENTICATION_RESULT is -- this is a custom, in-process
  * coordinator instead. Both components run in the same app process, so
  * a plain in-memory object is sufficient; this never needs to survive
- * process death, and never holds a credential longer than one round trip.
+ * process death.
  *
- * KNOWN RISK: launching an Activity from an InputMethodService can, on
- * some devices/OS versions, affect the IME's own input-view lifecycle
- * (see the service's own doc comment). If currentInputConnection is no
- * longer valid by the time completeReveal() fires, the fill will
- * silently no-op rather than crash. Test this specifically on a real
- * device before relying on it -- it's the single highest-uncertainty
- * piece of this phase's work.
+ * It never holds a credential longer than one round trip: the pending
+ * request is dropped the moment it completes, so the only reference to the
+ * revealed password is the awaiting coroutine's. (Before, the completed
+ * request stayed referenced from here until the next reveal.)
  */
 object KeyboardRevealCoordinator {
     @Volatile
@@ -30,10 +27,13 @@ object KeyboardRevealCoordinator {
 
     /** Called by the IME right before launching the trampoline activity. */
     fun beginReveal(): CompletableDeferred<RevealedCredential?> {
-        // Cancel/complete any stale prior request rather than leaving it
-        // dangling if the user tapped a second suggestion before the
+        // Resolve any stale prior request with "nothing" rather than leaving
+        // it dangling if the user tapped a second suggestion before the
         // first one resolved.
-        pending?.takeIf { !it.isCompleted }?.complete(null)
+        val stale = pending
+        pending = null
+        stale?.takeIf { !it.isCompleted }?.complete(null)
+
         val deferred = CompletableDeferred<RevealedCredential?>()
         pending = deferred
         return deferred
@@ -41,6 +41,8 @@ object KeyboardRevealCoordinator {
 
     /** Called by KeyboardCredentialAuthActivity once biometric auth succeeds (or fails/cancels) and finishes. */
     fun completeReveal(credential: RevealedCredential?) {
-        pending?.takeIf { !it.isCompleted }?.complete(credential)
+        val current = pending
+        pending = null
+        current?.takeIf { !it.isCompleted }?.complete(credential)
     }
 }

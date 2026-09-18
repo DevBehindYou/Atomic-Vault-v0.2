@@ -294,6 +294,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun lockVault() {
+        // A locked vault should not leave a copied password sitting on the clipboard.
+        com.example.security.ClipboardHelper.clearIfOwned(getApplication())
         try {
             activeDb?.close()
         } catch (e: Exception) {

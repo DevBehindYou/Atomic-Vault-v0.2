@@ -120,7 +120,12 @@ object CredentialMatcher {
         // every site in that browser shares it; letting it decide the match
         // offered one site's login on every other site (and, on save,
         // overwrote it). For web content the domain must decide.
-        if (packageMatches && targetDomain.isNullOrBlank()) {
+        //
+        // The keyboard cannot see a web domain at all (EditorInfo carries only
+        // the package), so it always lands here for a browser too. An item that
+        // stores a domain was saved from a browser or web view, and the package
+        // alone must not reveal it: it needs domain evidence.
+        if (packageMatches && targetDomain.isNullOrBlank() && normalizedItemDomain.isNullOrBlank()) {
             return TrustLevel.LEVEL_3_PACKAGE
         }
 

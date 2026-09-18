@@ -3,6 +3,7 @@ package com.example.keyboard
 import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.text.InputType
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -62,6 +63,10 @@ import com.example.ui.theme.AtomicSpacing
 import com.example.ui.theme.AtomicVaultTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.Arrays
@@ -124,6 +129,16 @@ class AtomicVaultInputMethodService :
     private var shieldActive by mutableStateOf(false)
     private var enterAction by mutableStateOf(EditorInfo.IME_ACTION_NONE)
     private var currentPackageName: String? = null
+
+    private var suggestionsJob: Job? = null
+
+    /** What a reveal was requested FOR, so it is only ever typed into that same field. */
+    private data class RevealTarget(val packageName: String?, val fieldId: Int, val inputType: Int)
+
+    private class PendingFill(val credential: RevealedCredential, val target: RevealTarget, val createdAtMs: Long)
+
+    /** A revealed credential that arrived while no input connection was attached (the auth screen was on top). */
+    private var pendingFill: PendingFill? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -197,10 +212,21 @@ class AtomicVaultInputMethodService :
         }
         shieldActive = isSensitiveField(info)
         refreshSuggestions()
+
+        // The biometric screen finishes and this input view restarts; if the
+        // credential arrived first there was no connection to type into, so it
+        // waits here -- but only for the same field, and only briefly.
+        pendingFill?.let { pending ->
+            pendingFill = null
+            if (SystemClock.elapsedRealtime() - pending.createdAtMs <= PENDING_FILL_TTL_MS) {
+                tryFill(pending.credential, pending.target)
+            }
+        }
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
         super.onFinishInputView(finishingInput)
+        suggestionsJob?.cancel()
         suggestions = emptyList()
         shieldActive = false
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
@@ -208,6 +234,8 @@ class AtomicVaultInputMethodService :
 
     override fun onDestroy() {
         super.onDestroy()
+        pendingFill = null
+        serviceScope.cancel()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     }
 
@@ -250,6 +278,7 @@ class AtomicVaultInputMethodService :
     }
 
     private fun refreshSuggestions() {
+        suggestionsJob?.cancel()
         val packageName = currentPackageName
         suggestions = emptyList()
         if (packageName.isNullOrBlank()) return
@@ -257,15 +286,31 @@ class AtomicVaultInputMethodService :
         val keyStore = BiometricGatedKeyStore(this)
         if (!keyStore.isArmed()) return
 
+        // Opening the vault database and running the match runs on EVERY
+        // onStartInputView(), i.e. every time any field on the device gets
+        // focus while this keyboard is active. It used to run right here on
+        // the main thread, delaying the keyboard itself.
+        suggestionsJob = serviceScope.launch {
+            val found = withContext(Dispatchers.IO) { loadSuggestions(keyStore, packageName) }
+            if (currentPackageName == packageName) {
+                suggestions = found
+            }
+        }
+    }
+
+    private fun loadSuggestions(
+        keyStore: BiometricGatedKeyStore,
+        packageName: String
+    ): List<CredentialMatcher.MatchCandidate> {
         // Same bounded grace-window pattern as VaultAutofillService
         // .onFillRequest() -- onStartInputView() can't show a live
         // prompt either, for the same reason a backgrounded
         // AutofillService can't.
-        val dek = keyStore.tryRevealWithoutPrompt() ?: return
+        val dek = keyStore.tryRevealWithoutPrompt() ?: return emptyList()
         var db: net.sqlcipher.database.SQLiteDatabase? = null
-        try {
+        return try {
             db = VaultDatabase.open(this, dek)
-            suggestions = CredentialMatcher.findAutoOfferMatches(
+            CredentialMatcher.findAutoOfferMatches(
                 context = this,
                 db = db,
                 packageName = packageName,
@@ -276,19 +321,25 @@ class AtomicVaultInputMethodService :
                 webDomain = null
             )
         } catch (e: Exception) {
-            suggestions = emptyList()
+            emptyList()
         } finally {
             Arrays.fill(dek, 0.toByte())
-            // Most important close() in this codebase -- refreshSuggestions()
-            // runs on EVERY onStartInputView(), i.e. every time the user
-            // focuses any field on the device while this keyboard is
-            // active. Without this, connections leak far faster here than
-            // anywhere else in the app.
+            // Most important close() in this codebase: this runs for every
+            // focused field, so a leaked connection here piles up fastest.
             db?.close()
         }
     }
 
+    private fun currentTarget(): RevealTarget? = currentInputEditorInfo?.let {
+        RevealTarget(it.packageName, it.fieldId, it.inputType)
+    }
+
     private fun requestReveal(candidate: CredentialMatcher.MatchCandidate) {
+        // Remember which field this is for. The biometric screen takes focus,
+        // so by the time the credential comes back the user may be somewhere
+        // else -- it must only ever be typed into the field that asked.
+        val target = currentTarget() ?: return
+
         val deferred = KeyboardRevealCoordinator.beginReveal()
         val intent = Intent(this, KeyboardCredentialAuthActivity::class.java).apply {
             putExtra(KeyboardCredentialAuthActivity.EXTRA_ITEM_ID, candidate.id)
@@ -297,17 +348,31 @@ class AtomicVaultInputMethodService :
         startActivity(intent)
 
         serviceScope.launch {
-            val result = deferred.await()
-            if (result != null) {
-                // The IME only ever fills the ONE currently-focused field
-                // it's typing into (unlike AutofillService, which sees
-                // both username and password AutofillIds from
-                // AssistStructure at once) -- use the same Shield Mode
-                // detection to decide which value belongs in that field.
-                val value = if (shieldActive) result.password else result.username
-                currentInputConnection?.commitText(value, 1)
+            // Never wait forever if the prompt is abandoned without a result.
+            val result = withTimeoutOrNull(REVEAL_TIMEOUT_MS) { deferred.await() } ?: return@launch
+            if (!tryFill(result, target)) {
+                pendingFill = PendingFill(result, target, SystemClock.elapsedRealtime())
             }
         }
+    }
+
+    /**
+     * Types the credential into the focused field if -- and only if -- it is
+     * still the field it was requested for. The IME only ever fills ONE field
+     * (unlike AutofillService, which sees username and password together), so
+     * a password field gets the password and anything else the username.
+     */
+    private fun tryFill(credential: RevealedCredential, target: RevealTarget): Boolean {
+        val connection = currentInputConnection ?: return false
+        if (currentTarget() != target) return false
+        val sensitive = isSensitiveField(currentInputEditorInfo)
+        connection.commitText(if (sensitive) credential.password else credential.username, 1)
+        return true
+    }
+
+    private companion object {
+        const val REVEAL_TIMEOUT_MS = 60_000L
+        const val PENDING_FILL_TTL_MS = 15_000L
     }
 }
 
