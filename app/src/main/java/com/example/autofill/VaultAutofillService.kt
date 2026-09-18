@@ -265,32 +265,35 @@ class VaultAutofillService : AutofillService() {
                     db = VaultDatabase.open(this@VaultAutofillService, dek)
                     val openDb = db
                     val repo = VaultRepositoryImpl(openDb, dek)
-                    val title = parsed.webDomain ?: parsed.packageName ?: "Saved Login"
+                    val savedUser = parsed.saveUsernameValue.orEmpty().trim()
+                    val savedPassword = parsed.savePasswordValue.orEmpty()
 
-                    // Look for an existing item before creating a new one --
-                    // previously this always inserted, so changing a
-                    // password on an already-saved site silently produced a
-                    // duplicate every time. Uses the SAME trust threshold as
-                    // fill-time auto-offer (Level 2+) deliberately: a
-                    // low-confidence Level 0 match here would risk silently
-                    // overwriting a DIFFERENT site's credential, which is a
-                    // worse outcome than an occasional duplicate.
-                    val existingMatch = CredentialMatcher
-                        .findMatches(this@VaultAutofillService, openDb, parsed.packageName, parsed.webDomain)
-                        .firstOrNull { it.trustLevel.score >= CredentialMatcher.MINIMUM_AUTO_OFFER_LEVEL.score }
-
-                    val input = CredentialInput(
-                        title = title,
-                        username = parsed.saveUsernameValue ?: "",
-                        password = parsed.savePasswordValue,
-                        uriMatchPattern = parsed.webDomain,
-                        androidPackageName = parsed.packageName
+                    // Decide which existing item (if any) this save is FOR. Uses the
+                    // same trust threshold as fill-time auto-offer (Level 2+) so a
+                    // low-confidence match can never overwrite a different site's
+                    // credential, and only updates an item that holds the same
+                    // username -- see AutofillSave for the two bugs this prevents.
+                    val candidates = CredentialMatcher.findMatches(
+                        this@VaultAutofillService, openDb, parsed.packageName, parsed.webDomain
                     )
+                    val targetId = AutofillSave.chooseTarget(candidates, savedUser) { id ->
+                        repo.getItem(id)?.username
+                    }
+                    val existing = targetId?.let { repo.getItem(it) }
 
-                    if (existingMatch != null) {
-                        repo.updateItem(existingMatch.id, input)
+                    if (existing != null) {
+                        // Update only what changed; notes, TOTP, custom fields, tags and
+                        // folder ride along untouched (updateItem is a full replace).
+                        if (existing.password != savedPassword || (savedUser.isNotEmpty() && existing.username != savedUser)) {
+                            repo.updateItem(
+                                existing.id,
+                                AutofillSave.mergeInto(existing, savedUser, savedPassword, parsed.webDomain, parsed.packageName)
+                            )
+                        }
                     } else {
-                        repo.createItem(input)
+                        repo.createItem(
+                            AutofillSave.newItem(savedUser, savedPassword, parsed.webDomain, parsed.packageName)
+                        )
                     }
                 } catch (e: Exception) {
                     // Ignore save error
