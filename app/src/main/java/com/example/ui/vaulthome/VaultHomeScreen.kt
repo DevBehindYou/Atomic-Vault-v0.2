@@ -49,6 +49,7 @@ import com.example.database.CredentialPreview
 import com.example.database.VaultItemType
 import com.example.ui.VaultUiState
 import com.example.ui.components.AtomicTextField
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.components.FilterChipPill
 import com.example.ui.components.GlassVariant
 import com.example.ui.components.LiquidGlassSurface
@@ -66,10 +67,10 @@ fun VaultHomeScreen(
     onSelectTag: (String?) -> Unit,
     onItemClick: (String) -> Unit,
     onAddNewClick: () -> Unit,
-    onSettingsClick: () -> Unit,
     onLockClick: () -> Unit,
     onReload: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomBar: @Composable () -> Unit = {}
 ) {
     LaunchedEffect(Unit) {
         onReload()
@@ -78,6 +79,25 @@ fun VaultHomeScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            AtomicTopBar(
+                title = "AtomicVault",
+                caption = "Encrypted on this device",
+                actions = {
+                    IconButton(
+                        onClick = onLockClick,
+                        modifier = Modifier.testTag("home_lock_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Lock vault",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+            )
+        },
+        bottomBar = bottomBar,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddNewClick,
@@ -104,48 +124,6 @@ fun VaultHomeScreen(
                 .padding(innerPadding)
                 .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.md)
         ) {
-            // Top Toolbar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = AtomicSpacing.xs),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "AtomicVault",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = AtomicFontWeight.bold
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = onSettingsClick,
-                        modifier = Modifier.testTag("home_settings_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onLockClick,
-                        modifier = Modifier.testTag("home_lock_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Lock vault",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-
             // Search Bar
             AtomicTextField(
                 value = uiState.query,

@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.security.ClipboardHelper
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
@@ -41,8 +42,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PasswordGeneratorScreen(
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomBar: @Composable () -> Unit = {}
 ) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -62,32 +63,9 @@ fun PasswordGeneratorScreen(
             }
         },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Password Generator",
-                        fontWeight = AtomicFontWeight.bold,
-                        fontSize = AtomicFontSize.heading
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("generator_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        }
+            AtomicTopBar(title = "Password generator", caption = "CSPRNG · unbiased sampling")
+        },
+        bottomBar = bottomBar
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -96,25 +74,6 @@ fun PasswordGeneratorScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(AtomicSpacing.lg)
         ) {
-            Row(
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = AtomicSpacing.md)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(AtomicColors.Success, androidx.compose.foundation.shape.CircleShape)
-                )
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(AtomicSpacing.xs))
-                Text(
-                    text = "CSPRNG \u00b7 UNBIASED REJECTION SAMPLING",
-                    fontSize = AtomicFontSize.micro,
-                    fontWeight = AtomicFontWeight.bold,
-                    color = AtomicColors.Success,
-                    letterSpacing = 1.sp
-                )
-            }
-
             PasswordGeneratorPanel(
                 onUsePassword = { generatedPassword ->
                     ClipboardHelper.copySensitive(context, "Generated Password", generatedPassword)
@@ -124,9 +83,8 @@ fun PasswordGeneratorScreen(
                             withDismissAction = true
                         )
                     }
-                    onBack()
                 },
-                useButtonLabel = "Copy & return"
+                useButtonLabel = "Copy"
             )
         }
     }

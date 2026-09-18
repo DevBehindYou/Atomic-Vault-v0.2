@@ -117,7 +117,7 @@ class UiSnapshotTest {
         VaultHomeScreen(
             uiState = unlocked,
             onSearchChange = {}, onSelectFolder = {}, onSelectTag = {}, onItemClick = {},
-            onAddNewClick = {}, onSettingsClick = {}, onLockClick = {}, onReload = {}
+            onAddNewClick = {}, onLockClick = {}, onReload = {}
         )
     }
 
@@ -127,9 +127,8 @@ class UiSnapshotTest {
             uiState = unlocked,
             onUpdateAutoLock = {}, onUpdateBiometric = {}, onSetAutofillArmed = {},
             onCreateFolder = {}, onDeleteFolder = {}, onCreateTag = {}, onDeleteTag = {},
-            onNavigateSecurity = {}, onNavigateGenerator = {}, onNavigateBackup = {},
-            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {},
-            onBack = {}
+            onNavigateBackup = {},
+            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {}
         )
     }
 
@@ -138,14 +137,13 @@ class UiSnapshotTest {
         SecurityDashboardScreen(
             integrityWarnings = emptyList(),
             onLoadAllCredentials = { emptyList() },
-            onItemClick = {},
-            onBack = {}
+            onItemClick = {}
         )
     }
 
     @Test
     fun password_generator() = snap("password_generator") {
-        PasswordGeneratorScreen(onBack = {})
+        PasswordGeneratorScreen()
     }
 
     @Test

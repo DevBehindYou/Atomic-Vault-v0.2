@@ -52,6 +52,7 @@ import com.example.security.CredentialFinding
 import com.example.security.PasswordAnalysis
 import com.example.security.VaultSecurityReport
 import com.example.ui.components.IssueBadge
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
@@ -64,8 +65,8 @@ fun SecurityDashboardScreen(
     integrityWarnings: List<String>,
     onLoadAllCredentials: suspend () -> List<CredentialPlain>,
     onItemClick: (String) -> Unit,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomBar: @Composable () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
 
@@ -97,32 +98,9 @@ fun SecurityDashboardScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Security Dashboard",
-                        fontWeight = AtomicFontWeight.bold,
-                        fontSize = AtomicFontSize.heading
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("security_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        }
+            AtomicTopBar(title = "Security", caption = "Audit & vault hygiene")
+        },
+        bottomBar = bottomBar
     ) { innerPadding ->
         Column(
             modifier = Modifier

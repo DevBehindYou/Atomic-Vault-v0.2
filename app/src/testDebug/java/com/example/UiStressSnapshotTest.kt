@@ -90,15 +90,15 @@ class UiStressSnapshotTest {
     }
 
     @Test fun home() = snap("home") {
-        VaultHomeScreen(unlocked, {}, {}, {}, {}, {}, {}, {}, {})
+        VaultHomeScreen(unlocked, {}, {}, {}, {}, {}, {}, {})
     }
 
     @Test fun security() = snap("security") {
-        SecurityDashboardScreen(emptyList(), { emptyList() }, {}, {})
+        SecurityDashboardScreen(emptyList(), { emptyList() }, {})
     }
 
     @Test fun generator() = snap("generator") {
-        PasswordGeneratorScreen(onBack = {})
+        PasswordGeneratorScreen()
     }
 
     @Test fun editor() = snap("editor") {
@@ -110,9 +110,8 @@ class UiStressSnapshotTest {
             uiState = unlocked,
             onUpdateAutoLock = {}, onUpdateBiometric = {}, onSetAutofillArmed = {},
             onCreateFolder = {}, onDeleteFolder = {}, onCreateTag = {}, onDeleteTag = {},
-            onNavigateSecurity = {}, onNavigateGenerator = {}, onNavigateBackup = {},
-            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {},
-            onBack = {}
+            onNavigateBackup = {},
+            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {}
         )
     }
 

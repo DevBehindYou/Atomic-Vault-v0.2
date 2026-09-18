@@ -61,6 +61,7 @@ import com.example.database.FolderPlain
 import com.example.ui.VaultUiState
 import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicSwitch
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.FilterChipPill
 import com.example.ui.components.SectionLabel
@@ -81,14 +82,12 @@ fun SettingsScreen(
     onDeleteFolder: (String) -> Unit,
     onCreateTag: (String) -> Unit,
     onDeleteTag: (String) -> Unit,
-    onNavigateSecurity: () -> Unit,
-    onNavigateGenerator: () -> Unit,
     onNavigateBackup: () -> Unit,
     onNavigatePrivacyProof: () -> Unit,
     onNavigateAddPaymentCard: () -> Unit,
     onNavigateAddIdentity: () -> Unit,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomBar: @Composable () -> Unit = {}
 ) {
     val context = LocalContext.current
     var showNewFolderDialog by remember { mutableStateOf(false) }
@@ -238,32 +237,9 @@ fun SettingsScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Settings",
-                        fontWeight = AtomicFontWeight.bold,
-                        fontSize = AtomicFontSize.heading
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("settings_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        }
+            AtomicTopBar(title = "Settings", caption = "Security & preferences")
+        },
+        bottomBar = bottomBar
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -692,26 +668,6 @@ fun SettingsScreen(
             ) {
                 Column {
                     SettingsNavigationRow(
-                        icon = Icons.Default.Security,
-                        title = "Security dashboard",
-                        subtitle = "Audit reused, weak, and missing passwords",
-                        onClick = onNavigateSecurity,
-                        testTag = "nav_security_dashboard"
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                    SettingsNavigationRow(
-                        icon = Icons.Default.Key,
-                        title = "Password generator",
-                        subtitle = "Configurable high-entropy generator",
-                        onClick = onNavigateGenerator,
-                        testTag = "nav_password_generator"
-                    )
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                    SettingsNavigationRow(
                         icon = Icons.Default.Storage,
                         title = "Backup & restore",
                         subtitle = "Passphrase-encrypted export & import",
@@ -775,7 +731,7 @@ fun SettingsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "AtomicVault v1.0.0 · Local-only AES-256-GCM + SQLCipher",
+                    text = "AtomicVault v${com.atomicvault.android.BuildConfig.VERSION_NAME} · Local-only AES-256-GCM + SQLCipher",
                     fontSize = AtomicFontSize.micro,
                     color = AtomicColors.TextMuted
                 )

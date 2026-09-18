@@ -15,6 +15,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.security.AppBiometricManager
+import com.example.ui.components.AtomicBottomNav
+import com.example.ui.components.AtomicTab
 import com.example.ui.backup.BackupScreen
 import com.example.ui.editor.CredentialEditorScreen
 import com.example.ui.generator.PasswordGeneratorScreen
@@ -129,6 +131,22 @@ fun AtomicVaultNavGraph(
                 onDone(false)
             }
         )
+    }
+
+    // Bottom-bar destinations replace one another instead of stacking, and
+    // every one pops back to Home so Back always leaves via the vault.
+    fun navigateTab(tab: AtomicTab) {
+        val route = when (tab) {
+            AtomicTab.Vault -> Screen.Home.route
+            AtomicTab.Generate -> Screen.Generator.route
+            AtomicTab.Audit -> Screen.Security.route
+            AtomicTab.Settings -> Screen.Settings.route
+        }
+        navController.navigate(route) {
+            popUpTo(Screen.Home.route) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 
     val startDestination = when (uiState.status) {
@@ -250,16 +268,14 @@ fun AtomicVaultNavGraph(
                 onAddNewClick = {
                     navController.navigate(Screen.Editor.createRoute(null))
                 },
-                onSettingsClick = {
-                    navController.navigate(Screen.Settings.route)
-                },
                 onLockClick = {
                     viewModel.lockVault()
                     navController.navigate(Screen.Unlock.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 },
-                onReload = { viewModel.reloadVaultData() }
+                onReload = { viewModel.reloadVaultData() },
+                bottomBar = { AtomicBottomNav(AtomicTab.Vault, { navigateTab(it) }) }
             )
         }
 
@@ -358,7 +374,7 @@ fun AtomicVaultNavGraph(
 
         composable(Screen.Generator.route) {
             PasswordGeneratorScreen(
-                onBack = { navController.popBackStack() }
+                bottomBar = { AtomicBottomNav(AtomicTab.Generate, { navigateTab(it) }) }
             )
         }
 
@@ -369,7 +385,7 @@ fun AtomicVaultNavGraph(
                 onItemClick = { itemId ->
                     navController.navigate(Screen.Editor.createRoute(itemId))
                 },
-                onBack = { navController.popBackStack() }
+                bottomBar = { AtomicBottomNav(AtomicTab.Audit, { navigateTab(it) }) }
             )
         }
 
@@ -398,13 +414,11 @@ fun AtomicVaultNavGraph(
                 onDeleteFolder = { id -> viewModel.deleteFolder(id) },
                 onCreateTag = { name -> viewModel.createTag(name) },
                 onDeleteTag = { id -> viewModel.deleteTag(id) },
-                onNavigateSecurity = { navController.navigate(Screen.Security.route) },
-                onNavigateGenerator = { navController.navigate(Screen.Generator.route) },
                 onNavigateBackup = { navController.navigate(Screen.Backup.route) },
                 onNavigatePrivacyProof = { navController.navigate(Screen.PrivacyProof.route) },
                 onNavigateAddPaymentCard = { navController.navigate(Screen.PaymentCardEditor.createRoute(null)) },
                 onNavigateAddIdentity = { navController.navigate(Screen.IdentityEditor.createRoute(null)) },
-                onBack = { navController.popBackStack() }
+                bottomBar = { AtomicBottomNav(AtomicTab.Settings, { navigateTab(it) }) }
             )
         }
 
