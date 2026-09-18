@@ -17,9 +17,18 @@ IME="$PKG/com.example.keyboard.AtomicVaultInputMethodService"
 OUT=emulator-artifacts
 mkdir -p "$OUT"
 
+# uiautomator returns "null root node" while a window is still coming up or
+# animating, so retry instead of letting `set -e` end the script on the first miss.
 dump() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null
-  adb pull /sdcard/ui.xml "$OUT/ui.xml" >/dev/null
+  local i
+  for i in 1 2 3 4 5; do
+    rm -f "$OUT/ui.xml"
+    if adb shell uiautomator dump /sdcard/ui.xml 2>&1 | grep -q "dumped to"        && adb pull /sdcard/ui.xml "$OUT/ui.xml" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
 }
 
 # find_center <attr> <value> [exact]  -> "x y" of the first matching node, or nothing
@@ -66,7 +75,7 @@ fail() {
 
 # tap_node <attr> <value> [exact] [seconds-to-wait-after]
 tap_node() {
-  dump
+  dump || fail "UI dump failed before tapping $1=\"$2\""
   local c
   c=$(find_center "$1" "$2" "${3:-contains}")
   [ -n "$c" ] || fail "Could not find $1=\"$2\" on screen"
@@ -79,8 +88,7 @@ tap_node() {
 wait_for_text() {
   local deadline=$((SECONDS + ${2:-20}))
   while [ $SECONDS -lt $deadline ]; do
-    dump
-    if grep -q "$1" "$OUT/ui.xml"; then return 0; fi
+    if dump && grep -q "$1" "$OUT/ui.xml"; then return 0; fi
     sleep 2
   done
   fail "Timed out waiting for \"$1\""
@@ -104,11 +112,12 @@ adb shell ime set "$IME"
 
 echo "Launching MainActivity"
 adb shell am start -n "$PKG/com.example.MainActivity"
+sleep 8
 wait_for_text "Create your vault" 30
 adb exec-out screencap -p > "$OUT/01_launch.png"
 
 echo "Focusing the master password field"
-dump
+dump || fail "UI dump failed on the onboarding screen"
 C=$(nth_edit_center 1)
 [ -n "$C" ] || fail "No text field on the onboarding screen"
 adb shell input tap $C
@@ -124,7 +133,7 @@ fi
 echo "Creating a vault"
 adb shell input text "CorrectHorse9Battery"
 sleep 1
-dump
+dump || fail "UI dump failed after typing the password"
 C=$(nth_edit_center 2)
 [ -n "$C" ] || fail "No confirm field"
 adb shell input tap $C
@@ -139,21 +148,21 @@ echo "Vault created; Home is showing"
 
 echo "Walking the bottom navigation"
 tap_node text "Generate" exact 3
-grep -q "Password generator" "$OUT/ui.xml" || { dump; grep -q "Password generator" "$OUT/ui.xml" || fail "Generate tab did not open the generator"; }
+grep -q "Password generator" "$OUT/ui.xml" || { dump || fail "UI dump failed"; grep -q "Password generator" "$OUT/ui.xml" || fail "Generate tab did not open the generator"; }
 tap_node text "Audit" exact 3
-dump; grep -q "Health score\|HEALTH SCORE\|Device integrity" "$OUT/ui.xml" || fail "Audit tab did not open the security dashboard"
+dump || fail "UI dump failed"; grep -q "Health score\|HEALTH SCORE\|Device integrity" "$OUT/ui.xml" || fail "Audit tab did not open the security dashboard"
 tap_node text "Settings" exact 3
-dump; grep -q "Lock after leaving the app" "$OUT/ui.xml" || fail "Settings tab did not open Settings"
+dump || fail "UI dump failed"; grep -q "Lock after leaving the app" "$OUT/ui.xml" || fail "Settings tab did not open Settings"
 tap_node text "Vault" exact 3
-dump; grep -q "Encrypted on this device" "$OUT/ui.xml" || fail "Vault tab did not return to Home"
+dump || fail "UI dump failed"; grep -q "Encrypted on this device" "$OUT/ui.xml" || fail "Vault tab did not return to Home"
 
 echo "Opening the Home add menu"
 tap_node content-desc "Add to vault" contains 2
 tap_node text "Payment card" contains 3
-dump; grep -q "Add payment card" "$OUT/ui.xml" || fail "Add menu did not open the payment card editor"
+dump || fail "UI dump failed"; grep -q "Add payment card" "$OUT/ui.xml" || fail "Add menu did not open the payment card editor"
 adb shell input keyevent 4
 sleep 2
-dump; grep -q "Encrypted on this device" "$OUT/ui.xml" || fail "Back from the card editor did not return to Home"
+dump || fail "UI dump failed"; grep -q "Encrypted on this device" "$OUT/ui.xml" || fail "Back from the card editor did not return to Home"
 
 adb logcat -d > "$OUT/logcat.txt"
 
