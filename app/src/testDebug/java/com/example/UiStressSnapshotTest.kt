@@ -118,6 +118,45 @@ class UiStressSnapshotTest {
 
     @Test fun settings() = snap("settings", settingsContent())
 
+    @Test fun backup() = snap("backup") {
+        com.example.ui.backup.BackupScreen(onExportBackup = { _, _ -> }, onImportBackup = { _, _, _ -> }, onBack = {})
+    }
+
+    @Test fun privacy_proof() = snap("privacy_proof") {
+        com.example.ui.trust.PrivacyProofScreen(
+            checks = listOf(
+                com.example.trust.PrivacyCheck("Storage", "Vault database is encrypted", true, "SQLCipher, AES-256", true),
+                com.example.trust.PrivacyCheck("Network", "No internet permission requested", true, "Manifest declares none", false),
+                com.example.trust.PrivacyCheck("Biometric", "Biometric unlock armed", false, "Not enabled", true)
+            ),
+            chainBroken = false, onBack = {}, onNavigateTimeline = {}
+        )
+    }
+
+    @Test fun timeline() = snap("timeline") {
+        com.example.ui.trust.SecurityTimelineScreen(
+            entries = listOf(
+                com.example.trust.TrustLedgerEntry(
+                    "1", 1_760_000_000_000L, com.example.trust.TrustEventType.VAULT_UNLOCKED,
+                    null, null, "biometric", "app", "success", "0", "a1"
+                ),
+                com.example.trust.TrustLedgerEntry(
+                    "2", 1_760_000_100_000L, com.example.trust.TrustEventType.CREDENTIAL_CREATED,
+                    null, null, null, "app", "success", "a1", "a2"
+                )
+            ),
+            previews = unlocked.previews, chainBrokenAtId = null, onBack = {}
+        )
+    }
+
+    @Test fun payment_card() = snap("payment_card") {
+        com.example.ui.paymentcard.PaymentCardEditorScreen(existing = null, onSave = {}, onBack = {})
+    }
+
+    @Test fun identity() = snap("identity") {
+        com.example.ui.identity.IdentityEditorScreen(existing = null, onSave = {}, onBack = {})
+    }
+
     // Dialog windows are not part of the root capture, so the sheet is laid
     // out directly over a scrim (AtomicDialogPanel is the dialog minus its window).
     private fun dialogOnScrim(content: @Composable () -> Unit): @Composable () -> Unit = {
