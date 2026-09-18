@@ -181,13 +181,15 @@ fun IconTile(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     tint: Color = AtomicColors.Success,
-    size: androidx.compose.ui.unit.Dp = 40.dp
+    size: androidx.compose.ui.unit.Dp = 40.dp,
+    // Darker than the surface it sits on: Background inside a card, GlassFill on the page.
+    container: Color = AtomicColors.Background
 ) {
     Box(
         modifier = modifier
             .size(size)
             .clip(RoundedCornerShape(AtomicRadius.md))
-            .background(AtomicColors.Background),
+            .background(container),
         contentAlignment = Alignment.Center
     ) {
         Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.5f))

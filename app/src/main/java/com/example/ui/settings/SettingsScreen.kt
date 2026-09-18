@@ -7,6 +7,8 @@ import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -71,7 +73,7 @@ import com.example.ui.theme.AtomicFontWeight
 import com.example.ui.theme.AtomicRadius
 import com.example.ui.theme.AtomicSpacing
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     uiState: VaultUiState,
@@ -221,9 +223,13 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.sm))
 
-                    Row(
+                    // FlowRow: four equal-width chips broke words ("15 m", "Nev er") on
+                    // narrow screens and at large font sizes. Chips now keep their natural
+                    // width and wrap as a group.
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
+                        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm),
+                        verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
                     ) {
                         val timeouts = listOf(
                             "1m" to 60,
@@ -236,7 +242,6 @@ fun SettingsScreen(
                                 label = label,
                                 selected = autoLockSeconds == seconds,
                                 onClick = { onUpdateAutoLock(seconds) },
-                                modifier = Modifier.weight(1f),
                                 testTag = "autolock_chip_$label"
                             )
                         }

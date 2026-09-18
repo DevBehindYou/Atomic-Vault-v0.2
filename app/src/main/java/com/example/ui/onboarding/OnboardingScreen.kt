@@ -101,7 +101,7 @@ fun OnboardingScreen(
                     fontSize = AtomicFontSize.body
                 )
             }
-            IconTile(icon = Icons.Default.Shield, size = 44.dp)
+            IconTile(icon = Icons.Default.Shield, size = 44.dp, container = AtomicColors.GlassFill)
         }
 
         Spacer(modifier = Modifier.height(AtomicSpacing.xl))

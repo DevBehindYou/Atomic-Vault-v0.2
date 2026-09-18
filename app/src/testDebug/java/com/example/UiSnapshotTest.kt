@@ -117,7 +117,8 @@ class UiSnapshotTest {
         VaultHomeScreen(
             uiState = unlocked,
             onSearchChange = {}, onSelectFolder = {}, onSelectTag = {}, onItemClick = {},
-            onAddNewClick = {}, onLockClick = {}, onReload = {}
+            onAddNewClick = {}, onLockClick = {}, onReload = {},
+            bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Vault, {}) }
         )
     }
 
@@ -128,7 +129,8 @@ class UiSnapshotTest {
             onUpdateAutoLock = {}, onUpdateBiometric = {}, onSetAutofillArmed = {},
             onCreateFolder = {}, onDeleteFolder = {}, onCreateTag = {}, onDeleteTag = {},
             onNavigateBackup = {},
-            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {}
+            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {},
+            bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Settings, {}) }
         )
     }
 
@@ -137,13 +139,14 @@ class UiSnapshotTest {
         SecurityDashboardScreen(
             integrityWarnings = emptyList(),
             onLoadAllCredentials = { emptyList() },
-            onItemClick = {}
+            onItemClick = {},
+            bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Audit, {}) }
         )
     }
 
     @Test
     fun password_generator() = snap("password_generator") {
-        PasswordGeneratorScreen()
+        PasswordGeneratorScreen(bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Generate, {}) })
     }
 
     @Test

@@ -101,7 +101,9 @@ fun AtomicTextField(
                 Text(
                     text = placeholder,
                     color = AtomicColors.TextMuted,
-                    fontSize = AtomicFontSize.body
+                    fontSize = AtomicFontSize.body,
+                    maxLines = if (singleLine) 1 else 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             },
             singleLine = singleLine,
@@ -198,7 +200,8 @@ fun AtomicPrimaryButton(
             Text(
                 text = text,
                 fontSize = AtomicFontSize.body,
-                fontWeight = AtomicFontWeight.bold
+                fontWeight = AtomicFontWeight.bold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }
@@ -231,7 +234,8 @@ fun AtomicOutlinedButton(
             text = text,
             fontSize = AtomicFontSize.body,
             fontWeight = AtomicFontWeight.medium,
-            color = AtomicColors.Foreground
+            color = AtomicColors.Foreground,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
@@ -264,7 +268,8 @@ fun AtomicDestructiveButton(
             text = text,
             fontSize = AtomicFontSize.body,
             fontWeight = AtomicFontWeight.medium,
-            color = AtomicColors.Danger
+            color = AtomicColors.Danger,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
@@ -299,7 +304,9 @@ fun FilterChipPill(
             text = label,
             fontSize = AtomicFontSize.label,
             fontWeight = if (selected) AtomicFontWeight.bold else AtomicFontWeight.regular,
-            color = textColor
+            color = textColor,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }

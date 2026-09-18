@@ -90,15 +90,15 @@ class UiStressSnapshotTest {
     }
 
     @Test fun home() = snap("home") {
-        VaultHomeScreen(unlocked, {}, {}, {}, {}, {}, {}, {})
+        VaultHomeScreen(unlocked, {}, {}, {}, {}, {}, {}, {}, bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Vault, {}) })
     }
 
     @Test fun security() = snap("security") {
-        SecurityDashboardScreen(emptyList(), { emptyList() }, {})
+        SecurityDashboardScreen(emptyList(), { emptyList() }, {}, bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Audit, {}) })
     }
 
     @Test fun generator() = snap("generator") {
-        PasswordGeneratorScreen()
+        PasswordGeneratorScreen(bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Generate, {}) })
     }
 
     @Test fun editor() = snap("editor") {
@@ -111,7 +111,8 @@ class UiStressSnapshotTest {
             onUpdateAutoLock = {}, onUpdateBiometric = {}, onSetAutofillArmed = {},
             onCreateFolder = {}, onDeleteFolder = {}, onCreateTag = {}, onDeleteTag = {},
             onNavigateBackup = {},
-            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {}
+            onNavigatePrivacyProof = {}, onNavigateAddPaymentCard = {}, onNavigateAddIdentity = {},
+            bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Settings, {}) }
         )
     }
 
