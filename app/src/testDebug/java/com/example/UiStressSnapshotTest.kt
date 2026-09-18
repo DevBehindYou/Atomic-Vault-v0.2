@@ -117,17 +117,38 @@ class UiStressSnapshotTest {
 
     @Test fun settings() = snap("settings", settingsContent())
 
-    @Test
-    fun dialog_new_folder() {
-        show(content = settingsContent())
-        composeTestRule.onNode(hasTestTag("add_folder_button")).performScrollTo().performClick()
-        captureScreenRoboImage(filePath = "build/ui-snapshots/stress_dialog_new_folder.png")
+    // Dialog windows are not part of the root capture, so the sheet is laid
+    // out directly over a scrim (AtomicDialogPanel is the dialog minus its window).
+    private fun dialogOnScrim(content: @Composable () -> Unit): @Composable () -> Unit = {
+        Box(
+            Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f)),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) { content() }
     }
 
-    @Test
-    fun dialog_keyboard_disclosure() {
-        show(content = settingsContent())
-        composeTestRule.onNodeWithTag("open_keyboard_settings_button").performScrollTo().performClick()
-        captureScreenRoboImage(filePath = "build/ui-snapshots/stress_dialog_keyboard_disclosure.png")
-    }
+    @Test fun dialog_input() = snap("dialog_input", dialogOnScrim {
+        com.example.ui.components.AtomicDialogPanel(
+            title = "New folder", confirmLabel = "Create", onConfirm = {}, onDismiss = {}
+        ) {
+            com.example.ui.components.AtomicTextField(value = "", onValueChange = {}, placeholder = "Folder name")
+        }
+    })
+
+    @Test fun dialog_disclosure() = snap("dialog_disclosure", dialogOnScrim {
+        com.example.ui.components.AtomicDialogPanel(
+            title = "Before you enable this",
+            message = "While it is your active keyboard, Atomic Keyboard can see what you type. It never uploads or " +
+                "stores ordinary keystrokes, and the app has no internet permission at all. It only saves something " +
+                "when you explicitly save it to AtomicVault.",
+            confirmLabel = "Continue", dismissLabel = "Keep default keyboard", onConfirm = {}, onDismiss = {}
+        )
+    })
+
+    @Test fun dialog_destructive() = snap("dialog_destructive", dialogOnScrim {
+        com.example.ui.components.AtomicDialogPanel(
+            title = "Delete folder",
+            message = "Delete \"Work\"? Credentials inside will be moved to unassigned.",
+            confirmLabel = "Delete", isDestructive = true, onConfirm = {}, onDismiss = {}
+        )
+    })
 }

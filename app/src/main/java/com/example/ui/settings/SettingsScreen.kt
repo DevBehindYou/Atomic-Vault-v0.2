@@ -105,131 +105,83 @@ fun SettingsScreen(
     // toggle that is on but cannot unlock anything.
     val biometricEnabled = uiState.biometricArmed
 
-    // New Folder Dialog
     if (showNewFolderDialog) {
-        AlertDialog(
-            onDismissRequest = { showNewFolderDialog = false },
-            title = { Text("New Folder", fontWeight = AtomicFontWeight.bold) },
-            text = {
-                AtomicTextField(
-                    value = newFolderName,
-                    onValueChange = { newFolderName = it },
-                    placeholder = "Folder name",
-                    singleLine = true,
-                    testTag = "new_folder_name_input"
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (newFolderName.isNotBlank()) {
-                            onCreateFolder(newFolderName.trim())
-                            newFolderName = ""
-                            showNewFolderDialog = false
-                        }
-                    },
-                    enabled = newFolderName.isNotBlank(),
-                    modifier = Modifier.testTag("create_folder_confirm_button")
-                ) {
-                    Text("Create", color = AtomicColors.Accent, fontWeight = AtomicFontWeight.bold)
+        AtomicDialog(
+            title = "New folder",
+            confirmLabel = "Create",
+            confirmEnabled = newFolderName.isNotBlank(),
+            confirmTestTag = "create_folder_confirm_button",
+            onConfirm = {
+                if (newFolderName.isNotBlank()) {
+                    onCreateFolder(newFolderName.trim())
+                    newFolderName = ""
+                    showNewFolderDialog = false
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showNewFolderDialog = false }) {
-                    Text("Cancel", color = AtomicColors.TextMuted)
-                }
-            }
+            onDismiss = { showNewFolderDialog = false }
+        ) {
+            AtomicTextField(
+                value = newFolderName,
+                onValueChange = { newFolderName = it },
+                placeholder = "Folder name",
+                singleLine = true,
+                testTag = "new_folder_name_input"
+            )
+        }
+    }
+
+    folderToDelete?.let { folder ->
+        AtomicDialog(
+            title = "Delete folder",
+            message = "Delete \"${folder.name}\"? Credentials inside will be moved to unassigned.",
+            confirmLabel = "Delete",
+            isDestructive = true,
+            confirmTestTag = "delete_folder_confirm_button",
+            onConfirm = {
+                onDeleteFolder(folder.id)
+                folderToDelete = null
+            },
+            onDismiss = { folderToDelete = null }
         )
     }
 
-    // Delete Folder Confirm Dialog
-    if (folderToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { folderToDelete = null },
-            title = { Text("Delete Folder", fontWeight = AtomicFontWeight.bold) },
-            text = {
-                Text("Delete \"${folderToDelete?.name}\"? Credentials inside will be moved to unassigned.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        folderToDelete?.let { onDeleteFolder(it.id) }
-                        folderToDelete = null
-                    },
-                    modifier = Modifier.testTag("delete_folder_confirm_button")
-                ) {
-                    Text("Delete", color = AtomicColors.Danger, fontWeight = AtomicFontWeight.bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { folderToDelete = null }) {
-                    Text("Cancel", color = AtomicColors.TextMuted)
-                }
-            }
-        )
-    }
-
-    // New Tag Dialog
     if (showNewTagDialog) {
-        AlertDialog(
-            onDismissRequest = { showNewTagDialog = false },
-            title = { Text("New Tag", fontWeight = AtomicFontWeight.bold) },
-            text = {
-                AtomicTextField(
-                    value = newTagName,
-                    onValueChange = { newTagName = it },
-                    placeholder = "e.g. Work, Personal, Social",
-                    singleLine = true,
-                    testTag = "new_tag_name_input"
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (newTagName.isNotBlank()) {
-                            onCreateTag(newTagName.trim())
-                            newTagName = ""
-                            showNewTagDialog = false
-                        }
-                    },
-                    enabled = newTagName.isNotBlank(),
-                    modifier = Modifier.testTag("create_tag_confirm_button")
-                ) {
-                    Text("Create", color = AtomicColors.Accent, fontWeight = AtomicFontWeight.bold)
+        AtomicDialog(
+            title = "New tag",
+            confirmLabel = "Create",
+            confirmEnabled = newTagName.isNotBlank(),
+            confirmTestTag = "create_tag_confirm_button",
+            onConfirm = {
+                if (newTagName.isNotBlank()) {
+                    onCreateTag(newTagName.trim())
+                    newTagName = ""
+                    showNewTagDialog = false
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showNewTagDialog = false }) {
-                    Text("Cancel", color = AtomicColors.TextMuted)
-                }
-            }
-        )
+            onDismiss = { showNewTagDialog = false }
+        ) {
+            AtomicTextField(
+                value = newTagName,
+                onValueChange = { newTagName = it },
+                placeholder = "e.g. Work, Personal, Social",
+                singleLine = true,
+                testTag = "new_tag_name_input"
+            )
+        }
     }
 
-    // Delete Tag Confirm Dialog
-    if (tagToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { tagToDelete = null },
-            title = { Text("Delete Tag", fontWeight = AtomicFontWeight.bold) },
-            text = {
-                Text("Delete \"${tagToDelete?.name}\"? It will be removed from every credential it's on -- the credentials themselves are not affected.")
+    tagToDelete?.let { tag ->
+        AtomicDialog(
+            title = "Delete tag",
+            message = "Delete \"${tag.name}\"? It is removed from every credential it is on. The credentials themselves are not deleted.",
+            confirmLabel = "Delete",
+            isDestructive = true,
+            confirmTestTag = "delete_tag_confirm_button",
+            onConfirm = {
+                onDeleteTag(tag.id)
+                tagToDelete = null
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        tagToDelete?.let { onDeleteTag(it.id) }
-                        tagToDelete = null
-                    },
-                    modifier = Modifier.testTag("delete_tag_confirm_button")
-                ) {
-                    Text("Delete", color = AtomicColors.Danger, fontWeight = AtomicFontWeight.bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { tagToDelete = null }) {
-                    Text("Cancel", color = AtomicColors.TextMuted)
-                }
-            }
+            onDismiss = { tagToDelete = null }
         )
     }
 
@@ -414,7 +366,8 @@ fun SettingsScreen(
                                 }
                             },
                             modifier = Modifier.testTag("open_system_autofill_settings_button"),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                            shape = androidx.compose.ui.graphics.RectangleShape
                         ) {
                             Text(
                                 text = "Open system autofill settings →",
@@ -475,7 +428,8 @@ fun SettingsScreen(
                             }
                         },
                         modifier = Modifier.testTag("open_keyboard_settings_button"),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                        shape = androidx.compose.ui.graphics.RectangleShape
                     ) {
                         Text(
                             text = if (isKeyboardEnabled) "Select Atomic Keyboard →" else "Enable Atomic Keyboard →",
@@ -571,7 +525,8 @@ fun SettingsScreen(
                     TextButton(
                         onClick = { showNewFolderDialog = true },
                         modifier = Modifier.testTag("add_folder_button"),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                        shape = androidx.compose.ui.graphics.RectangleShape
                     ) {
                         Text(
                             text = "+ New folder",
@@ -641,7 +596,8 @@ fun SettingsScreen(
                     TextButton(
                         onClick = { showNewTagDialog = true },
                         modifier = Modifier.testTag("add_tag_button"),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                        shape = androidx.compose.ui.graphics.RectangleShape
                     ) {
                         Text(
                             text = "+ New tag",

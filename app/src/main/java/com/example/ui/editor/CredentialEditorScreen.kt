@@ -73,6 +73,7 @@ import com.example.password.PasswordGenerator
 import com.example.ui.components.AtomicDestructiveButton
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicSwitch
+import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.EntropyMeter
 import com.example.ui.components.FilterChipPill
@@ -141,41 +142,17 @@ fun CredentialEditorScreen(
     }
 
     if (showDeleteConfirmDialog && itemId != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
-            title = {
-                Text(
-                    text = "Delete credential",
-                    fontWeight = AtomicFontWeight.bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+        AtomicDialog(
+            title = "Delete credential",
+            message = "This cannot be undone.",
+            confirmLabel = "Delete",
+            isDestructive = true,
+            confirmTestTag = "confirm_delete_dialog_button",
+            onConfirm = {
+                showDeleteConfirmDialog = false
+                onDelete(itemId)
             },
-            text = {
-                Text(
-                    text = "This cannot be undone.",
-                    color = AtomicColors.TextMuted
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteConfirmDialog = false
-                        onDelete(itemId)
-                    },
-                    modifier = Modifier.testTag("confirm_delete_dialog_button")
-                ) {
-                    Text(
-                        text = "Delete",
-                        color = AtomicColors.Danger,
-                        fontWeight = AtomicFontWeight.bold
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel", color = AtomicColors.TextMuted)
-                }
-            }
+            onDismiss = { showDeleteConfirmDialog = false }
         )
     }
 
@@ -333,7 +310,8 @@ fun CredentialEditorScreen(
                 TextButton(
                     onClick = { showGenerator = !showGenerator },
                     modifier = Modifier.testTag("toggle_inline_generator_button"),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                    shape = androidx.compose.ui.graphics.RectangleShape
                 ) {
                     Text(
                         text = if (showGenerator) "Hide generator" else "Generate password",
@@ -472,7 +450,8 @@ fun CredentialEditorScreen(
                     )
                 },
                 modifier = Modifier.testTag("add_custom_field_button"),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                shape = androidx.compose.ui.graphics.RectangleShape
             ) {
                 Text(
                     text = "+ Add custom field",

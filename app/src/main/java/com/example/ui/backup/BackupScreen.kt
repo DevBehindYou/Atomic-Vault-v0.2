@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.backup.BackupFile
+import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicOutlinedButton
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
@@ -96,45 +97,34 @@ fun BackupScreen(
     }
 
     if (showImportConfirmDialog && selectedFileUri != null) {
-        AlertDialog(
-            onDismissRequest = { showImportConfirmDialog = false },
-            title = { Text("Replace vault?", fontWeight = AtomicFontWeight.bold) },
-            text = {
-                Text("This replaces all current credentials with the backup contents. This cannot be undone.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showImportConfirmDialog = false
-                        val uri = selectedFileUri ?: return@TextButton
-                        importBusy = true
-                        importError = null
-                        try {
-                            val bytes = BackupFile.readBytesFromUri(context, uri)
-                            onImportBackup(bytes, importPassphrase) { result ->
-                                importBusy = false
-                                result.onSuccess { count ->
-                                    Toast.makeText(context, "Successfully restored $count credentials", Toast.LENGTH_LONG).show()
-                                    onBack()
-                                }.onFailure { e ->
-                                    importError = e.message ?: "Failed to import backup"
-                                }
-                            }
-                        } catch (e: Exception) {
-                            importBusy = false
-                            importError = "Could not read file: ${e.message}"
+        AtomicDialog(
+            title = "Replace vault?",
+            message = "This replaces all current credentials with the backup contents. This cannot be undone.",
+            confirmLabel = "Replace",
+            isDestructive = true,
+            confirmTestTag = "confirm_import_replace_button",
+            onConfirm = {
+                showImportConfirmDialog = false
+                val uri = selectedFileUri ?: return@AtomicDialog
+                importBusy = true
+                importError = null
+                try {
+                    val bytes = BackupFile.readBytesFromUri(context, uri)
+                    onImportBackup(bytes, importPassphrase) { result ->
+                        importBusy = false
+                        result.onSuccess { count ->
+                            Toast.makeText(context, "Successfully restored $count credentials", Toast.LENGTH_LONG).show()
+                            onBack()
+                        }.onFailure { e ->
+                            importError = e.message ?: "Failed to import backup"
                         }
-                    },
-                    modifier = Modifier.testTag("confirm_import_replace_button")
-                ) {
-                    Text("Replace", color = AtomicColors.Danger, fontWeight = AtomicFontWeight.bold)
+                    }
+                } catch (e: Exception) {
+                    importBusy = false
+                    importError = "Could not read file: ${e.message}"
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showImportConfirmDialog = false }) {
-                    Text("Cancel", color = AtomicColors.TextMuted)
-                }
-            }
+            onDismiss = { showImportConfirmDialog = false }
         )
     }
 
