@@ -75,6 +75,9 @@ import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicSwitch
 import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicTextField
+import com.example.ui.components.AtomicTopBar
+import com.example.ui.components.GlassVariant
+import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.components.EntropyMeter
 import com.example.ui.components.FilterChipPill
 import com.example.ui.components.SectionLabel
@@ -170,30 +173,11 @@ fun CredentialEditorScreen(
             }
         },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (isEditMode) "Edit Credential" else "New Credential",
-                        fontWeight = AtomicFontWeight.bold,
-                        fontSize = AtomicFontSize.heading
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("editor_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
+            AtomicTopBar(
+                title = if (isEditMode) "Edit credential" else "New credential",
+                caption = "Encrypted on this device",
+                onBack = onBack,
+                backTestTag = "editor_back_button"
             )
         }
     ) { innerPadding ->
@@ -204,221 +188,240 @@ fun CredentialEditorScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.sm)
         ) {
-            // Title (Required)
-            AtomicTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = "Title *",
-                placeholder = "e.g. Google, GitHub, Work VPN",
-                singleLine = true,
-                testTag = "editor_title_input"
-            )
+            LiquidGlassSurface(
+                modifier = Modifier.fillMaxWidth(),
+                variant = GlassVariant.Card,
+                contentPadding = AtomicSpacing.lg
+            ) {
+                Column {
+                    // Title (Required)
+                    AtomicTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = "Title *",
+                        placeholder = "e.g. Google, GitHub, Work VPN",
+                        singleLine = true,
+                        testTag = "editor_title_input"
+                    )
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.md))
+                    Spacer(modifier = Modifier.height(AtomicSpacing.md))
 
-            // Username
-            AtomicTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = "Username",
-                placeholder = "Email or username",
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
-                trailingIcon = if (username.isNotEmpty()) {
-                    {
-                        IconButton(
-                            onClick = {
-                                ClipboardHelper.copySensitive(context, "Username", username)
-                                showCopiedSnackbar("Username")
-                            },
-                            modifier = Modifier.testTag("editor_copy_username_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = "Copy username",
-                                tint = AtomicColors.Accent
-                            )
-                        }
-                    }
-                } else null,
-                testTag = "editor_username_input"
-            )
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
-            // Password with inline Show/Hide and Copy buttons
-            Column {
-                Text(
-                    text = "Password",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = AtomicFontWeight.medium,
-                    modifier = Modifier.padding(bottom = AtomicSpacing.xs)
-                )
-
-                AtomicTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    placeholder = "Password",
-                    isPassword = !passwordVisible,
-                    singleLine = true,
-                    trailingIcon = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (password.isNotEmpty()) {
+                    // Username
+                    AtomicTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = "Username",
+                        placeholder = "Email or username",
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
+                        trailingIcon = if (username.isNotEmpty()) {
+                            {
                                 IconButton(
                                     onClick = {
-                                        ClipboardHelper.copySensitive(context, "Password", password)
-                                        showCopiedSnackbar("Password")
+                                        ClipboardHelper.copySensitive(context, "Username", username)
+                                        showCopiedSnackbar("Username")
                                     },
-                                    modifier = Modifier.testTag("editor_copy_password_button")
+                                    modifier = Modifier.testTag("editor_copy_username_button")
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ContentCopy,
-                                        contentDescription = "Copy password",
+                                        contentDescription = "Copy username",
                                         tint = AtomicColors.Accent
                                     )
                                 }
                             }
-                            IconButton(
-                                onClick = { passwordVisible = !passwordVisible }
-                            ) {
-                                Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                                    tint = AtomicColors.TextMuted
+                        } else null,
+                        testTag = "editor_username_input"
+                    )
+
+                    Spacer(modifier = Modifier.height(AtomicSpacing.md))
+
+                    // Password with inline Show/Hide and Copy buttons
+                    Column {
+                        Text(
+                            text = "Password",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = AtomicFontWeight.medium,
+                            modifier = Modifier.padding(bottom = AtomicSpacing.xs)
+                        )
+
+                        AtomicTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            placeholder = "Password",
+                            isPassword = !passwordVisible,
+                            singleLine = true,
+                            trailingIcon = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (password.isNotEmpty()) {
+                                        IconButton(
+                                            onClick = {
+                                                ClipboardHelper.copySensitive(context, "Password", password)
+                                                showCopiedSnackbar("Password")
+                                            },
+                                            modifier = Modifier.testTag("editor_copy_password_button")
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ContentCopy,
+                                                contentDescription = "Copy password",
+                                                tint = AtomicColors.Accent
+                                            )
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = { passwordVisible = !passwordVisible }
+                                    ) {
+                                        Icon(
+                                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                            tint = AtomicColors.TextMuted
+                                        )
+                                    }
+                                }
+                            },
+                            testTag = "editor_password_input"
+                        )
+
+                        if (password.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(AtomicSpacing.xs))
+                            val entropyBits = remember(password) { PasswordAnalysis.estimateEntropyBits(password) }
+                            val strength = remember(entropyBits) { PasswordGenerator.strengthFromEntropy(entropyBits) }
+                            EntropyMeter(
+                                bits = entropyBits,
+                                strength = strength,
+                                modifier = Modifier.fillMaxWidth().testTag("editor_password_strength_meter")
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(AtomicSpacing.xs))
+
+                        // Toggle inline password generator
+                        TextButton(
+                            onClick = { showGenerator = !showGenerator },
+                            modifier = Modifier.testTag("toggle_inline_generator_button"),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                            shape = androidx.compose.ui.graphics.RectangleShape
+                        ) {
+                            Text(
+                                text = if (showGenerator) "Hide generator" else "Generate password",
+                                color = AtomicColors.Accent,
+                                fontSize = AtomicFontSize.label,
+                                fontWeight = AtomicFontWeight.medium
+                            )
+                        }
+
+                        // Inline Password Generator Panel
+                        AnimatedVisibility(
+                            visible = showGenerator,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically()
+                        ) {
+                            PasswordGeneratorPanel(
+                                onUsePassword = { generated ->
+                                    password = generated
+                                    showGenerator = false
+                                },
+                                modifier = Modifier.padding(vertical = AtomicSpacing.sm)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+
+                    // URL / Match Pattern
+                    AtomicTextField(
+                        value = uriMatchPattern,
+                        onValueChange = { uriMatchPattern = it },
+                        label = "Website / App Match Pattern",
+                        placeholder = "e.g. github.com, com.example.app",
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
+                        testTag = "editor_url_input"
+                    )
+
+                    Spacer(modifier = Modifier.height(AtomicSpacing.md))
+
+                    // Notes
+                    AtomicTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = "Notes",
+                        placeholder = "Additional secure notes, recovery codes...",
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 6,
+                        testTag = "editor_notes_input"
+                    )
+                }
+            }
+
+            if (folders.isNotEmpty() || allTags.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(AtomicSpacing.md))
+                LiquidGlassSurface(
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = GlassVariant.Card,
+                    contentPadding = AtomicSpacing.lg
+                ) {
+                    Column {
+                    // Folder selection (if folders exist)
+                    if (folders.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+                        SectionLabel(text = "Folder")
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
+                        ) {
+                            FilterChipPill(
+                                label = "None",
+                                selected = selectedFolderId == null,
+                                onClick = { selectedFolderId = null },
+                                testTag = "editor_folder_none"
+                            )
+
+                            for (folder in folders) {
+                                FilterChipPill(
+                                    label = folder.name,
+                                    selected = selectedFolderId == folder.id,
+                                    onClick = { selectedFolderId = folder.id },
+                                    testTag = "editor_folder_${folder.id}"
                                 )
                             }
                         }
-                    },
-                    testTag = "editor_password_input"
-                )
-
-                if (password.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(AtomicSpacing.xs))
-                    val entropyBits = remember(password) { PasswordAnalysis.estimateEntropyBits(password) }
-                    val strength = remember(entropyBits) { PasswordGenerator.strengthFromEntropy(entropyBits) }
-                    EntropyMeter(
-                        bits = entropyBits,
-                        strength = strength,
-                        modifier = Modifier.fillMaxWidth().testTag("editor_password_strength_meter")
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(AtomicSpacing.xs))
-
-                // Toggle inline password generator
-                TextButton(
-                    onClick = { showGenerator = !showGenerator },
-                    modifier = Modifier.testTag("toggle_inline_generator_button"),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-                    shape = androidx.compose.ui.graphics.RectangleShape
-                ) {
-                    Text(
-                        text = if (showGenerator) "Hide generator" else "Generate password",
-                        color = AtomicColors.Accent,
-                        fontSize = AtomicFontSize.label,
-                        fontWeight = AtomicFontWeight.medium
-                    )
-                }
-
-                // Inline Password Generator Panel
-                AnimatedVisibility(
-                    visible = showGenerator,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    PasswordGeneratorPanel(
-                        onUsePassword = { generated ->
-                            password = generated
-                            showGenerator = false
-                        },
-                        modifier = Modifier.padding(vertical = AtomicSpacing.sm)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-
-            // URL / Match Pattern
-            AtomicTextField(
-                value = uriMatchPattern,
-                onValueChange = { uriMatchPattern = it },
-                label = "Website / App Match Pattern",
-                placeholder = "e.g. github.com, com.example.app",
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
-                testTag = "editor_url_input"
-            )
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
-            // Notes
-            AtomicTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = "Notes",
-                placeholder = "Additional secure notes, recovery codes...",
-                singleLine = false,
-                minLines = 3,
-                maxLines = 6,
-                testTag = "editor_notes_input"
-            )
-
-            // Folder selection (if folders exist)
-            if (folders.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                SectionLabel(text = "Folder")
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
-                ) {
-                    FilterChipPill(
-                        label = "None",
-                        selected = selectedFolderId == null,
-                        onClick = { selectedFolderId = null },
-                        testTag = "editor_folder_none"
-                    )
-
-                    for (folder in folders) {
-                        FilterChipPill(
-                            label = folder.name,
-                            selected = selectedFolderId == folder.id,
-                            onClick = { selectedFolderId = folder.id },
-                            testTag = "editor_folder_${folder.id}"
-                        )
                     }
-                }
-            }
 
-            // Tag selection (multi-select) -- a separate, second
-            // organizing system alongside folders. New tags are created
-            // from Settings, not here, matching how folders work.
-            if (allTags.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                SectionLabel(text = "Tags")
+                    // Tag selection (multi-select) -- a separate, second
+                    // organizing system alongside folders. New tags are created
+                    // from Settings, not here, matching how folders work.
+                    if (allTags.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+                        SectionLabel(text = "Tags")
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
-                ) {
-                    for (tag in allTags) {
-                        FilterChipPill(
-                            label = tag.name,
-                            selected = selectedTagIds.contains(tag.id),
-                            onClick = {
-                                if (selectedTagIds.contains(tag.id)) {
-                                    selectedTagIds.remove(tag.id)
-                                } else {
-                                    selectedTagIds.add(tag.id)
-                                }
-                            },
-                            testTag = "editor_tag_${tag.id}"
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
+                        ) {
+                            for (tag in allTags) {
+                                FilterChipPill(
+                                    label = tag.name,
+                                    selected = selectedTagIds.contains(tag.id),
+                                    onClick = {
+                                        if (selectedTagIds.contains(tag.id)) {
+                                            selectedTagIds.remove(tag.id)
+                                        } else {
+                                            selectedTagIds.add(tag.id)
+                                        }
+                                    },
+                                    testTag = "editor_tag_${tag.id}"
+                                )
+                            }
+                        }
+                    }
                     }
                 }
             }
@@ -506,15 +509,12 @@ private fun CustomFieldEditorRow(
     onUpdate: (CustomFieldPlain) -> Unit,
     onRemove: () -> Unit
 ) {
-    Card(
+    LiquidGlassSurface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(AtomicRadius.md),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
-        )
+        variant = GlassVariant.Card,
+        contentPadding = AtomicSpacing.md
     ) {
-        Column(modifier = Modifier.padding(AtomicSpacing.md)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -528,18 +528,9 @@ private fun CustomFieldEditorRow(
                     singleLine = true
                 )
 
-                AtomicTextField(
-                    value = field.value,
-                    onValueChange = { onUpdate(field.copy(value = it)) },
-                    placeholder = "Value",
-                    isPassword = field.isSensitive,
-                    modifier = Modifier.weight(1.4f),
-                    singleLine = true
-                )
-
                 IconButton(
                     onClick = onRemove,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
@@ -549,32 +540,40 @@ private fun CustomFieldEditorRow(
                 }
             }
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.xs))
+            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+
+            AtomicTextField(
+                value = field.value,
+                onValueChange = { onUpdate(field.copy(value = it)) },
+                placeholder = "Value",
+                isPassword = field.isSensitive,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
             ) {
-                Text(
-                    text = if (field.isSensitive) "Masked (Sensitive)" else "Plaintext",
-                    fontSize = AtomicFontSize.micro,
-                    color = AtomicColors.TextMuted
+                Icon(
+                    imageVector = if (field.isSensitive) Icons.Default.Lock else Icons.Default.LockOpen,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = if (field.isSensitive) AtomicColors.Success else AtomicColors.TextMuted
                 )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (field.isSensitive) Icons.Default.Lock else Icons.Default.LockOpen,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = if (field.isSensitive) AtomicColors.Accent else AtomicColors.TextMuted
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    AtomicSwitch(
-                        checked = field.isSensitive,
-                        onCheckedChange = { onUpdate(field.copy(isSensitive = it)) }
-                    )
-                }
+                Text(
+                    text = if (field.isSensitive) "Masked (sensitive)" else "Plain text",
+                    fontSize = AtomicFontSize.caption,
+                    color = AtomicColors.TextSecondary,
+                    modifier = Modifier.weight(1f)
+                )
+                AtomicSwitch(
+                    checked = field.isSensitive,
+                    onCheckedChange = { onUpdate(field.copy(isSensitive = it)) }
+                )
             }
         }
     }

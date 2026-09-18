@@ -26,6 +26,7 @@ import com.example.trust.PrivacyCheck
 import com.example.ui.components.GlassVariant
 import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.components.SectionLabel
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
@@ -54,14 +55,10 @@ fun PrivacyProofScreen(
         modifier = modifier,
         containerColor = AtomicColors.Background,
         topBar = {
-            TopAppBar(
-                title = { Text("Privacy Proof", color = AtomicColors.Foreground) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AtomicColors.Foreground)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AtomicColors.Background)
+            AtomicTopBar(
+                title = "Privacy proof",
+                caption = "Checked, not just claimed",
+                onBack = onBack
             )
         }
     ) { padding ->

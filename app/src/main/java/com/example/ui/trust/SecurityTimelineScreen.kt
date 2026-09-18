@@ -28,6 +28,7 @@ import com.example.trust.TrustLedgerEntry
 import com.example.ui.components.GlassVariant
 import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.components.SectionLabel
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
@@ -92,14 +93,10 @@ fun SecurityTimelineScreen(
         modifier = modifier,
         containerColor = AtomicColors.Background,
         topBar = {
-            TopAppBar(
-                title = { Text("Security Event Timeline", color = AtomicColors.Foreground) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AtomicColors.Foreground)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AtomicColors.Background)
+            AtomicTopBar(
+                title = "Security timeline",
+                caption = "Tamper-evident event log",
+                onBack = onBack
             )
         }
     ) { padding ->

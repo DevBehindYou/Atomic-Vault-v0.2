@@ -56,6 +56,7 @@ import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicOutlinedButton
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
@@ -132,30 +133,11 @@ fun BackupScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Backup & Restore",
-                        fontWeight = AtomicFontWeight.bold,
-                        fontSize = AtomicFontSize.heading
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("backup_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
+            AtomicTopBar(
+                title = "Backup & restore",
+                caption = "Encrypted export & import",
+                onBack = onBack,
+                backTestTag = "backup_back_button"
             )
         }
     ) { innerPadding ->

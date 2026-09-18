@@ -30,6 +30,7 @@ import com.example.database.CustomFieldPlain
 import com.example.database.VaultItemType
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicSpacing
 
@@ -67,14 +68,10 @@ fun IdentityEditorScreen(
         modifier = modifier,
         containerColor = AtomicColors.Background,
         topBar = {
-            TopAppBar(
-                title = { Text(if (existing != null) "Edit Identity" else "Add Identity", color = AtomicColors.Foreground) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AtomicColors.Foreground)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AtomicColors.Background)
+            AtomicTopBar(
+                title = if (existing != null) "Edit identity" else "Add identity",
+                caption = "Encrypted on this device",
+                onBack = onBack
             )
         }
     ) { padding ->
