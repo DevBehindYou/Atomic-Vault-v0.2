@@ -82,3 +82,46 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 7
+
+  # Runs the built debug APK on an emulator: it must launch, the Atomic keyboard
+  # must register, bind and draw when a field is focused, and nothing may crash.
+  # Unit tests and Robolectric renders cannot see a startup or service crash.
+  emulator:
+    name: Emulator launch & keyboard check
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: AtomicVault-Debug-APK-${{ github.run_number }}
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Launch, select the Atomic keyboard, focus a field
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: bash .github/scripts/emulator_ime_check.sh apk/app-debug.apk
+
+      - name: Upload emulator screenshots and logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Emulator-${{ github.run_number }}
+          path: emulator-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
