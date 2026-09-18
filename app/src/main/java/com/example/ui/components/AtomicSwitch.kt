@@ -41,9 +41,10 @@ fun AtomicSwitch(
         progress.animateTo(if (checked) 1f else 0f, AtomicMotion.GlassSpring)
     }
 
-    val trackFill = lerp(AtomicColors.Hairline, AtomicColors.Foreground.copy(alpha = 0.9f), progress.value)
-    val trackBorder = lerp(AtomicColors.BorderSubtle, AtomicColors.GlassHighlight, progress.value)
-    val thumbColor = lerp(AtomicColors.TextMuted, AtomicColors.Background, progress.value)
+    // Off: neutral track, muted thumb. On: emerald track, dark thumb (design reference).
+    val trackFill = lerp(AtomicColors.SurfaceStrong, AtomicColors.Success, progress.value)
+    val trackBorder = lerp(AtomicColors.GlassBorder, AtomicColors.Success, progress.value)
+    val thumbColor = lerp(AtomicColors.TextMuted, AtomicColors.OnSuccess, progress.value)
 
     Box(
         modifier = modifier
@@ -70,7 +71,6 @@ fun AtomicSwitch(
                 .width(24.dp)
                 .clip(RoundedCornerShape(50))
                 .background(thumbColor)
-                .border(1.dp, AtomicColors.GlassBorder, RoundedCornerShape(50))
         )
     }
 }

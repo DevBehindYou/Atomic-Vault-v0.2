@@ -7,6 +7,22 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardReturn
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,6 +57,7 @@ import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
+import com.example.ui.theme.AtomicRadius
 import com.example.ui.theme.AtomicSpacing
 import com.example.ui.theme.AtomicVaultTheme
 import kotlinx.coroutines.CoroutineScope
@@ -105,6 +122,7 @@ class AtomicVaultInputMethodService :
     // Read by the hosted Composable; written from onStartInputView().
     private var suggestions by mutableStateOf<List<CredentialMatcher.MatchCandidate>>(emptyList())
     private var shieldActive by mutableStateOf(false)
+    private var enterAction by mutableStateOf(EditorInfo.IME_ACTION_NONE)
     private var currentPackageName: String? = null
 
     override fun onCreate() {
@@ -132,6 +150,12 @@ class AtomicVaultInputMethodService :
         view.setContent {
             AtomicVaultTheme {
                 Column(modifier = Modifier.fillMaxWidth().background(AtomicColors.Background)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(AtomicColors.BorderSubtle)
+                    )
                     if (shieldActive) {
                         ShieldBanner()
                     }
@@ -146,7 +170,9 @@ class AtomicVaultInputMethodService :
                         // Key events (not deleteSurroundingText) so a selection is
                         // deleted as a whole and surrogate pairs are not split.
                         onBackspace = { sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL) },
-                        onEnter = { handleEnter() }
+                        onEnter = { handleEnter() },
+                        enterIcon = enterIconFor(enterAction),
+                        enterDescription = enterLabelFor(enterAction)
                     )
                 }
             }
@@ -164,6 +190,11 @@ class AtomicVaultInputMethodService :
             lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
         }
         currentPackageName = info?.packageName
+        enterAction = if (info != null && (info.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION) == 0) {
+            info.imeOptions and EditorInfo.IME_MASK_ACTION
+        } else {
+            EditorInfo.IME_ACTION_NONE
+        }
         shieldActive = isSensitiveField(info)
         refreshSuggestions()
     }
@@ -280,19 +311,53 @@ class AtomicVaultInputMethodService :
     }
 }
 
+private fun enterIconFor(action: Int): ImageVector = when (action) {
+    EditorInfo.IME_ACTION_SEARCH -> Icons.Filled.Search
+    EditorInfo.IME_ACTION_SEND -> Icons.AutoMirrored.Filled.Send
+    EditorInfo.IME_ACTION_GO, EditorInfo.IME_ACTION_NEXT -> Icons.AutoMirrored.Filled.ArrowForward
+    EditorInfo.IME_ACTION_DONE -> Icons.Filled.Check
+    else -> Icons.AutoMirrored.Filled.KeyboardReturn
+}
+
+private fun enterLabelFor(action: Int): String = when (action) {
+    EditorInfo.IME_ACTION_SEARCH -> "Search"
+    EditorInfo.IME_ACTION_SEND -> "Send"
+    EditorInfo.IME_ACTION_GO -> "Go"
+    EditorInfo.IME_ACTION_NEXT -> "Next"
+    EditorInfo.IME_ACTION_DONE -> "Done"
+    else -> "Enter"
+}
+
+/** Shown only while a password/PIN/OTP field is focused. */
 @androidx.compose.runtime.Composable
 private fun ShieldBanner() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = AtomicSpacing.sm, vertical = AtomicSpacing.xs),
-        horizontalArrangement = Arrangement.Center
+            .padding(horizontal = AtomicSpacing.sm, vertical = AtomicSpacing.xs)
+            .background(AtomicColors.GlassFill, RoundedCornerShape(AtomicRadius.lg))
+            .border(1.dp, AtomicColors.BorderSubtle, RoundedCornerShape(AtomicRadius.lg))
+            .padding(horizontal = AtomicSpacing.md, vertical = AtomicSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
     ) {
+        Icon(
+            imageVector = Icons.Filled.Shield,
+            contentDescription = null,
+            tint = AtomicColors.Success,
+            modifier = Modifier.size(16.dp)
+        )
         Text(
-            text = "\uD83D\uDEE1 ATOMIC SHIELD \u2014 private field",
-            color = AtomicColors.TextMuted,
+            text = "ATOMIC SHIELD",
+            color = AtomicColors.Foreground,
             fontSize = AtomicFontSize.micro,
-            fontWeight = AtomicFontWeight.medium
+            fontWeight = AtomicFontWeight.bold,
+            letterSpacing = 0.5.sp
+        )
+        Text(
+            text = "private field",
+            color = AtomicColors.TextSecondary,
+            fontSize = AtomicFontSize.micro
         )
     }
 }
@@ -311,6 +376,7 @@ private fun SuggestionStrip(
         items(suggestions) { candidate ->
             LiquidGlassSurface(
                 variant = GlassVariant.Pill,
+                shape = RoundedCornerShape(AtomicRadius.pill),
                 contentPadding = AtomicSpacing.sm,
                 onClick = { onSuggestionTap(candidate) }
             ) {

@@ -48,6 +48,20 @@ jobs:
         if: ${{ !cancelled() }}
         run: ./gradlew lintDebug --stacktrace
 
+      # Renders the real screens (UiSnapshotTest) to PNGs for visual review.
+      - name: Render UI snapshots
+        if: ${{ !cancelled() }}
+        run: ./gradlew recordRoborazziDebug --stacktrace
+
+      - name: Upload UI snapshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-UI-Snapshots-${{ github.run_number }}
+          path: app/build/ui-snapshots/*.png
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

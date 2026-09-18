@@ -111,7 +111,7 @@ fun AtomicTextField(
             visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
-            shape = RoundedCornerShape(AtomicRadius.md),
+            shape = RoundedCornerShape(AtomicRadius.lg),
             leadingIcon = leadingIcon,
             trailingIcon = {
                 if (isPassword) {
@@ -132,11 +132,13 @@ fun AtomicTextField(
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedBorderColor = AtomicColors.Accent,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedContainerColor = AtomicColors.FieldFill,
+                unfocusedContainerColor = AtomicColors.FieldFill,
+                errorContainerColor = AtomicColors.FieldFill,
+                focusedBorderColor = AtomicColors.Foreground.copy(alpha = 0.6f),
+                unfocusedBorderColor = AtomicColors.GlassBorder,
                 errorBorderColor = AtomicColors.Danger,
+                cursorColor = AtomicColors.Foreground,
                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface
             )
@@ -178,12 +180,12 @@ fun AtomicPrimaryButton(
             .defaultMinSize(minHeight = 48.dp)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         enabled = enabled && !busy,
-        shape = RoundedCornerShape(AtomicRadius.md),
+        shape = RoundedCornerShape(AtomicRadius.lg),
         colors = ButtonDefaults.buttonColors(
             containerColor = AtomicColors.Accent,
             contentColor = AtomicColors.AccentText,
-            disabledContainerColor = AtomicColors.Accent.copy(alpha = 0.45f),
-            disabledContentColor = AtomicColors.AccentText.copy(alpha = 0.8f)
+            disabledContainerColor = AtomicColors.Accent.copy(alpha = 0.3f),
+            disabledContentColor = AtomicColors.AccentText.copy(alpha = 0.7f)
         )
     ) {
         if (busy) {
@@ -216,19 +218,20 @@ fun AtomicOutlinedButton(
             .defaultMinSize(minHeight = 48.dp)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         enabled = enabled,
-        shape = RoundedCornerShape(AtomicRadius.md),
+        shape = RoundedCornerShape(AtomicRadius.lg),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = AtomicColors.Accent
+            containerColor = AtomicColors.GlassFill,
+            contentColor = AtomicColors.Foreground
         ),
         border = ButtonDefaults.outlinedButtonBorder.copy(
-            brush = androidx.compose.ui.graphics.SolidColor(AtomicColors.Accent)
+            brush = androidx.compose.ui.graphics.SolidColor(AtomicColors.GlassBorder)
         )
     ) {
         Text(
             text = text,
             fontSize = AtomicFontSize.body,
             fontWeight = AtomicFontWeight.medium,
-            color = AtomicColors.Accent
+            color = AtomicColors.Foreground
         )
     }
 }
@@ -248,8 +251,9 @@ fun AtomicDestructiveButton(
             .defaultMinSize(minHeight = 48.dp)
             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         enabled = enabled,
-        shape = RoundedCornerShape(AtomicRadius.md),
+        shape = RoundedCornerShape(AtomicRadius.lg),
         colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = AtomicColors.DangerLight,
             contentColor = AtomicColors.Danger
         ),
         border = ButtonDefaults.outlinedButtonBorder.copy(
@@ -330,9 +334,9 @@ fun IssueBadge(
     // Danger stays readable either way since it's a consistently deep,
     // saturated red in both palettes.
     val (label, bg, fg) = when (issue) {
-        PasswordIssue.REUSED -> Triple("Reused", AtomicColors.Danger, AtomicColors.Background)
-        PasswordIssue.WEAK -> Triple("Weak", AtomicColors.Warning, AtomicColors.Background)
-        PasswordIssue.EMPTY -> Triple("No password", AtomicColors.Info, AtomicColors.Background)
+        PasswordIssue.REUSED -> Triple("Reused", AtomicColors.DangerLight, AtomicColors.Danger)
+        PasswordIssue.WEAK -> Triple("Weak", AtomicColors.WarningLight, AtomicColors.Warning)
+        PasswordIssue.EMPTY -> Triple("No password", AtomicColors.BorderSubtle, AtomicColors.TextSecondary)
     }
 
     Box(
@@ -364,7 +368,7 @@ fun EntropyMeter(
         Strength.WEAK -> AtomicColors.Danger
         Strength.FAIR -> AtomicColors.Warning
         Strength.STRONG -> AtomicColors.Success
-        Strength.EXCELLENT -> AtomicColors.Accent
+        Strength.EXCELLENT -> AtomicColors.Success
     }
     val animatedColor by animateColorAsState(targetValue = color, label = "entropy_color")
 

@@ -28,6 +28,8 @@ object AtomicColors {
 
     var Surface by mutableStateOf(DarkPalette.glassFill)
     var SurfaceStrong by mutableStateOf(DarkPalette.surfaceStrong)
+    var FieldFill by mutableStateOf(DarkPalette.fieldFill)
+    var OnSuccess by mutableStateOf(DarkPalette.onSuccess)
     var Border by mutableStateOf(DarkPalette.glassBorder)
     var BorderSubtle by mutableStateOf(DarkPalette.borderSubtle)
     var BorderStrong by mutableStateOf(DarkPalette.glassBorder)
@@ -47,7 +49,7 @@ object AtomicColors {
     var InfoLight by mutableStateOf(DarkPalette.borderSubtle)
 
     var Cyan by mutableStateOf(DarkPalette.foreground)
-    var Emerald by mutableStateOf(DarkPalette.foreground)
+    var Emerald by mutableStateOf(DarkPalette.success)
     var Rose by mutableStateOf(DarkPalette.danger)
     var Indigo by mutableStateOf(DarkPalette.foreground)
     var Purple by mutableStateOf(DarkPalette.foreground)
@@ -91,6 +93,8 @@ object AtomicColors {
 
         Surface = p.glassFill
         SurfaceStrong = p.surfaceStrong
+        FieldFill = p.fieldFill
+        OnSuccess = p.onSuccess
         Border = p.glassBorder
         BorderSubtle = p.borderSubtle
         BorderStrong = p.glassBorder
@@ -110,7 +114,7 @@ object AtomicColors {
         InfoLight = p.borderSubtle
 
         Cyan = p.foreground
-        Emerald = p.foreground
+        Emerald = p.success
         Rose = p.danger
         Indigo = p.foreground
         Purple = p.foreground
@@ -160,6 +164,8 @@ private data class AtomicPalette(
     val glassBorder: Color,
     val glassHighlight: Color,
     val surfaceStrong: Color,
+    val fieldFill: Color,
+    val onSuccess: Color,
     val borderSubtle: Color,
     val textBody: Color,
     val textSecondary: Color,
@@ -173,36 +179,42 @@ private data class AtomicPalette(
     val accentPressed: Color
 )
 
+// Values are taken from the design reference screenshots
+// (atomicvault_design_system_reference): a flat #131313 canvas with opaque
+// stepped surfaces, not translucent white stacked on pure black. Opaque
+// fills keep nested cards/fields from compounding alpha into muddy greys.
 private val DarkPalette = AtomicPalette(
-    background = Color(0xFF000000),
+    background = Color(0xFF131313),
     foreground = Color(0xFFFFFFFF),
-    glassFill = Color(0x0FFFFFFF),
-    glassBorder = Color(0x40FFFFFF),
+    glassFill = Color(0xFF1B1B1B),
+    glassBorder = Color(0x26FFFFFF),
     glassHighlight = Color(0x99FFFFFF),
-    surfaceStrong = Color(0x1FFFFFFF),
+    surfaceStrong = Color(0xFF2A2A2A),
+    fieldFill = Color(0xFF202020),
+    onSuccess = Color(0xFF003824),
     borderSubtle = Color(0x1AFFFFFF),
     textBody = Color(0xFFCCCCCC),
     textSecondary = Color(0xFF999999),
     textMuted = Color(0xFF666666),
     danger = Color(0xFFF43F5E),
     dangerLight = Color(0x26F43F5E),
-    success = Color(0xFF10B981),
-    successLight = Color(0x2610B981),
+    success = Color(0xFF4EDEA3),
+    successLight = Color(0x264EDEA3),
     warning = Color(0xFFCCCCCC),
     warningLight = Color(0x1AFFFFFF),
     accentPressed = Color(0xFFCCCCCC)
 )
 
 private val LightPalette = AtomicPalette(
-    background = Color(0xFFFFFFFF),
+    background = Color(0xFFF6F6F6),
     foreground = Color(0xFF000000),
-    // Glass tokens invert TINT direction, not just alpha -- black-tinted
-    // translucency reads as "glass" against a light background the way
-    // white-tinted translucency does against black. See object doc comment.
-    glassFill = Color(0x0F000000),
-    glassBorder = Color(0x40000000),
+    // Opaque stepped greys, mirroring the dark palette's structure.
+    glassFill = Color(0xFFFFFFFF),
+    glassBorder = Color(0x26000000),
     glassHighlight = Color(0x99000000),
-    surfaceStrong = Color(0x1F000000),
+    surfaceStrong = Color(0xFFE6E6E6),
+    fieldFill = Color(0xFFEFEFEF),
+    onSuccess = Color(0xFFFFFFFF),
     borderSubtle = Color(0x1A000000),
     textBody = Color(0xFF333333),
     // Note the RELATIVE relationship is preserved, not just each value

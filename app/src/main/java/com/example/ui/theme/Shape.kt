@@ -8,6 +8,10 @@ object AtomicRadius {
     val sm = 6.dp
     val md = 8.dp
     val lg = 12.dp
+    /** Cards and grouped sections. */
+    val xl = 16.dp
+    /** Sheets and the keyboard chassis only. */
+    val sheet = 24.dp
     val pill = 999.dp
 }
 
