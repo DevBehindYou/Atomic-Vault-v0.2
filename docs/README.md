@@ -8,6 +8,7 @@
 | [TASKS.md](TASKS.md) | What is left, by priority, and what is waiting on the user |
 | [ROADMAP.md](ROADMAP.md) | Where the project goes next, and what it will not do |
 | [PHONE-TEST-CHECKLIST.md](PHONE-TEST-CHECKLIST.md) | What only a physical phone can verify |
+| [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md) | Keyboard removal, Gboard-grade Autofill, every open bug and performance fix, by phase, plus differentiators |
 
 Other files in the repo root that matter: `AUDIT-REPORT.md` (an earlier
 static-only audit; parts of it were wrong, see the change log) and
