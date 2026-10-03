@@ -159,6 +159,17 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
+// CI reads failures from the job log (artifacts are not always reachable), so
+// print each failing test with its full stack trace.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
 gradle.taskGraph.whenReady {
     val productionReleaseTasks = setOf(
         "assembleRelease",
