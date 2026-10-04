@@ -22,10 +22,10 @@ Goal set by the user:
 | 0. Baseline | Done | `049e85b` | Run #25 green (unit, lint, emulator) |
 | 1. Remove the Atomic keyboard | Done | `a6c645f` | Run #26 green (emulator: restart + unlock via system keyboard) |
 | 2. Data safety | Done | `c1bd5cc` | Run #27 green (unit, lint, emulator) |
-| 3. Gboard Autofill | Done in code | `84e4fdc` + lint fix `6067d63` | #28 failed on one lint error (fixed); see latest run |
-| 4. Performance + 2FA codes | Done in code | `d210431` | see latest run |
+| 3. Gboard Autofill | Done in code | `84e4fdc` + lint fix `6067d63` | #28 failed on one lint error (fixed); #30 green: emulator confirms AtomicVault is the active Autofill service. `3edf516` adds a tap on the suggestion to prove the unlock screen opens |
+| 4. Performance + 2FA codes | Done in code | `d210431` | Run #30 green (after #29 test-expectation fix `3cf6f99`) |
 | 5. Platform health | Partly: TOTP engine, Moshi codegen, dead backup branch closed. Open: SQLCipher artifact swap, SDK/AGP upgrade, `security-crypto` replacement, package rename | | |
-| 6. Differentiators | Phishing guard `744055c`, fill receipts `6067d63`, India identity fields `4fc26e1`. Open: offline breach check, change-password assistant, QR transfer, restore drill | | |
+| 6. Differentiators | Phishing guard `744055c`, fill receipts `6067d63`, India identity fields `4fc26e1`. change-password shortcut and backup check ("restore drill") done. Open: offline breach check (needs a dataset), QR transfer | | Run #30 green |
 
 Note on F11 (flaky test): run #23's failure did not reproduce in runs #24 and
 #25. Failing tests are now printed in the CI log, so the next occurrence will
