@@ -69,6 +69,20 @@ if len(nodes) >= n:
 PY
 }
 
+# nth_edit_bottom <n> -> "x bottom" of the nth (1-based) EditText
+nth_edit_bottom() {
+  python3 - "$OUT/ui.xml" "$1" <<'PY'
+import re, sys
+xml = open(sys.argv[1], encoding="utf-8").read()
+n = int(sys.argv[2])
+nodes = [m.group(0) for m in re.finditer(r'<node [^>]*class="android\.widget\.EditText"[^>]*>', xml)]
+if len(nodes) >= n:
+    b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', nodes[n - 1])
+    x1, y1, x2, y2 = map(int, b.groups())
+    print((x1 + x2) // 2, y2)
+PY
+}
+
 fail() {
   echo "::error::$1"
   adb exec-out screencap -p > "$OUT/failure.png" || true
@@ -216,10 +230,27 @@ if [ -f "$TEST_APK" ]; then
   if [ -z "$(adb shell pidof "$PKG" || true)" ]; then
     fail "The autofill service process is not running after a fill request"
   fi
-  if grep -qi "Unlock AtomicVault" "$OUT/autofill_dump.txt"; then
-    echo "Fill response with the Unlock AtomicVault suggestion found in dumpsys"
+  # The suggestion is drawn in a system popup right under the field (no
+  # keyboard strip on this emulator). Tap there: AtomicVault's unlock screen
+  # must open -- proof the locked-vault response reached the user.
+  dump || true
+  B=$(nth_edit_bottom 1)
+  OPENED=0
+  if [ -n "$B" ]; then
+    set -- $B
+    for dy in 70 120 170; do
+      adb shell input tap "$1" $(( $2 + dy ))
+      sleep 4
+      if dump && grep -qi "Fill with AtomicVault" "$OUT/ui.xml"; then OPENED=1; break; fi
+    done
+  fi
+  if [ "$OPENED" = "1" ]; then
+    echo "Tapping the AtomicVault suggestion opened the unlock screen"
+    adb exec-out screencap -p > "$OUT/04_autofill_auth.png"
+    adb shell input keyevent 4
+    sleep 2
   else
-    echo "::warning::Could not confirm the Unlock AtomicVault suggestion from dumpsys; see 03_autofill_locked.png"
+    echo "::warning::Could not open the AtomicVault suggestion by tapping under the field; see 03_autofill_locked.png"
   fi
 else
   echo "::warning::Autofill test app not found at $TEST_APK; skipping the Autofill check"
