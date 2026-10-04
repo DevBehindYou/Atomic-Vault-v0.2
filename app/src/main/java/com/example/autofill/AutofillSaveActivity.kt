@@ -14,6 +14,8 @@ import com.example.trust.TrustLedger
  */
 class AutofillSaveActivity : VaultAuthActivity() {
 
+    override val eyebrow = "Save login"
+    override val unlockLabel = "Unlock and save"
     override val promptTitle = "Save to AtomicVault"
     override val promptSubtitle: String
         get() = pending?.let { "Unlock to save the login for ${it.webDomain ?: it.packageName ?: "this app"}" }

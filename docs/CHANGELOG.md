@@ -5,6 +5,37 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.4–7.5: first screens rebuilt (0.4.0)
+
+- **Unlock:** atom mark on the dot grid, eyebrow `VAULT / LOCKED`, a split
+  headline, the master password with its error underneath, `UNLOCK` and a
+  Ghost `USE FINGERPRINT`, and a mono footer (`ARGON2ID · KEYSTORE`, `NO
+  NETWORK`). Fits tablets as one 480 dp column.
+- **Create vault:** eyebrow and split headline, strength bar with a word,
+  "type it again" with a fix-it error, fingerprint as an "on" panel, the
+  protection facts, and the no-recovery warning.
+- **Vault home:** brand header with `LOCK VAULT` as the accent icon action,
+  a title row that states the real count (`42 ITEMS · ON THIS PHONE`, or
+  `12 SHOWN` while filtering), search, chips (folder and tag names keep their
+  case), white item rows with letter or outlined-icon tiles and usernames in
+  mono, a first-use state (0 on this phone, cloud copies: none, add a login),
+  a "no match" state that clears the filters, and an add stack (`+ NEW` opens
+  Login, Payment card, Identity).
+- **Item detail (new):** logins open in a read view. Fact sheet with copy
+  buttons, the password hidden until revealed, the 2FA code on request with a
+  countdown bar, fill receipts with ISO timestamps, change-password link,
+  notes, custom fields (sensitive ones masked), tags, and a pinned
+  `COPY PASSWORD`. Copy says when the clipboard clears (45 s). `EDIT` opens
+  the editor; returning shows the saved values; deleting returns to the vault.
+- **Autofill screens:** "Fill with AtomicVault" and "Save to AtomicVault"
+  share the new layout (atom mark, `FILL · GITHUB.COM` eyebrow, Display title,
+  `UNLOCK AND FILL` / `UNLOCK AND SAVE`). The look-alike warning is the app's
+  one loud block: an error-bordered `THIS IS NOT GITHUB.COM`, the two domains
+  side by side, and `GO BACK`. The Autofill dropdown row is now paper with an
+  ink title and a mono subtitle.
+- Each screen has a stable test tag, exposed to the emulator check as a
+  resource id; the check no longer depends on visible headlines.
+
 ### Phase 7.2: Atomic components (0.4.0)
 
 - **Buttons** follow the spec: Primary (accent, ink border, 3 dp hard shadow

@@ -27,6 +27,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import com.example.ui.components.AtomMark
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.theme.AtomicType
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.keystore.BiometricGatedKeyStore
@@ -65,6 +75,12 @@ abstract class VaultAuthActivity : FragmentActivity() {
     /** Title and one-line explanation shown above the password field. */
     protected abstract val promptTitle: String
     protected abstract val promptSubtitle: String
+
+    /** Mono line above the title, e.g. "Fill · github.com". */
+    protected open val eyebrow: String = "AtomicVault"
+
+    /** Label of the primary button. */
+    protected open val unlockLabel: String = "Unlock"
 
     /** Source recorded in the Trust Ledger for failures ("autofill", "autofill_save"). */
     protected abstract val ledgerSource: String
@@ -193,59 +209,63 @@ abstract class VaultAuthActivity : FragmentActivity() {
     @androidx.compose.runtime.Composable
     private fun AuthContent() {
         var password by androidx.compose.runtime.remember { mutableStateOf("") }
+        val colors = AtomicTheme.colors
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AtomicColors.Background)
-                .verticalScroll(rememberScrollState())
+                .background(colors.background)
+                .statusBarsPadding()
+                .navigationBarsPadding()
                 .imePadding()
-                .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.xl),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.xl)
+                .testTag("screen_vault_auth")
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                AtomMark(size = 40.dp)
+                Text(
+                    text = AtomicType.caps(eyebrow),
+                    style = AtomicType.monoCaption,
+                    color = colors.accent,
+                    maxLines = 2
+                )
+            }
+            Spacer(Modifier.height(AtomicSpacing.lg))
             Text(
                 text = promptTitle,
-                color = AtomicColors.Foreground,
-                fontSize = AtomicFontSize.title,
-                fontWeight = AtomicFontWeight.bold,
-                textAlign = TextAlign.Center
+                style = AtomicType.displayXL,
+                color = colors.textPrimary,
+                modifier = Modifier.semantics { heading() }
             )
-            Spacer(Modifier.height(AtomicSpacing.sm))
-            Text(
-                text = promptSubtitle,
-                color = AtomicColors.TextSecondary,
-                fontSize = AtomicFontSize.label,
-                textAlign = TextAlign.Center
-            )
+            Spacer(Modifier.height(10.dp))
+            Text(text = promptSubtitle, style = AtomicType.body, color = colors.textSecondary)
             Spacer(Modifier.height(AtomicSpacing.xl))
             AtomicTextField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = "Master password",
+                label = "Master password",
                 isPassword = true,
+                errorMessage = error,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { completeWithPassword(password) }),
                 testTag = "autofill_auth_password",
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(AtomicSpacing.md))
+            Spacer(Modifier.height(AtomicSpacing.lg))
             AtomicPrimaryButton(
-                text = "Unlock",
+                text = unlockLabel,
                 onClick = { completeWithPassword(password) },
                 enabled = password.isNotEmpty(),
                 busy = busy,
                 testTag = "autofill_auth_unlock"
             )
-            error?.let {
-                Spacer(Modifier.height(AtomicSpacing.sm))
-                Text(text = it, color = AtomicColors.Danger, fontSize = AtomicFontSize.caption, textAlign = TextAlign.Center)
-            }
             if (biometricAvailable) {
                 Spacer(Modifier.height(AtomicSpacing.md))
                 AtomicOutlinedButton(
                     text = "Use fingerprint",
                     onClick = { startBiometric() },
                     enabled = !busy,
+                    modifier = Modifier.fillMaxWidth(),
                     testTag = "autofill_auth_biometric"
                 )
             }

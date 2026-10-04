@@ -8,21 +8,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,33 +30,42 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.password.PasswordGenerator
 import com.example.security.PasswordAnalysis
 import com.example.ui.VaultUiState
+import com.example.ui.components.AtomicPanel
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicSwitch
 import com.example.ui.components.AtomicTextField
+import com.example.ui.components.AtomicWarningBox
 import com.example.ui.components.EntropyMeter
-import com.example.ui.components.GlassVariant
-import com.example.ui.components.IconTile
-import com.example.ui.components.LiquidGlassSurface
-import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
-import com.example.ui.theme.AtomicRadius
+import com.example.ui.components.dotGrid
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.theme.AtomicType
 
+/**
+ * Create vault (plan 8.7). Purpose: set a master password the user will
+ * remember. Primary: CREATE VAULT. One screen, so creating a vault stays a
+ * single action; fingerprint unlock is an "on" panel on the same screen.
+ * Says plainly that a forgotten master password cannot be recovered, and
+ * every hint explains the fix.
+ */
 @Composable
 fun OnboardingScreen(
     uiState: VaultUiState,
     onCreateVault: (password: String, biometricEnabled: Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = AtomicTheme.colors
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var biometricEnabled by remember { mutableStateOf(true) }
@@ -76,208 +83,142 @@ fun OnboardingScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(colors.background)
             .statusBarsPadding()
+            .navigationBarsPadding()
+            .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.xl)
+            .padding(horizontal = AtomicSpacing.lg)
+            .testTag("screen_onboarding"),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) {
+            // Hero: eyebrow and split headline on the dot grid.
+            Column(modifier = Modifier.fillMaxWidth().dotGrid().padding(top = 40.dp, bottom = AtomicSpacing.xl)) {
                 Text(
-                    text = "Create your vault",
-                    color = AtomicColors.Foreground,
-                    fontSize = 28.sp,
-                    fontWeight = AtomicFontWeight.bold,
-                    letterSpacing = (-0.5).sp
+                    text = AtomicType.caps("New vault · Set your key"),
+                    style = AtomicType.monoCaption,
+                    color = colors.accent
                 )
-                Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+                Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "Your master password encrypts everything. It is never stored and cannot be recovered.",
-                    color = AtomicColors.TextSecondary,
-                    fontSize = AtomicFontSize.body
+                    text = buildAnnotatedString {
+                        append("Create your vault. ")
+                        withStyle(SpanStyle(color = colors.accent)) { append("Only you hold the key.") }
+                    },
+                    style = AtomicType.displayXL,
+                    color = colors.textPrimary,
+                    modifier = Modifier.semantics { heading() }
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = "Your master password encrypts everything in AtomicVault. It is never stored, and no one can recover it for you.",
+                    style = AtomicType.body,
+                    color = colors.textSecondary
                 )
             }
-            IconTile(icon = Icons.Default.Shield, size = 44.dp, container = AtomicColors.GlassFill)
-        }
 
-        Spacer(modifier = Modifier.height(AtomicSpacing.xl))
+            AtomicTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = "Master password",
+                placeholder = "At least 8 characters",
+                isPassword = true,
+                warningMessage = if (showLengthHint) "Use at least 8 characters. A few unrelated words work well." else null,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next
+                ),
+                testTag = "onboarding_master_password_input"
+            )
+            if (password.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                EntropyMeter(bits = entropyBits, strength = strength, modifier = Modifier.fillMaxWidth())
+            }
 
-        LiquidGlassSurface(
-            modifier = Modifier.fillMaxWidth(),
-            variant = GlassVariant.Card,
-            shape = RoundedCornerShape(AtomicRadius.xl),
-            contentPadding = AtomicSpacing.lg
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                AtomicTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = "Master password",
-                    placeholder = "At least 8 characters",
-                    isPassword = true,
-                    warningMessage = if (showLengthHint) "Use at least 8 characters." else null,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Next
-                    ),
-                    testTag = "onboarding_master_password_input"
-                )
+            Spacer(Modifier.height(AtomicSpacing.lg))
 
-                if (password.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-                    EntropyMeter(
-                        bits = entropyBits,
-                        strength = strength,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+            AtomicTextField(
+                value = confirm,
+                onValueChange = { confirm = it },
+                label = "Type it again",
+                placeholder = "The same master password",
+                isPassword = true,
+                errorMessage = if (showMismatchHint) "These don't match yet. Check the last few characters." else null,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { if (canSubmit) onCreateVault(password, biometricEnabled) }
+                ),
+                testTag = "onboarding_confirm_password_input"
+            )
+            if (isMatch) {
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = colors.accent, modifier = Modifier.size(16.dp))
+                    Text(text = "Passwords match", style = AtomicType.bodySmall, color = colors.textPrimary)
                 }
+            }
 
-                Spacer(modifier = Modifier.height(AtomicSpacing.lg))
+            Spacer(Modifier.height(AtomicSpacing.xl))
 
-                AtomicTextField(
-                    value = confirm,
-                    onValueChange = { confirm = it },
-                    label = "Confirm master password",
-                    placeholder = "Type it again",
-                    isPassword = true,
-                    warningMessage = if (showMismatchHint) "Passwords do not match." else null,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (canSubmit) {
-                                onCreateVault(password, biometricEnabled)
-                            }
-                        }
-                    ),
-                    testTag = "onboarding_confirm_password_input"
-                )
-
-                if (isMatch) {
-                    Spacer(modifier = Modifier.height(AtomicSpacing.xs))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = AtomicColors.Success,
-                            modifier = Modifier.size(14.dp)
-                        )
+            AtomicPanel(modifier = Modifier.fillMaxWidth(), on = biometricEnabled) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "Fingerprint unlock", style = AtomicType.displayS, color = colors.textPrimary)
                         Text(
-                            text = "Passwords match",
-                            color = AtomicColors.Success,
-                            fontSize = AtomicFontSize.caption,
-                            fontWeight = AtomicFontWeight.medium
+                            text = "Fingerprint or face, asked on every fill too. Change it any time in Settings.",
+                            style = AtomicType.bodySmall,
+                            color = colors.textSecondary
                         )
                     }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
-        LiquidGlassSurface(
-            modifier = Modifier.fillMaxWidth(),
-            variant = GlassVariant.Card,
-            shape = RoundedCornerShape(AtomicRadius.xl),
-            contentPadding = AtomicSpacing.lg
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
-            ) {
-                IconTile(icon = Icons.Default.Memory)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Argon2id + hardware Keystore",
-                        color = AtomicColors.Foreground,
-                        fontSize = AtomicFontSize.body,
-                        fontWeight = AtomicFontWeight.medium
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "64 MiB memory-hard key derivation, with the key sealed in the Android hardware-backed Keystore.",
-                        color = AtomicColors.TextSecondary,
-                        fontSize = AtomicFontSize.label
+                    AtomicSwitch(
+                        checked = biometricEnabled,
+                        onCheckedChange = { biometricEnabled = it },
+                        modifier = Modifier.testTag("onboarding_biometric_toggle")
                     )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+            Spacer(Modifier.height(AtomicSpacing.md))
 
-        LiquidGlassSurface(
-            modifier = Modifier.fillMaxWidth(),
-            variant = GlassVariant.Card,
-            shape = RoundedCornerShape(AtomicRadius.xl),
-            contentPadding = AtomicSpacing.lg
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
-            ) {
-                IconTile(icon = Icons.Default.Fingerprint)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Biometric unlock",
-                        color = AtomicColors.Foreground,
-                        fontSize = AtomicFontSize.body,
-                        fontWeight = AtomicFontWeight.medium
-                    )
-                    Text(
-                        text = "Fingerprint or face. Change it any time in Settings.",
-                        color = AtomicColors.TextSecondary,
-                        fontSize = AtomicFontSize.label
-                    )
-                }
-                AtomicSwitch(
-                    checked = biometricEnabled,
-                    onCheckedChange = { biometricEnabled = it },
-                    modifier = Modifier.testTag("onboarding_biometric_toggle")
+            AtomicPanel(modifier = Modifier.fillMaxWidth()) {
+                Text(text = AtomicType.caps("How it is protected"), style = AtomicType.monoCaption, color = colors.textSecondary)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = AtomicType.caps("Argon2id 64 MiB · Hardware Keystore · No network"),
+                    style = AtomicType.monoCaption,
+                    color = colors.textPrimary
                 )
             }
-        }
 
-        if (uiState.error != null) {
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-            Text(
-                text = uiState.error,
-                color = AtomicColors.Danger,
-                fontSize = AtomicFontSize.caption,
-                fontWeight = AtomicFontWeight.medium
+            if (uiState.error != null) {
+                Spacer(Modifier.height(AtomicSpacing.md))
+                AtomicWarningBox(title = "Could not create the vault", message = uiState.error)
+            }
+
+            Spacer(Modifier.height(AtomicSpacing.xl))
+
+            AtomicPrimaryButton(
+                text = "Create vault",
+                onClick = { onCreateVault(password, biometricEnabled) },
+                enabled = canSubmit,
+                busy = uiState.busy,
+                testTag = "onboarding_create_vault_button"
             )
+
+            Spacer(Modifier.height(AtomicSpacing.md))
+
+            Text(
+                text = "There is no recovery. If the master password is lost, the vault cannot be opened.",
+                style = AtomicType.bodySmall,
+                color = colors.textSecondary,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(AtomicSpacing.xl))
         }
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.xl))
-
-        AtomicPrimaryButton(
-            text = "Create vault",
-            onClick = { onCreateVault(password, biometricEnabled) },
-            enabled = canSubmit,
-            busy = uiState.busy,
-            testTag = "onboarding_create_vault_button"
-        )
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
-        Text(
-            text = "There is no recovery. If the master password is lost, the vault cannot be opened.",
-            color = AtomicColors.TextMuted,
-            fontSize = AtomicFontSize.caption,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = AtomicSpacing.md)
-        )
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.xl))
     }
 }

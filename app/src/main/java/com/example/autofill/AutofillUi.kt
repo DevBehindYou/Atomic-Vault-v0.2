@@ -39,9 +39,15 @@ object AutofillUi {
     /** Up to this many accounts are offered at once; more go through "Search vault" in the app. */
     const val MAX_SUGGESTIONS = 5
 
+    /** The dropdown row: title over a mono subtitle, on paper (res/layout/autofill_suggestion.xml). */
     fun dropdown(context: Context, title: String, subtitle: String?): RemoteViews =
-        RemoteViews(context.packageName, android.R.layout.simple_list_item_1).apply {
-            setTextViewText(android.R.id.text1, if (subtitle.isNullOrBlank()) title else "$title  ·  $subtitle")
+        RemoteViews(context.packageName, R.layout.autofill_suggestion).apply {
+            setTextViewText(R.id.autofill_title, title)
+            if (subtitle.isNullOrBlank()) {
+                setViewVisibility(R.id.autofill_subtitle, android.view.View.GONE)
+            } else {
+                setTextViewText(R.id.autofill_subtitle, subtitle)
+            }
         }
 
     /**

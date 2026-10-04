@@ -16,14 +16,32 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.fragment.app.FragmentActivity
 import com.example.trust.TrustEventType
 import com.example.trust.TrustLedger
-import com.example.ui.components.AtomicPrimaryButton
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import com.example.ui.components.AtomicFactRow
+import com.example.ui.components.AtomicFactSheet
+import com.example.ui.components.AtomicSolidButton
+import com.example.ui.theme.AtomicBorder
 import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
+import com.example.ui.theme.AtomicRadius
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.theme.AtomicType
 import com.example.ui.theme.AtomicSpacing
 import com.example.ui.theme.AtomicVaultTheme
 import com.example.ui.theme.ThemePreferenceStore
@@ -46,31 +64,47 @@ class PhishingWarningActivity : FragmentActivity() {
         }
         setContent {
             AtomicVaultTheme {
+                val colors = AtomicTheme.colors
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(AtomicColors.Background)
+                        .background(colors.background)
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.xl),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.xl)
+                        .testTag("screen_phishing_warning"),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
-                    Text(
-                        text = "This is not $resembles",
-                        color = AtomicColors.Danger,
-                        fontSize = AtomicFontSize.title,
-                        fontWeight = AtomicFontWeight.bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(AtomicSpacing.md))
-                    Text(
-                        text = message(visited, resembles, reason),
-                        color = AtomicColors.TextSecondary,
-                        fontSize = AtomicFontSize.body,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(AtomicSpacing.xl))
-                    AtomicPrimaryButton(text = "Got it", onClick = { finish() }, testTag = "phishing_warning_ok")
+                    // Loud on purpose: the one error-bordered block in the app.
+                    val shape = RoundedCornerShape(AtomicRadius.sm)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(shape)
+                            .background(colors.errorContainer)
+                            .border(AtomicBorder.danger, colors.error, shape)
+                            .padding(AtomicSpacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = colors.onErrorContainer, modifier = Modifier.size(22.dp))
+                            Text(AtomicType.caps("Stop · Look-alike site"), style = AtomicType.monoCaption, color = colors.onErrorContainer)
+                        }
+                        Text(
+                            text = "This is not $resembles",
+                            style = AtomicType.displayXL,
+                            color = colors.onErrorContainer,
+                            modifier = Modifier.semantics { heading() }
+                        )
+                    }
+                    AtomicFactSheet {
+                        AtomicFactRow("You are on", visited)
+                        AtomicFactRow("Your login is for", resembles, last = true)
+                    }
+                    Text(text = message(visited, resembles, reason), style = AtomicType.body, color = colors.textPrimary)
+                    Spacer(Modifier.height(AtomicSpacing.sm))
+                    AtomicSolidButton(text = "Go back", onClick = { finish() }, testTag = "phishing_warning_ok")
                 }
             }
         }

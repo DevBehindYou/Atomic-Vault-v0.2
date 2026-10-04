@@ -1,5 +1,8 @@
 package com.example
 
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
@@ -19,6 +22,7 @@ import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicVaultTheme
 import com.example.ui.theme.ThemePreferenceStore
 
+@OptIn(ExperimentalComposeUiApi::class)
 class MainActivity : FragmentActivity() {
 
     private val viewModel: VaultViewModel by viewModels()
@@ -39,9 +43,8 @@ class MainActivity : FragmentActivity() {
 
         enableEdgeToEdge()
 
-        // Load the persisted theme choice before the first frame renders,
-        // so the app doesn't flash dark-then-light on every launch for a
-        // user who picked light mode.
+        // Load the appearance choice before the first frame renders, so the
+        // app doesn't flash one theme and then the other at launch.
         AtomicColors.applyTheme(ThemePreferenceStore.load(this))
 
         // Attach LifecycleObserver that automatically re-locks the application if backgrounded > 60s
@@ -54,7 +57,9 @@ class MainActivity : FragmentActivity() {
 
         setContent {
             AtomicVaultTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                // Test tags double as resource ids, so the emulator check can
+                // find screens by a stable id instead of visible text.
+                Surface(modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
                     val navController = rememberNavController()
                     AtomicVaultNavGraph(
                         navController = navController,

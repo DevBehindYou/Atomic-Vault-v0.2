@@ -32,6 +32,9 @@ class AutofillAuthActivity : VaultAuthActivity() {
     override val promptSubtitle: String
         get() = "Unlock to fill your login for ${intent.getStringExtra(EXTRA_WEB_DOMAIN) ?: appLabel()}"
     override val ledgerSource = "autofill"
+    override val eyebrow: String
+        get() = "Fill · ${intent.getStringExtra(EXTRA_WEB_DOMAIN) ?: appLabel()}"
+    override val unlockLabel = "Unlock and fill"
 
     private fun appLabel(): String {
         val pkg = intent.getStringExtra(EXTRA_PACKAGE) ?: return "this app"

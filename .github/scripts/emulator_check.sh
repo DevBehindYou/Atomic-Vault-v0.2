@@ -133,7 +133,7 @@ fi
 echo "Launching MainActivity"
 adb shell am start -n "$PKG/com.example.MainActivity"
 sleep 8
-wait_for_text "Create your vault" 30
+wait_for_text 'resource-id="screen_onboarding"' 30
 adb exec-out screencap -p > "$OUT/01_launch.png"
 
 echo "Focusing the master password field"
@@ -162,8 +162,10 @@ adb shell input text "CorrectHorse9Battery"
 sleep 1
 adb shell input keyevent 4   # BACK closes the keyboard
 sleep 1
+adb shell input swipe 540 1800 540 600 300   # the button sits below the fold on small screens
+sleep 1
 tap_node text "Create vault" contains 1
-wait_for_text "Encrypted on this device" 60   # Argon2id (64 MiB) + database creation
+wait_for_text 'resource-id="screen_home"' 60   # Argon2id (64 MiB) + database creation
 echo "Vault created; Home is showing"
 
 echo "Walking the bottom navigation"
@@ -174,7 +176,7 @@ dump || fail "UI dump failed"; grep -qi "Health score\|HEALTH SCORE\|Device inte
 tap_node content-desc "Settings" exact 3
 dump || fail "UI dump failed"; grep -qi "Lock after leaving the app" "$OUT/ui.xml" || fail "Settings tab did not open Settings"
 tap_node content-desc "Vault" exact 3
-dump || fail "UI dump failed"; grep -qi "Encrypted on this device" "$OUT/ui.xml" || fail "Vault tab did not return to Home"
+dump || fail "UI dump failed"; grep -qi 'resource-id="screen_home"' "$OUT/ui.xml" || fail "Vault tab did not return to Home"
 
 echo "Opening the Home add menu"
 tap_node content-desc "Add to vault" contains 2
@@ -182,13 +184,13 @@ tap_node text "Payment card" contains 3
 dump || fail "UI dump failed"; grep -qi "Add payment card" "$OUT/ui.xml" || fail "Add menu did not open the payment card editor"
 adb shell input keyevent 4
 sleep 2
-dump || fail "UI dump failed"; grep -qi "Encrypted on this device" "$OUT/ui.xml" || fail "Back from the card editor did not return to Home"
+dump || fail "UI dump failed"; grep -qi 'resource-id="screen_home"' "$OUT/ui.xml" || fail "Back from the card editor did not return to Home"
 
 echo "Restarting the app: the vault must come back locked"
 adb shell am force-stop "$PKG"
 sleep 2
 adb shell am start -n "$PKG/com.example.MainActivity"
-wait_for_text "Unlock AtomicVault" 30
+wait_for_text 'resource-id="screen_unlock"' 30
 
 echo "Unlocking with the master password through the system keyboard"
 dump || fail "UI dump failed on the unlock screen"
@@ -205,7 +207,7 @@ if adb shell dumpsys input_method | grep -q "mInputShown=true"; then
   sleep 1
 fi
 tap_node text "Unlock" exact 1
-wait_for_text "Encrypted on this device" 60
+wait_for_text 'resource-id="screen_home"' 60
 echo "Unlocked with the system keyboard"
 
 echo "Autofill: a locked vault answers a real fill request"

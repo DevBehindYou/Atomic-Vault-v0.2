@@ -11,4 +11,5 @@
     <color name="atomic_paper">#FFF4F5F1</color>
     <color name="atomic_ink">#FF15171B</color>
     <color name="atomic_signal">#FF3A2FF0</color>
+    <color name="atomic_slate">#FF4A4D55</color>
 </resources>

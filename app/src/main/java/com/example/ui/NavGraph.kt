@@ -22,6 +22,7 @@ import com.example.ui.editor.CredentialEditorScreen
 import com.example.ui.generator.PasswordGeneratorScreen
 import com.example.ui.onboarding.OnboardingScreen
 import com.example.ui.security.SecurityDashboardScreen
+import com.example.ui.detail.ItemDetailScreen
 import com.example.ui.settings.SettingsScreen
 import com.example.ui.unlock.UnlockScreen
 import com.example.ui.vaulthome.VaultHomeScreen
@@ -44,6 +45,10 @@ sealed class Screen(val route: String) {
         fun createRoute(itemId: String? = null): String {
             return if (itemId != null) "identity_editor?itemId=$itemId" else "identity_editor"
         }
+    }
+    /** Read view for a login (0.4.0): copy and reveal here, EDIT opens the editor. */
+    object ItemDetail : Screen("item/{itemId}") {
+        fun createRoute(itemId: String): String = "item/$itemId"
     }
     object Generator : Screen("generator")
     object Security : Screen("security")
@@ -262,7 +267,7 @@ fun AtomicVaultNavGraph(
                         com.example.database.VaultItemType.IDENTITY ->
                             navController.navigate(Screen.IdentityEditor.createRoute(itemId))
                         else ->
-                            navController.navigate(Screen.Editor.createRoute(itemId))
+                            navController.navigate(Screen.ItemDetail.createRoute(itemId))
                     }
                 },
                 onAddNewClick = {
@@ -305,6 +310,20 @@ fun AtomicVaultNavGraph(
         }
 
         composable(
+            route = Screen.ItemDetail.route,
+            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getString("itemId").orEmpty()
+            ItemDetailScreen(
+                itemId = itemId,
+                onLoadItem = { id -> viewModel.getItem(id) },
+                onEdit = { navController.navigate(Screen.Editor.createRoute(itemId)) },
+                onBack = { navController.popBackStack() },
+                refreshKey = uiState.previews.firstOrNull { it.id == itemId }?.updatedAt
+            )
+        }
+
+        composable(
             route = Screen.Editor.route,
             arguments = listOf(
                 navArgument("itemId") {
@@ -333,7 +352,10 @@ fun AtomicVaultNavGraph(
                 },
                 onDelete = { id ->
                     viewModel.deleteItem(id) {
-                        navController.popBackStack()
+                        // The item's detail screen is underneath: skip it.
+                        if (!navController.popBackStack(Screen.Home.route, inclusive = false)) {
+                            navController.popBackStack()
+                        }
                     }
                 },
                 onBack = { navController.popBackStack() }

@@ -201,7 +201,9 @@ enum class AtomicTagTone { Accent, Danger, Strong, Quiet }
 fun AtomicTag(
     label: String,
     tone: AtomicTagTone = AtomicTagTone.Accent,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** False for user-named tags, which keep their case. */
+    caps: Boolean = true
 ) {
     val colors = AtomicTheme.colors
     val shape = RoundedCornerShape(AtomicRadius.pill)
@@ -219,7 +221,7 @@ fun AtomicTag(
             .padding(horizontal = 10.dp, vertical = 3.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = AtomicType.caps(label), style = AtomicType.monoCaption, color = fg, maxLines = 1)
+        Text(text = if (caps) AtomicType.caps(label) else label, style = AtomicType.monoCaption, color = fg, maxLines = 1)
     }
 }
 
