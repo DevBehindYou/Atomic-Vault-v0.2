@@ -126,6 +126,12 @@ fun CredentialEditorScreen(
 
     val customFields = remember { mutableStateListOf<CustomFieldPlain>() }
 
+    // Stored values this editor has no field for yet. They must round-trip:
+    // saving used to write "" / null here and wiped a stored TOTP secret and
+    // the Android app a login was saved from (which Autofill matches on).
+    var totpSecret by remember { mutableStateOf("") }
+    var androidPackageName by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(itemId) {
         if (itemId != null) {
             val item = onLoadItem(itemId)
@@ -135,6 +141,8 @@ fun CredentialEditorScreen(
                 password = item.password
                 uriMatchPattern = item.uriMatchPattern ?: ""
                 notes = item.notes
+                totpSecret = item.totpSecret
+                androidPackageName = item.androidPackageName
                 selectedFolderId = item.folderId
                 customFields.clear()
                 customFields.addAll(item.customFields)
@@ -477,8 +485,8 @@ fun CredentialEditorScreen(
                         password = password,
                         notes = notes,
                         uriMatchPattern = uriMatchPattern.ifBlank { null },
-                        androidPackageName = null,
-                        totpSecret = "",
+                        androidPackageName = androidPackageName,
+                        totpSecret = totpSecret,
                         customFields = customFields.filter { it.label.isNotBlank() },
                         tagIds = selectedTagIds.toList()
                     )

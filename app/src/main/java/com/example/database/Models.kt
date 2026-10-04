@@ -54,7 +54,9 @@ data class CredentialPlain(
     val customFields: List<CustomFieldPlain> = emptyList(),
     val updatedAt: Long = System.currentTimeMillis(),
     val itemType: VaultItemType = VaultItemType.LOGIN,
-    val tags: List<TagPlain> = emptyList()
+    val tags: List<TagPlain> = emptyList(),
+    /** True if a stored field failed to decrypt and reads as empty. */
+    val damaged: Boolean = false
 )
 
 data class CredentialInput(

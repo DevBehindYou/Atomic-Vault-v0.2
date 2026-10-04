@@ -1,6 +1,7 @@
 package com.example.security
 
 import com.example.database.CredentialPlain
+import com.example.database.VaultItemType
 import kotlin.math.ln
 import kotlin.math.roundToInt
 
@@ -37,7 +38,13 @@ object PasswordAnalysis {
         return password.length * (ln(pool.toDouble()) / ln(2.0))
     }
 
-    fun analyzeVault(items: List<CredentialPlain>): VaultSecurityReport {
+    /**
+     * Password health of the vault's LOGIN items. Payment cards and identities
+     * have no password; counting them used to flag every one as "empty" and
+     * drag the score down.
+     */
+    fun analyzeVault(allItems: List<CredentialPlain>): VaultSecurityReport {
+        val items = allItems.filter { it.itemType == VaultItemType.LOGIN }
         if (items.isEmpty()) {
             return VaultSecurityReport(
                 score = 100,

@@ -20,8 +20,8 @@ Goal set by the user:
 | Phase | Status | Commit | CI |
 |---|---|---|---|
 | 0. Baseline | Done | `049e85b` | Run #25 green (unit, lint, emulator) |
-| 1. Remove the Atomic keyboard | Pushed, awaiting CI | see CHANGELOG | — |
-| 2. Data safety | Next | | |
+| 1. Remove the Atomic keyboard | Done | `a6c645f` | Run #26 green (unit, lint, emulator: restart + unlock via system keyboard) |
+| 2. Data safety | Pushed, awaiting CI | see CHANGELOG | — |
 | 3. Gboard Autofill | | | |
 | 4. Performance | | | |
 | 5. Platform health | | | |

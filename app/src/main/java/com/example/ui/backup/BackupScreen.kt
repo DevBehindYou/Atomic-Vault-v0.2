@@ -69,9 +69,12 @@ fun BackupScreen(
     onExportBackup: (passphrase: String, onResult: (Result<ByteArray>) -> Unit) -> Unit,
     onImportBackup: (bytes: ByteArray, passphrase: String, onResult: (Result<Int>) -> Unit) -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Puts back the vault as it was before the last restore (kept in memory until lock). */
+    onUndoRestore: ((onResult: (Result<Int>) -> Unit) -> Unit)? = null
 ) {
     val context = LocalContext.current
+    var restoredCount by remember { mutableStateOf<Int?>(null) }
     var selectedTab by remember { mutableIntStateOf(0) }
 
     // Export state
@@ -100,7 +103,8 @@ fun BackupScreen(
     if (showImportConfirmDialog && selectedFileUri != null) {
         AtomicDialog(
             title = "Replace vault?",
-            message = "This replaces all current credentials with the backup contents. This cannot be undone.",
+            message = "This replaces all current credentials with the backup contents. " +
+                "Until you lock the vault you can undo it; after that it cannot be undone.",
             confirmLabel = "Replace",
             isDestructive = true,
             confirmTestTag = "confirm_import_replace_button",
@@ -114,8 +118,12 @@ fun BackupScreen(
                     onImportBackup(bytes, importPassphrase) { result ->
                         importBusy = false
                         result.onSuccess { count ->
-                            Toast.makeText(context, "Successfully restored $count credentials", Toast.LENGTH_LONG).show()
-                            onBack()
+                            if (onUndoRestore != null) {
+                                restoredCount = count
+                            } else {
+                                Toast.makeText(context, "Successfully restored $count credentials", Toast.LENGTH_LONG).show()
+                                onBack()
+                            }
                         }.onFailure { e ->
                             importError = e.message ?: "Failed to import backup"
                         }
@@ -127,6 +135,43 @@ fun BackupScreen(
             },
             onDismiss = { showImportConfirmDialog = false }
         )
+    }
+
+    val restored = restoredCount
+    if (restored != null && onUndoRestore != null) {
+        AtomicDialog(
+            title = "Backup restored",
+            message = "$restored items restored. The vault as it was before is kept in memory until you lock, " +
+                "so you can still undo this.",
+            confirmLabel = "Done",
+            dismissLabel = "Close",
+            confirmTestTag = "restore_done_button",
+            onConfirm = {
+                restoredCount = null
+                onBack()
+            },
+            // Tapping outside closes too, so undo is never the dismiss action.
+            onDismiss = {
+                restoredCount = null
+                onBack()
+            }
+        ) {
+            AtomicOutlinedButton(
+                text = "Undo restore",
+                onClick = {
+                    restoredCount = null
+                    onUndoRestore { result ->
+                        result.onSuccess { count ->
+                            Toast.makeText(context, "Restore undone: $count items are back", Toast.LENGTH_LONG).show()
+                            onBack()
+                        }.onFailure { e ->
+                            importError = "Could not undo the restore: ${e.message}"
+                        }
+                    }
+                },
+                testTag = "restore_undo_button"
+            )
+        }
     }
 
     Scaffold(

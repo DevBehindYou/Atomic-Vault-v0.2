@@ -87,7 +87,7 @@ fun SecurityDashboardScreen(
 
     LaunchedEffect(Unit) {
         val items = onLoadAllCredentials()
-        report = PasswordAnalysis.analyzeVault(items)
+        report = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { PasswordAnalysis.analyzeVault(items) }
     }
 
     val scoreColor = when {
@@ -229,7 +229,7 @@ fun SecurityDashboardScreen(
                     onClick = {
                         scope.launch {
                             val items = onLoadAllCredentials()
-                            report = PasswordAnalysis.analyzeVault(items)
+                            report = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { PasswordAnalysis.analyzeVault(items) }
                         }
                     },
                     modifier = Modifier.padding(top = AtomicSpacing.sm),

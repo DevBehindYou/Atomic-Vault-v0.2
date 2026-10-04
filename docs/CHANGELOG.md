@@ -5,6 +5,39 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 2: data safety and crash fixes
+
+- **Lock never corrupts a save (B4).** New `VaultSession` owns the open vault
+  (key, connection, repository) for the whole process. Locking stops new work
+  at once and closes / zeroes the key when the last running operation ends;
+  before, locking mid-save sealed the item under a zero-filled key.
+  `VaultSessionTest` locks during a running save.
+- **No more silent key-store fallback (B5).** `VaultMetaStore` picks its store
+  once per install and remembers it; if that store cannot open later the app
+  says so instead of showing onboarding over the real vault. Creating a vault
+  next to an orphaned database renames the old file aside instead of failing.
+  The envelope is written synchronously.
+- **Backups and device transfer exclude everything** (`data_extraction_rules`,
+  `backup_rules`); `allowBackup="false"` alone does not stop device-to-device
+  transfer on Android 12+.
+- **Editing a login no longer wipes its TOTP secret or Android app (B6)**; the
+  app wipe was found while fixing the TOTP one.
+- **KDF parameters stored with a vault are used at unlock (B8)**, validated.
+- **Trust Ledger (B9):** an explicit sequence number, one transaction for
+  "read head + append", one cached connection, and a migration that keeps
+  existing chains valid. Same-millisecond events, concurrent writers and a
+  clock moved backwards no longer report "chain broken".
+- **Background vault work cannot crash the app (F4)**; failures are shown.
+- **Search** waits for a pause in typing and a newer query cancels an older one,
+  so results never arrive out of order (F5).
+- **Security score** counts logins only; cards and identities were all flagged
+  as "empty password" (F6). The analysis runs off the main thread.
+- **Restore is all-or-nothing (F7)**, keeps this phone's biometric setting,
+  and can be undone until the vault locks (the previous vault is kept in
+  memory only) (F8).
+- **A damaged field no longer breaks the security scan or backups (F9)**: it
+  reads as empty and the item is flagged `damaged`.
+
 ### Phase 1: Atomic keyboard removed
 
 - **Removed** the input method service, its reveal activity/coordinator, the

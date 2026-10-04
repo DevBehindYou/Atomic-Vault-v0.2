@@ -1,6 +1,7 @@
 package com.example.security
 
 import com.example.database.CredentialPlain
+import com.example.database.VaultItemType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,5 +35,18 @@ class PasswordHealthAnalyzerTest {
         val report = PasswordAnalysis.analyzeVault(credentials)
         assertEquals(100, report.score)
         assertEquals(0, report.findings.size)
+    }
+
+    @Test
+    fun `cards and identities are not scored as empty passwords`() {
+        val credentials = listOf(
+            CredentialPlain(id = "1", title = "Bank", username = "ashu", password = "Xk9#mP2\$vL8@qZ5&wN1*yB4"),
+            CredentialPlain(id = "2", title = "Visa", itemType = VaultItemType.PAYMENT_CARD),
+            CredentialPlain(id = "3", title = "Passport", itemType = VaultItemType.IDENTITY)
+        )
+        val report = PasswordAnalysis.analyzeVault(credentials)
+        assertEquals(1, report.totalCount)
+        assertEquals(0, report.emptyCount)
+        assertEquals(100, report.score)
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -111,6 +112,33 @@ class RegressionUiTest {
         show { IdentityEditorScreen(existing = identity, onSave = { saved = it }, onBack = {}) }
         rule.onNodeWithTag("identity_save").performScrollTo().performClick()
         assertEquals(listOf("t2"), saved?.tagIds)
+    }
+
+    @Test
+    fun `saving an edited login keeps its TOTP secret and app`() {
+        // The login editor has no field for these yet and used to save
+        // totpSecret = "" and androidPackageName = null, wiping both.
+        val login = CredentialPlain(
+            id = "7",
+            title = "Bank",
+            username = "ashu",
+            password = "pw",
+            totpSecret = "JBSWY3DPEHPK3PXP",
+            androidPackageName = "com.example.bank"
+        )
+        var saved: CredentialInput? = null
+        show {
+            com.example.ui.editor.CredentialEditorScreen(
+                itemId = "7", folders = emptyList(), allTags = emptyList(),
+                onLoadItem = { login }, onSave = { saved = it }, onDelete = {}, onBack = {}
+            )
+        }
+        rule.waitUntil(5_000) {
+            rule.onAllNodesWithText("Bank").fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNodeWithTag("editor_save_button").performScrollTo().performClick()
+        assertEquals("JBSWY3DPEHPK3PXP", saved?.totpSecret)
+        assertEquals("com.example.bank", saved?.androidPackageName)
     }
 
     @Test

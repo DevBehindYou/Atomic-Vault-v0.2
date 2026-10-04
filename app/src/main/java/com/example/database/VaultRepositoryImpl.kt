@@ -234,12 +234,13 @@ class VaultRepositoryImpl(
                 val updatedAt = cursor.getLong(9)
                 val itemType = parseItemType(cursor.getString(10))
 
-                val username = VaultCrypto.openField(dek, encUser)
-                val password = VaultCrypto.openField(dek, encPass)
-                val notes = VaultCrypto.openField(dek, encNotes)
-                val totpSecret = VaultCrypto.openField(dek, encTotp)
+                val opener = FieldOpener(dek)
+                val username = opener.open(encUser)
+                val password = opener.open(encPass)
+                val notes = opener.open(encNotes)
+                val totpSecret = opener.open(encTotp)
 
-                val customFields = getCustomFieldsForItem(id)
+                val customFields = getCustomFieldsForItem(id, opener)
                 val tags = getTagsForItem(id)
 
                 credential = CredentialPlain(
@@ -255,14 +256,33 @@ class VaultRepositoryImpl(
                     customFields = customFields,
                     updatedAt = updatedAt,
                     itemType = itemType,
-                    tags = tags
+                    tags = tags,
+                    damaged = opener.damaged
                 )
             }
         }
         return credential
     }
 
-    private fun getCustomFieldsForItem(itemId: String): List<CustomFieldPlain> {
+    /**
+     * Decrypts fields of one item. A field that fails authentication (a
+     * corrupted blob) reads as empty and marks the item damaged, instead of
+     * throwing: one bad field used to make the whole security scan and every
+     * backup export fail.
+     */
+    private class FieldOpener(private val dek: ByteArray) {
+        var damaged = false
+            private set
+
+        fun open(blob: ByteArray?): String = try {
+            VaultCrypto.openField(dek, blob)
+        } catch (e: Exception) {
+            damaged = true
+            ""
+        }
+    }
+
+    private fun getCustomFieldsForItem(itemId: String, opener: FieldOpener): List<CustomFieldPlain> {
         val fields = mutableListOf<CustomFieldPlain>()
         db.rawQuery(
             "SELECT id, label, encrypted_value, is_sensitive FROM custom_field WHERE item_id = ?;",
@@ -273,7 +293,7 @@ class VaultRepositoryImpl(
                 val label = cursor.getString(1)
                 val encVal = if (cursor.isNull(2)) null else cursor.getBlob(2)
                 val isSensitive = cursor.getInt(3) == 1
-                val value = VaultCrypto.openField(dek, encVal)
+                val value = opener.open(encVal)
                 fields.add(CustomFieldPlain(fieldId, label, value, isSensitive))
             }
         }
@@ -504,7 +524,7 @@ class VaultRepositoryImpl(
                     put("name", f.name)
                     put("parent_id", f.parentId)
                 }
-                db.insert("folder", null, fCv)
+                db.insertOrThrow("folder", null, fCv)
             }
 
             // Re-insert tags (using each backup's original id -- items
@@ -518,7 +538,7 @@ class VaultRepositoryImpl(
                     put("color", t.color)
                     put("created_at", now)
                 }
-                db.insert("tag", null, tCv)
+                db.insertOrThrow("tag", null, tCv)
             }
 
             // Re-insert items with current session DEK encryption
@@ -544,7 +564,7 @@ class VaultRepositoryImpl(
                     put("updated_at", item.updatedAt)
                     put("item_type", item.itemType.name)
                 }
-                db.insert("credential_item", null, iCv)
+                db.insertOrThrow("credential_item", null, iCv)
 
                 for (cf in item.customFields) {
                     val cfCv = ContentValues().apply {
@@ -554,22 +574,23 @@ class VaultRepositoryImpl(
                         put("encrypted_value", VaultCrypto.sealField(dek, cf.value))
                         put("is_sensitive", if (cf.isSensitive) 1 else 0)
                     }
-                    db.insert("custom_field", null, cfCv)
+                    db.insertOrThrow("custom_field", null, cfCv)
                 }
 
-                for (tag in item.tags) {
+                for (tag in item.tags.distinctBy { it.id }) {
                     val ctCv = ContentValues().apply {
                         put("item_id", item.id)
                         put("tag_id", tag.id)
                     }
-                    db.insert("credential_tag", null, ctCv)
+                    db.insertOrThrow("credential_tag", null, ctCv)
                 }
             }
 
-            // Apply settings
+            // Apply settings. Biometric unlock is a property of THIS phone's
+            // Keystore, not of the backup: importing "enabled" from another
+            // device showed biometrics as on with no key behind it.
             val sCv = ContentValues().apply {
                 put("auto_lock_seconds", data.settings.autoLockSeconds)
-                put("biometric_enabled", if (data.settings.biometricEnabled) 1 else 0)
                 put("updated_at", now)
             }
             db.update("vault_settings", sCv, "id = 1", null)

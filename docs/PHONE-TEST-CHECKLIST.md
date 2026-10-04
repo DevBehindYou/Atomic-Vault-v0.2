@@ -44,6 +44,10 @@ biometric unlock back on once. The master password keeps working throughout.
 - [ ] Generator tab: length slider, toggles, Copy. Paste elsewhere; the clipboard clears after about 45 s.
 - [ ] Audit tab: score, counts, a finding opens its item.
 - [ ] Backup and restore: export, then import into a clean install; items, tags and folders come back.
+- [ ] Restore over a vault with items, then tap **Undo restore**: the original items are back. Lock and unlock: undo is no longer offered.
+- [ ] Edit a login that has a TOTP secret (imported from a backup) and save: the secret is still in the backup you export afterwards.
+- [ ] Audit tab with a payment card and an identity in the vault: they are not counted as "empty password".
+- [ ] Settings > Privacy proof: "Screen capture protection" is a pass and "No keyboard service" is a pass. The security timeline shows no "chain broken".
 
 ## 5. Auto-lock
 

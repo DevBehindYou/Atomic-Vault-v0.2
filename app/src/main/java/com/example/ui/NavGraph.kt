@@ -455,7 +455,8 @@ fun AtomicVaultNavGraph(
                 onImportBackup = { bytes, passphrase, onResult ->
                     viewModel.importBackup(bytes, passphrase, onResult)
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onUndoRestore = { onResult -> viewModel.undoLastRestore(onResult) }
             )
         }
 
