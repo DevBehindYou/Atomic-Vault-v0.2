@@ -37,6 +37,13 @@ import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
 import com.example.ui.theme.AtomicSpacing
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Alignment
+import com.example.ui.components.AtomicTitleRow
+import com.example.ui.theme.AtomicTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,21 +57,9 @@ fun PasswordGeneratorScreen(
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState) { data ->
-                Snackbar(
-                    containerColor = AtomicColors.GlassFill.copy(alpha = 0.95f),
-                    contentColor = AtomicColors.Foreground,
-                    actionColor = AtomicColors.Accent,
-                    snackbarData = data
-                )
-            }
-        },
-        topBar = {
-            AtomicTopBar(title = "Password generator", caption = "CSPRNG · unbiased sampling")
-        },
+        modifier = modifier.fillMaxSize().testTag("screen_generate"),
+        containerColor = AtomicTheme.colors.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = bottomBar
     ) { innerPadding ->
         Column(
@@ -72,20 +67,25 @@ fun PasswordGeneratorScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(AtomicSpacing.lg)
+                .padding(AtomicSpacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PasswordGeneratorPanel(
-                onUsePassword = { generatedPassword ->
-                    ClipboardHelper.copySensitive(context, "Generated Password", generatedPassword)
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(
-                            message = "Password copied \u2014 clears in 45s",
-                            withDismissAction = true
-                        )
-                    }
-                },
-                useButtonLabel = "Copy"
-            )
+            Column(modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth()) {
+                AtomicTitleRow(title = "Generate", counter = "On this phone")
+                Spacer(Modifier.height(AtomicSpacing.lg))
+                PasswordGeneratorPanel(
+                    onUsePassword = { generatedPassword ->
+                        ClipboardHelper.copySensitive(context, "Generated password", generatedPassword)
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Password copied. It clears from the clipboard in 45 seconds.",
+                                withDismissAction = true
+                            )
+                        }
+                    },
+                    useButtonLabel = "Copy"
+                )
+            }
         }
     }
 }

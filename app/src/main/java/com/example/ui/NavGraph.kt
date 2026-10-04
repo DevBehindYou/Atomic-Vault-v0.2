@@ -432,7 +432,7 @@ fun AtomicVaultNavGraph(
                 integrityWarnings = uiState.integrityWarnings,
                 onLoadAllCredentials = { viewModel.getAllCredentialsForSecurity() },
                 onItemClick = { itemId ->
-                    navController.navigate(Screen.Editor.createRoute(itemId))
+                    navController.navigate(Screen.ItemDetail.createRoute(itemId))
                 },
                 bottomBar = { AtomicBottomNav(AtomicTab.Audit, { navigateTab(it) }) }
             )

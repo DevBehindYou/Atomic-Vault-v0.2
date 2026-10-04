@@ -170,11 +170,11 @@ echo "Vault created; Home is showing"
 
 echo "Walking the bottom navigation"
 tap_node content-desc "Generate" exact 3
-grep -qi "Password generator" "$OUT/ui.xml" || { dump || fail "UI dump failed"; grep -qi "Password generator" "$OUT/ui.xml" || fail "Generate tab did not open the generator"; }
+grep -qi 'resource-id="screen_generate"' "$OUT/ui.xml" || { dump || fail "UI dump failed"; grep -qi 'resource-id="screen_generate"' "$OUT/ui.xml" || fail "Generate tab did not open the generator"; }
 tap_node content-desc "Health" exact 3
-dump || fail "UI dump failed"; grep -qi "Health score\|HEALTH SCORE\|Device integrity" "$OUT/ui.xml" || fail "Health tab did not open the security dashboard"
+dump || fail "UI dump failed"; grep -qi 'resource-id="screen_health"' "$OUT/ui.xml" || fail "Health tab did not open the security dashboard"
 tap_node content-desc "Settings" exact 3
-dump || fail "UI dump failed"; grep -qi "Lock after leaving the app" "$OUT/ui.xml" || fail "Settings tab did not open Settings"
+dump || fail "UI dump failed"; grep -qi 'resource-id="screen_settings"' "$OUT/ui.xml" || fail "Settings tab did not open Settings"
 tap_node content-desc "Vault" exact 3
 dump || fail "UI dump failed"; grep -qi 'resource-id="screen_home"' "$OUT/ui.xml" || fail "Vault tab did not return to Home"
 

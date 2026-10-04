@@ -5,6 +5,24 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.6: Generate, Health, Settings (0.4.0)
+
+- **Generate:** the password in a shadowed white card in JetBrains Mono, a
+  strength bar with a word, length as a stepper (plus a slider for big
+  jumps), character sets as switch rows, `NEW PASSWORD` and `COPY`. The same
+  panel is used inside the editor.
+- **Health** (was Audit): the ink "vault health" module with the score, a bar
+  and the one reason that matters most ("2 logins share a password. Fix those
+  first"); stat tiles; each finding has a left priority bar (critical, high,
+  low) and opens the item; "This phone" shows device integrity with an `OK`
+  pill or a warning box; `CHECK AGAIN`. A loading state while it checks.
+- **Settings:** grouped under mono headers. Fingerprint unlock is an "on" card
+  with an `ARMED` pill; Autofill shows a live `ON`/`OFF` pill; **Appearance is
+  Light / Dark / Match system**; folders and tags are plain rows with
+  confirmed deletes that say what happens to the logins; Backup and Privacy
+  proof are settings rows. Split into `SettingsScreen.kt` and
+  `SettingsSections.kt` (was one 650-line file).
+
 ### Phase 7.4–7.5: first screens rebuilt (0.4.0)
 
 - **Unlock:** atom mark on the dot grid, eyebrow `VAULT / LOCKED`, a split
