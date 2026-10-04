@@ -8,11 +8,12 @@
 | [TASKS.md](TASKS.md) | What is left, by priority, and what is waiting on the user |
 | [ROADMAP.md](ROADMAP.md) | Where the project goes next, and what it will not do |
 | [PHONE-TEST-CHECKLIST.md](PHONE-TEST-CHECKLIST.md) | What only a physical phone can verify |
-| [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md) | Keyboard removal, Gboard-grade Autofill, every open bug and performance fix, by phase, plus differentiators |
+| [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md) | Keyboard removal, Gboard-grade Autofill, every open bug and performance fix, by phase, plus differentiators and the Phase 7 design-system rebuild (section 8) |
+| [design/ATOMIC-DESIGN-SYSTEM.md](design/ATOMIC-DESIGN-SYSTEM.md) | The Atomic "Technical Editorial" design system: the visual source of truth (D15) |
 
 Other files in the repo root that matter: `AUDIT-REPORT.md` (an earlier
 static-only audit; parts of it were wrong, see the change log) and
-`atomicvault_design_system_reference/` (the visual reference).
+`atomicvault_design_system_reference/` (the earlier dark visual reference, superseded by `docs/design/ATOMIC-DESIGN-SYSTEM.md`, see D15).
 
 ## Status (2026-10-04)
 

@@ -112,3 +112,16 @@ while unlocked" setting is possible later; the default stays strict.
 Before a restore replaces the vault, the current contents are kept decrypted in
 process memory so "Undo restore" can put them back. They are dropped on lock
 and never written to disk.
+
+## D15. The Atomic design system is the visual source of truth (user, details pending)
+
+The user supplied `docs/design/ATOMIC-DESIGN-SYSTEM.md` (Atomic "Technical
+Editorial" v1.0) as the authoritative design language for the Atomic family
+and asked for a complete UI/UX rebuild on it. It supersedes the visual part of
+D2 (the dark Liquid Glass reference); D2's content rule stays: no mock-only
+features. It also resolves D9: the three OFL families (Bebas Neue, Hanken
+Grotesk, JetBrains Mono) are bundled in the APK, never downloaded, so the
+no-network promise holds. Security adaptations (secrets never uppercased,
+user text never in Display, fonts offline, `FLAG_SECURE` kept) are in
+IMPLEMENTATION-PLAN section 8.3. Open: default theme and release timing
+(plan section 7, items 5–7).
