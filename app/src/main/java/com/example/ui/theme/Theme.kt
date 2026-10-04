@@ -1,110 +1,108 @@
 package com.example.ui.theme
 
+import android.app.Activity
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+
+val LocalAtomicPalette = staticCompositionLocalOf { LightAtomicPalette }
+
+/** Access to the current design tokens from any composable. */
+object AtomicTheme {
+    val colors: AtomicPalette
+        @Composable @ReadOnlyComposable get() = LocalAtomicPalette.current
+    val reducedMotion: Boolean
+        @Composable @ReadOnlyComposable get() = LocalReducedMotion.current
+}
 
 /**
- * The app-wide theme wrapper. This file was previously empty -- MainActivity.kt
- * already referenced `AtomicVaultTheme { ... }`, which had nowhere to
- * resolve to, so the project would not have compiled as shipped. This
- * fills that gap and is also the Liquid Glass design plan's Foundation
- * phase item #1 ("fill the Theme.kt gap").
- *
- * Wraps AtomicColors/AtomicShapes/Typography in a real MaterialTheme so
- * components can read MaterialTheme.colorScheme/.shapes/.typography
- * consistently, instead of reaching into the AtomicColors object as a bare
- * global from every composable.
- *
- * IMPORTANT: the ColorScheme is built INSIDE the composable function,
- * not as a module-level val. A top-level val is computed once on first
- * access and frozen forever after -- it would read AtomicColors' values
- * at that one moment and never again, so toggling the theme would
- * update the ~21 files that read AtomicColors.X directly (see Color.kt's
- * doc comment) but silently leave every built-in Material3 component
- * (Scaffold, TopAppBar, Snackbar, etc. -- several screens in this app
- * read MaterialTheme.colorScheme.X directly) stuck on whatever theme was
- * active the first time any screen rendered. Building it fresh here
- * means it's read as observable state during composition, so it
- * recomposes correctly when AtomicColors.isDarkTheme changes.
+ * The app-wide theme: the Atomic palette, fonts and shapes, provided both
+ * as AtomicTheme.* and mapped onto Material 3 slots (design system §14.3)
+ * so stock components never fall back to Material's purple defaults.
+ * Material elevation tint is off: depth comes from hard shadows.
  */
 @Composable
 fun AtomicVaultTheme(content: @Composable () -> Unit) {
-    val scheme = if (AtomicColors.isDarkTheme) {
-        darkColorScheme(
-            background = AtomicColors.Background,
-            surface = AtomicColors.GlassFill,
-            surfaceVariant = AtomicColors.SurfaceStrong,
-            onBackground = AtomicColors.Foreground,
-            onSurface = AtomicColors.Foreground,
-            onSurfaceVariant = AtomicColors.TextSecondary,
-            outline = AtomicColors.GlassBorder,
-            outlineVariant = AtomicColors.BorderSubtle,
-            primary = AtomicColors.Accent,
-            onPrimary = AtomicColors.AccentText,
-            primaryContainer = AtomicColors.AccentLight,
-            onPrimaryContainer = AtomicColors.Foreground,
-            secondary = AtomicColors.Foreground,
-            onSecondary = AtomicColors.Background,
-            error = AtomicColors.Danger,
-            onError = AtomicColors.Foreground,
-            errorContainer = AtomicColors.DangerLight,
-            onErrorContainer = AtomicColors.Danger,
-            // Surface tiers: dialogs use surfaceContainerHigh, menus and
-            // sheets the others. Left unset, Material fills these with its
-            // own purple-tinted greys, which is what dialogs showed.
-            surfaceTint = androidx.compose.ui.graphics.Color.Transparent,
-            surfaceDim = AtomicColors.Background,
-            surfaceBright = AtomicColors.SurfaceStrong,
-            surfaceContainerLowest = AtomicColors.Background,
-            surfaceContainerLow = AtomicColors.GlassFill,
-            surfaceContainer = AtomicColors.FieldFill,
-            surfaceContainerHigh = AtomicColors.SurfaceStrong,
-            surfaceContainerHighest = AtomicColors.SurfaceStrong,
-            inverseSurface = AtomicColors.Foreground,
-            inverseOnSurface = AtomicColors.Background
-        )
-    } else {
-        lightColorScheme(
-            background = AtomicColors.Background,
-            surface = AtomicColors.GlassFill,
-            surfaceVariant = AtomicColors.SurfaceStrong,
-            onBackground = AtomicColors.Foreground,
-            onSurface = AtomicColors.Foreground,
-            onSurfaceVariant = AtomicColors.TextSecondary,
-            outline = AtomicColors.GlassBorder,
-            outlineVariant = AtomicColors.BorderSubtle,
-            primary = AtomicColors.Accent,
-            onPrimary = AtomicColors.AccentText,
-            primaryContainer = AtomicColors.AccentLight,
-            onPrimaryContainer = AtomicColors.Foreground,
-            secondary = AtomicColors.Foreground,
-            onSecondary = AtomicColors.Background,
-            error = AtomicColors.Danger,
-            onError = AtomicColors.Foreground,
-            errorContainer = AtomicColors.DangerLight,
-            onErrorContainer = AtomicColors.Danger,
-            // Surface tiers: dialogs use surfaceContainerHigh, menus and
-            // sheets the others. Left unset, Material fills these with its
-            // own purple-tinted greys, which is what dialogs showed.
-            surfaceTint = androidx.compose.ui.graphics.Color.Transparent,
-            surfaceDim = AtomicColors.Background,
-            surfaceBright = AtomicColors.SurfaceStrong,
-            surfaceContainerLowest = AtomicColors.Background,
-            surfaceContainerLow = AtomicColors.GlassFill,
-            surfaceContainer = AtomicColors.FieldFill,
-            surfaceContainerHigh = AtomicColors.SurfaceStrong,
-            surfaceContainerHighest = AtomicColors.SurfaceStrong,
-            inverseSurface = AtomicColors.Foreground,
-            inverseOnSurface = AtomicColors.Background
+    val palette = AtomicColors.palette
+    val context = LocalContext.current
+    val reducedMotion = remember(context) { AtomicMotion.reducedMotion(context) }
+    val scheme = remember(palette) { palette.toColorScheme() }
+    SystemBarIcons(darkTheme = palette.isDark)
+
+    CompositionLocalProvider(
+        LocalAtomicPalette provides palette,
+        LocalReducedMotion provides reducedMotion
+    ) {
+        MaterialTheme(
+            colorScheme = scheme,
+            typography = Typography,
+            shapes = AtomicShapes,
+            content = content
         )
     }
+}
 
-    MaterialTheme(
-        colorScheme = scheme,
-        typography = Typography,
-        shapes = AtomicShapes,
-        content = content
+private fun AtomicPalette.toColorScheme(): ColorScheme {
+    val base = if (isDark) darkColorScheme() else lightColorScheme()
+    return base.copy(
+        primary = accent,
+        onPrimary = onAccent,
+        primaryContainer = accentTint,
+        onPrimaryContainer = textPrimary,
+        secondary = textPrimary,
+        onSecondary = background,
+        secondaryContainer = panel,
+        onSecondaryContainer = textPrimary,
+        tertiary = accent,
+        onTertiary = onAccent,
+        background = background,
+        onBackground = textPrimary,
+        surface = background,
+        onSurface = textPrimary,
+        surfaceVariant = panel,
+        onSurfaceVariant = textSecondary,
+        surfaceTint = Color.Transparent,
+        surfaceDim = panel,
+        surfaceBright = card,
+        surfaceContainerLowest = card,
+        surfaceContainerLow = raised,
+        surfaceContainer = panel,
+        surfaceContainerHigh = background,
+        surfaceContainerHighest = panel,
+        inverseSurface = textPrimary,
+        inverseOnSurface = background,
+        inversePrimary = accentOnModule,
+        outline = borderControl,
+        outlineVariant = line,
+        error = error,
+        onError = onError,
+        errorContainer = errorContainer,
+        onErrorContainer = onErrorContainer,
+        scrim = Color.Black
     )
+}
+
+/** Dark status and navigation bar icons on paper, light ones on ink. */
+@Composable
+private fun SystemBarIcons(darkTheme: Boolean) {
+    val view = LocalView.current
+    if (view.isInEditMode) return
+    SideEffect {
+        val window = (view.context as? Activity)?.window ?: return@SideEffect
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightNavigationBars = !darkTheme
+        }
+    }
 }

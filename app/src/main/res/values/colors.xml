@@ -7,4 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Atomic design system (docs/design/ATOMIC-DESIGN-SYSTEM.md) -->
+    <color name="atomic_paper">#FFF4F5F1</color>
+    <color name="atomic_ink">#FF15171B</color>
+    <color name="atomic_signal">#FF3A2FF0</color>
 </resources>

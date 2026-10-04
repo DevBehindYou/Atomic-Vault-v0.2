@@ -35,7 +35,7 @@ dump() {
   return 1
 }
 
-# find_center <attr> <value> [exact]  -> "x y" of the first matching node, or nothing
+# find_center <attr> <value> [exact]  -> "x y" of the first matching node, or nothing (ignores case)
 find_center() {
   python3 - "$OUT/ui.xml" "$1" "$2" "${3:-contains}" <<'PY'
 import re, sys
@@ -47,7 +47,9 @@ for m in re.finditer(r'<node [^>]*>', xml):
     b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node)
     if not (a and b):
         continue
-    hit = (a.group(1) == val) if mode == "exact" else (val in a.group(1))
+    # Case-insensitive: the design system renders labels in uppercase.
+    have, want = a.group(1).lower(), val.lower()
+    hit = (have == want) if mode == "exact" else (want in have)
     if hit:
         x1, y1, x2, y2 = map(int, b.groups())
         print((x1 + x2) // 2, (y1 + y2) // 2)

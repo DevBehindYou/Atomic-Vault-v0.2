@@ -22,16 +22,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.example.ui.theme.AtomicColors
+import com.example.ui.theme.AtomicBorder
 import com.example.ui.theme.AtomicMotion
+import com.example.ui.theme.AtomicTheme
 
 /**
- * The app's toggle: neutral track and muted thumb when off, emerald track
- * and dark thumb when on (design reference).
+ * The app's toggle (design system §9.5): on is an accent track with a
+ * white thumb; off is a paper track with a 2 dp ink outline and an ink
+ * thumb, so the off state is visible without colour.
  *
  * Built on toggleable(role = Switch) so screen readers announce it as a
  * switch with an on/off state -- a bare clickable() announced nothing. The
- * drawn switch is 52x30dp, but the touch target is padded out to the 48dp
+ * drawn switch is 52x32dp, but the touch target is padded out to the 48dp
  * minimum around it.
  */
 @Composable
@@ -44,12 +46,15 @@ fun AtomicSwitch(
     val progress = remember { Animatable(if (checked) 1f else 0f) }
 
     LaunchedEffect(checked) {
-        progress.animateTo(if (checked) 1f else 0f, AtomicMotion.GlassSpring)
+        progress.animateTo(if (checked) 1f else 0f, AtomicMotion.toggle())
     }
 
-    val trackFill = lerp(AtomicColors.SurfaceStrong, AtomicColors.Success, progress.value)
-    val trackBorder = lerp(AtomicColors.GlassBorder, AtomicColors.Success, progress.value)
-    val thumbColor = lerp(AtomicColors.TextMuted, AtomicColors.OnSuccess, progress.value)
+    val colors = AtomicTheme.colors
+    val trackFill = lerp(colors.background, colors.accent, progress.value)
+    val trackBorder = lerp(colors.borderControl, colors.accent, progress.value)
+    val thumbColor = lerp(colors.borderControl, colors.onAccent, progress.value)
+    // Off thumb is smaller, like Material 3, so on/off also differ in shape.
+    val thumbSize = 18.dp + 6.dp * progress.value
 
     val toggle = if (onCheckedChange != null && enabled) {
         Modifier.toggleable(
@@ -72,17 +77,17 @@ fun AtomicSwitch(
         Box(
             modifier = Modifier
                 .width(52.dp)
-                .height(30.dp)
+                .height(32.dp)
                 .clip(RoundedCornerShape(50))
                 .background(trackFill.copy(alpha = if (enabled) trackFill.alpha else trackFill.alpha * 0.4f))
-                .border(1.dp, trackBorder, RoundedCornerShape(50))
-                .padding(3.dp),
+                .border(AtomicBorder.control, trackBorder, RoundedCornerShape(50))
+                .padding(4.dp),
             contentAlignment = BiasAlignment(horizontalBias = progress.value * 2f - 1f, verticalBias = 0f)
         ) {
             Box(
                 modifier = Modifier
-                    .height(24.dp)
-                    .width(24.dp)
+                    .height(thumbSize)
+                    .width(thumbSize)
                     .clip(RoundedCornerShape(50))
                     .background(thumbColor)
             )

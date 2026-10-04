@@ -123,5 +123,7 @@ features. It also resolves D9: the three OFL families (Bebas Neue, Hanken
 Grotesk, JetBrains Mono) are bundled in the APK, never downloaded, so the
 no-network promise holds. Security adaptations (secrets never uppercased,
 user text never in Display, fonts offline, `FLAG_SECURE` kept) are in
-IMPLEMENTATION-PLAN section 8.3. Open: default theme and release timing
-(plan section 7, items 5–7).
+IMPLEMENTATION-PLAN section 8.3. Decided by the user on 2026-10-04: paper
+(light) is the default with a dark variant and "Match system"; the
+redesign ships as 0.4.0 after the 0.3.0 phone test; items open in a read
+view first. Someone who explicitly chose dark in an older version keeps it.

@@ -95,7 +95,7 @@ class RegressionUiTest {
         assertEquals(0, picked)
         rule.onNodeWithTag("autolock_chip_15 min").performClick()
         assertEquals(900, picked)
-        rule.onNodeWithText("Never").assertDoesNotExist()
+        rule.onNodeWithText("Never", ignoreCase = true).assertDoesNotExist()
     }
 
     @Test
@@ -205,8 +205,8 @@ class RegressionUiTest {
                 onConfirm = {}, onDismiss = {}
             )
         }
-        rule.onNodeWithText("Continue").assertIsDisplayed()
-        rule.onNodeWithText("Keep current vault").assertIsDisplayed()
+        rule.onNodeWithText("Continue", ignoreCase = true).assertIsDisplayed()
+        rule.onNodeWithText("Keep current vault", ignoreCase = true).assertIsDisplayed()
     }
 
     @Test

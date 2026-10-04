@@ -26,7 +26,7 @@ Goal set by the user:
 | 4. Performance + 2FA codes | Done in code | `d210431` | Run #30 green (after #29 test-expectation fix `3cf6f99`) |
 | 5. Platform health | Partly: TOTP engine, Moshi codegen, dead backup branch closed. Open: SQLCipher artifact swap, SDK/AGP upgrade, `security-crypto` replacement, package rename | | |
 | 6. Differentiators | Phishing guard `744055c`, fill receipts `6067d63`, India identity fields `4fc26e1`. change-password shortcut and backup check ("restore drill") done. Open: offline breach check (needs a dataset), QR transfer | | Run #30 green |
-| 7. Atomic design system (UI/UX rebuild) | Planned (section 8); spec in `docs/design/` | | |
+| 7. Atomic design system (UI/UX rebuild), ships as **0.4.0** | 7.0 done (plan, spec, [design canvas](https://claude.ai/artifact/KXY28fKQRhZcqpL4cgaGya)); 7.1 foundations in progress | see CHANGELOG | |
 
 Note on F11 (flaky test): run #23's failure did not reproduce in runs #24 and
 #25. Failing tests are now printed in the CI log, so the next occurrence will
@@ -499,13 +499,12 @@ access, fake "defence index" style metrics.
    library (accuracy), the Inter font (pending, TASKS U3).
 4. **Differentiators:** which of section 6 to start with. Recommended: the
    phishing guard, then the offline breach check.
-5. **Default theme (Phase 7):** paper (light) by default with the spec's dark
-   variant and "Match system" (recommended), or keep dark as the default.
-6. **When Phase 7 ships:** phone-test and release 0.3.0 first, then the
-   redesign as 0.4.0 (recommended: a functional release isn't held up by a
-   visual rebuild), or one release with both.
-7. **Item detail view (Phase 7):** open items in a read view with `EDIT`
-   (recommended), or keep opening the editor directly.
+5. ~~Default theme~~ **Decided (user, 2026-10-04):** paper (light) by
+   default, with the spec's dark variant and "Match system".
+6. ~~When Phase 7 ships~~ **Decided:** phone-test and release 0.3.0 first
+   (the functional work, up to commit `cd7b0d0`), then the redesign as
+   **0.4.0**.
+7. ~~Item detail view~~ **Decided:** items open in a read view with `EDIT`.
 
 ---
 
@@ -820,6 +819,17 @@ No springs, bounces, ambient loops or decorative motion.
 - Baseline profile (Phase 4) regenerated after the rebuild.
 
 ### 8.13 Steps, each its own commit and CI run
+
+Design reference: the 18-board canvas at
+https://claude.ai/artifact/KXY28fKQRhZcqpL4cgaGya (every screen in 8.7, the
+first-use state, restore confirm sheet, dark variant, tokens and components,
+tablet list + detail). Where the canvas and this section differ, this
+section wins.
+
+Learned in 7.1: Bebas Neue only has capital letterforms, so Display text is
+uppercase on screen while the string (and what TalkBack reads) keeps its
+normal case. No uppercase transform is needed for Display; mono labels use
+`AtomicType.caps`.
 
 | Step | Content | Evidence (CI) |
 |---|---|---|

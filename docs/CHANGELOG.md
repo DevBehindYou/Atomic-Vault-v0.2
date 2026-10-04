@@ -5,6 +5,31 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.1: Atomic design system foundations (0.4.0)
+
+- **Paper theme by default.** Ink on paper with one accent, Signal blue
+  (`docs/design/ATOMIC-DESIGN-SYSTEM.md`). The dark theme is the design
+  system's dark variant. Anyone who explicitly chose dark in an older version
+  keeps it; a new "Match system" mode is stored for the appearance picker.
+- **Bundled fonts:** Bebas Neue (display), Hanken Grotesk (body) and
+  JetBrains Mono (labels and secrets), about 380 KB in the APK, OFL licences
+  in `assets/licenses/`. Nothing is downloaded. Every screen now uses Hanken
+  Grotesk; the password generator shows passwords in JetBrains Mono.
+- **Tokens:** an immutable `AtomicPalette` (light and dark) behind
+  `AtomicTheme.colors`; radii 3/4/6/8/28/pill; border widths; hard offset
+  shadows (`Modifier.hardShadow`); motion durations with CSS `ease` and no
+  springs; reduced motion follows the system animation setting. Old colour
+  names remain as aliases until step 7.9.
+- **Contrast test:** every text/surface pair in both palettes is checked
+  against WCAG AA in a unit test.
+- Status and navigation bar icons follow the app theme; the window background
+  is paper (no dark flash at start-up).
+- New launcher icon: the Atomic atom mark on ink.
+- The switch follows the spec: accent track when on; paper track, ink outline
+  and a smaller ink thumb when off. It animates without a bounce.
+- Test safety: the emulator script and UI tests match text ignoring case,
+  because the design system shows labels in capitals.
+
 ### Phase 6: restore drill
 
 - **"Check backup (no changes)"** on the restore tab decrypts a backup file and

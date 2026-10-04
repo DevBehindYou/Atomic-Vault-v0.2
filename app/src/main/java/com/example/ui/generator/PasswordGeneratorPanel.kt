@@ -129,7 +129,7 @@ fun PasswordGeneratorPanel(
                         SelectionContainer(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = generatedPassword.ifEmpty { "Select a character type" },
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = com.example.ui.theme.AtomicFonts.Mono,
                                 fontSize = 17.sp,
                                 fontWeight = AtomicFontWeight.medium,
                                 color = if (generatedPassword.isEmpty()) AtomicColors.TextMuted else AtomicColors.Foreground
