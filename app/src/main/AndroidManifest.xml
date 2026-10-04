@@ -31,6 +31,15 @@
         <activity
             android:name="com.example.autofill.AutofillAuthActivity"
             android:exported="false"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.MyApplication" />
+
+        <activity
+            android:name="com.example.autofill.AutofillSaveActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.MyApplication" />
 
         <service

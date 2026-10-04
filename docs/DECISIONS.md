@@ -91,3 +91,24 @@ fill one field, so it was both a bigger trust ask and a worse fill path. The
 in-app unlock keyboard also locked out passwords with characters it lacked.
 Master passwords are normalized to NFC so any keyboard produces the same key.
 
+
+## D12. One per-use key; Autofill always authenticates in a screen (agent, supersedes D3)
+
+The timed "grace" key from D3 let Autofill release the vault key with no UI
+for 30 s after any fingerprint. In practice suggestions appeared only right
+after a phone unlock and saves were silently dropped. Autofill now returns a
+single "Unlock AtomicVault" chip while the vault is locked and authenticates in
+`AutofillAuthActivity` (fingerprint bound to the per-use key, or master
+password). The grace key is deleted on upgrade; the unlock key is unchanged.
+
+## D13. Fingerprint on every fill (user-approved default)
+
+When the vault is open in the app, Autofill shows account names but still asks
+for the fingerprint (or master password) before filling. A "fill without asking
+while unlocked" setting is possible later; the default stays strict.
+
+## D14. Restores keep an undo copy in memory only (agent)
+
+Before a restore replaces the vault, the current contents are kept decrypted in
+process memory so "Undo restore" can put them back. They are dropped on lock
+and never written to disk.

@@ -22,7 +22,7 @@ Goal set by the user:
 | 0. Baseline | Done | `049e85b` | Run #25 green (unit, lint, emulator) |
 | 1. Remove the Atomic keyboard | Done | `a6c645f` | Run #26 green (unit, lint, emulator: restart + unlock via system keyboard) |
 | 2. Data safety | Pushed, awaiting CI | see CHANGELOG | — |
-| 3. Gboard Autofill | | | |
+| 3. Gboard Autofill | Committed, waiting for Phase 2 CI before push | see CHANGELOG | — |
 | 4. Performance | | | |
 | 5. Platform health | | | |
 

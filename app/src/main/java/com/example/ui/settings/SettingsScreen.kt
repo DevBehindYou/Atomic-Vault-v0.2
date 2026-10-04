@@ -326,32 +326,47 @@ fun SettingsScreen(
                     brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
                 )
             ) {
+                // Live state of Android's Autofill setting, re-read when the
+                // user comes back from system settings. Autofill no longer
+                // depends on biometric unlock: the master password works too.
+                val autofillManager = remember {
+                    context.getSystemService(android.view.autofill.AutofillManager::class.java)
+                }
+                var autofillOn by remember { mutableStateOf(autofillManager?.hasEnabledAutofillServices() == true) }
+                val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+                androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+                    val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                        if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                            autofillOn = autofillManager?.hasEnabledAutofillServices() == true
+                        }
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
+
                 Column(modifier = Modifier.padding(AtomicSpacing.md)) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag("settings_autofill_status"),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
                     ) {
+                        com.example.ui.components.StatusDot(if (autofillOn) AtomicColors.Success else AtomicColors.TextMuted)
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Arm autofill service",
+                                text = if (autofillOn) "AtomicVault fills your logins" else "Autofill is off",
                                 fontSize = AtomicFontSize.body,
                                 fontWeight = AtomicFontWeight.medium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Fills credentials in apps & browsers, gated by biometric authentication",
+                                text = "Suggestions appear in your keyboard's strip (Gboard and others) or under the field. " +
+                                    "Filling asks for your fingerprint or master password. " +
+                                    "In Chrome, also choose Settings > Autofill services > Autofill using another service.",
                                 fontSize = AtomicFontSize.caption,
                                 color = AtomicColors.TextMuted
                             )
                         }
-
-                        AtomicSwitch(
-                            checked = uiState.autofillArmed,
-                            onCheckedChange = onSetAutofillArmed,
-                            modifier = Modifier.testTag("settings_autofill_arm_switch")
-                        )
                     }
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -373,7 +388,7 @@ fun SettingsScreen(
                             shape = androidx.compose.ui.graphics.RectangleShape
                         ) {
                             Text(
-                                text = "Open system autofill settings →",
+                                text = if (autofillOn) "Change autofill service →" else "Turn on AtomicVault Autofill →",
                                 color = AtomicColors.Accent,
                                 fontSize = AtomicFontSize.label
                             )

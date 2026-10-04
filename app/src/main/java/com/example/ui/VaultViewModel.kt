@@ -22,8 +22,8 @@ import com.example.database.VaultSession
 import com.example.database.VaultSettingsPatch
 import com.example.database.VaultSettingsPlain
 import com.example.keystore.BiometricGatedKeyStore
-import com.example.keystore.KdfParams
 import com.example.keystore.VaultMetaStore
+import com.example.keystore.VaultUnlocker
 import com.example.security.DeviceIntegrity
 import com.example.trust.TrustEventType
 import com.example.trust.TrustLedger
@@ -195,43 +195,27 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(busy = true, error = null) }
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                val envelope = metaStore.getVaultEnvelope()
-                if (envelope == null) {
-                    withContext(Dispatchers.Main) {
-                        _uiState.update { it.copy(busy = false, error = if (metaStore.isUnavailable) KEY_STORE_UNAVAILABLE else "Vault envelope not found") }
-                        onComplete(false)
+                val dek = when (val result = VaultUnlocker.unlock(metaStore, password)) {
+                    is VaultUnlocker.Result.Unlocked -> result.dek
+                    VaultUnlocker.Result.WrongPassword -> {
+                        TrustLedger.record(
+                            getApplication(), TrustEventType.VAULT_UNLOCK_FAILED,
+                            authenticationType = "master_password", result = "failure"
+                        )
+                        withContext(Dispatchers.Main) {
+                            _uiState.update { it.copy(busy = false, error = "Incorrect master password") }
+                            onComplete(false)
+                        }
+                        return@launch
                     }
-                    return@launch
-                }
-
-                // The parameters this vault was created with, not today's defaults.
-                val kdf = KdfParams.parse(envelope.kdfParamsJson)
-                val unlocked = MasterPassword.unlock(
-                    password = password,
-                    derive = { candidate -> deriveWith(kdf, candidate, envelope.saltBase64) },
-                    unwrap = { kek -> DekCodec.unwrapDek(kek, envelope.wrappedDek) }
-                )
-                if (unlocked == null) {
-                    TrustLedger.record(
-                        getApplication(), TrustEventType.VAULT_UNLOCK_FAILED,
-                        authenticationType = "master_password", result = "failure"
-                    )
-                    withContext(Dispatchers.Main) {
-                        _uiState.update { it.copy(busy = false, error = "Incorrect master password") }
-                        onComplete(false)
-                    }
-                    return@launch
-                }
-                val dek = unlocked.dek
-                if (unlocked.needsRewrap) {
-                    // Created before passwords were normalized, from a
-                    // decomposed form: wrap the same DEK under the canonical
-                    // form once, so any keyboard opens it from now on.
-                    val kek = deriveWith(kdf, MasterPassword.normalize(password), envelope.saltBase64)
-                    try {
-                        metaStore.saveVaultEnvelope(envelope.saltBase64, envelope.kdfParamsJson, DekCodec.wrapDek(kek, dek))
-                    } finally {
-                        Arrays.fill(kek, 0.toByte())
+                    VaultUnlocker.Result.NoVault, VaultUnlocker.Result.KeyStoreUnavailable -> {
+                        withContext(Dispatchers.Main) {
+                            _uiState.update {
+                                it.copy(busy = false, error = if (metaStore.isUnavailable) KEY_STORE_UNAVAILABLE else "Vault envelope not found")
+                            }
+                            onComplete(false)
+                        }
+                        return@launch
                     }
                 }
 
@@ -664,15 +648,6 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      */
     suspend fun getAllCredentialsForSecurity(): List<CredentialPlain> = withContext(Dispatchers.IO) {
         VaultSession.useIfUnlocked { it.repository.exportData().items } ?: emptyList()
-    }
-
-    private fun deriveWith(kdf: KdfParams, password: String, saltBase64: String): ByteArray {
-        val chars = password.toCharArray()
-        try {
-            return Argon2Kdf.deriveKek(chars, saltBase64, kdf.memoryKiB, kdf.iterations, kdf.parallelism)
-        } finally {
-            Arrays.fill(chars, '\u0000')
-        }
     }
 
     /**

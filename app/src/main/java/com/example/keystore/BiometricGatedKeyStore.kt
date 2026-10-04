@@ -5,7 +5,6 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
-import android.security.keystore.UserNotAuthenticatedException
 import android.util.Base64
 import java.security.Key
 import java.security.KeyStore
@@ -23,37 +22,30 @@ import javax.crypto.spec.GCMParameterSpec
  * so anything able to call getDek() directly got the raw DEK without the
  * OS ever verifying a fingerprint. See the improvement plan's P0 finding.
  *
- * This class ties key release to the Android Keystore itself. It holds the
- * DEK wrapped under TWO Keystore keys, because the two consumers need
- * opposite authentication models:
+ * This class ties key release to the Android Keystore itself. The DEK is
+ * wrapped under one Keystore key that requires authentication for EVERY use
+ * (timeout 0) -- the model BiometricPrompt.CryptoObject is built for:
+ * Cipher.init() succeeds without a prior auth, and the Keystore refuses
+ * doFinal() until the prompt that owns the CryptoObject succeeds.
+ * begin() builds a Cipher to hand to BiometricPrompt.CryptoObject; finish()
+ * must only be called with the Cipher returned from a successful
+ * BiometricPrompt.AuthenticationResult.
  *
- *  - UNLOCK key: authentication required for EVERY use (timeout 0). This is
- *    the model BiometricPrompt.CryptoObject is built for: Cipher.init()
- *    succeeds without a prior auth, and the Keystore refuses doFinal()
- *    until the prompt that owns the CryptoObject succeeds. Used by
- *    beginReveal()/finishReveal() -- app unlock and AutofillAuthActivity
- *    both go through a fresh prompt.
- *
- *  - GRACE key: usable for [GRACE_WINDOW_SECONDS] after any strong
- *    biometric authentication. Cipher.init() on a timed key throws
- *    UserNotAuthenticatedException outside that window, so it can never
- *    back a CryptoObject prompt -- which is exactly why it must not be the
- *    unlock key (a single timed key made unlock a silent no-op on a cold
- *    start and made arming throw). Used only by tryRevealWithoutPrompt(),
- *    for the no-UI metadata matching in AutofillService.
- *
- * Both begin/finish pairs work the same way: begin() builds a Cipher to
- * hand to BiometricPrompt.CryptoObject; finish() must only be called with
- * the Cipher returned from a successful BiometricPrompt.AuthenticationResult.
+ * There is deliberately no key that releases the DEK without a prompt.
+ * Earlier builds kept a second, timed "grace" key so Autofill could match
+ * credentials with no UI; that made suggestions appear only within 30 s of
+ * a fingerprint unlock and silently dropped saves. Autofill now always
+ * authenticates in an activity (see AutofillAuthActivity), so the grace key
+ * and its wrapped copy are deleted on upgrade.
  *
  * Shared by the main app's unlock flow AND VaultAutofillService /
  * AutofillAuthActivity -- they run in the same process/UID, so sharing the
  * same Keystore aliases is safe and is exactly the "one auth manager, not
  * five" consolidation called for in the improvement plan.
  *
- * NOTE: only the WRAPPED (ciphertext) DEK copies and their IVs are
+ * NOTE: only the WRAPPED (ciphertext) DEK and its IV are
  * persisted here, in plain SharedPreferences. That's fine -- they are
- * useless without the hardware-backed Keystore keys, so there's no raw
+ * useless without the hardware-backed Keystore key, so there's no raw
  * secret sitting at rest.
  */
 class BiometricGatedKeyStore(context: Context) {
@@ -97,7 +89,6 @@ class BiometricGatedKeyStore(context: Context) {
             .putString(PREF_UNLOCK_WRAPPED_DEK, Base64.encodeToString(encrypted, Base64.NO_WRAP))
             .putString(PREF_UNLOCK_IV, Base64.encodeToString(iv, Base64.NO_WRAP))
             .apply()
-        armGraceCopy(dek)
     }
 
     /**
@@ -133,68 +124,12 @@ class BiometricGatedKeyStore(context: Context) {
         return authenticatedCipher.doFinal(wrapped)
     }
 
-    /**
-     * For contexts that cannot show UI at all -- specifically
-     * VaultAutofillService.onFillRequest(), which Android runs with no
-     * foreground activity, so it structurally cannot present a
-     * BiometricPrompt. Attempts to decrypt directly using the GRACE key's
-     * bounded post-authentication window (see [GRACE_WINDOW_SECONDS]).
-     * Returns null if nothing is armed OR if the key is outside its grace
-     * window (i.e. no recent successful biometric auth) -- callers must
-     * treat null as "show no suggestions," never as "show suggestions
-     * without protection." This is a deliberate, bounded trade-off for a
-     * real platform constraint, not a bypass: the actual credential VALUES
-     * are still only ever revealed through beginReveal()/finishReveal()
-     * behind an explicit, fresh BiometricPrompt in AutofillAuthActivity.
-     */
-    fun tryRevealWithoutPrompt(): ByteArray? {
-        if (!isArmed()) return null
-        return try {
-            val ivB64 = prefs.getString(PREF_GRACE_IV, null) ?: return null
-            val wrappedB64 = prefs.getString(PREF_GRACE_WRAPPED_DEK, null) ?: return null
-            val iv = Base64.decode(ivB64, Base64.NO_WRAP)
-            val key = androidKeyStore.getKey(GRACE_KEY_ALIAS, null) ?: return null
-            val cipher = Cipher.getInstance(TRANSFORMATION).apply {
-                init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
-            }
-            cipher.doFinal(Base64.decode(wrappedB64, Base64.NO_WRAP))
-        } catch (e: UserNotAuthenticatedException) {
-            // Outside the grace window -- no recent biometric auth. Fail closed.
-            null
-        } catch (e: KeyPermanentlyInvalidatedException) {
-            clear()
-            null
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    /** Disarms biometric unlock/autofill entirely: deletes both Keystore keys and the wrapped DEKs. */
+    /** Disarms biometric unlock entirely: deletes the Keystore keys and the wrapped DEK. */
     fun clear() {
         prefs.edit().clear().apply()
         deleteKey(UNLOCK_KEY_ALIAS)
         deleteKey(GRACE_KEY_ALIAS)
         deleteKey(LEGACY_KEY_ALIAS)
-    }
-
-    /**
-     * Best-effort second wrap under the GRACE key. Runs right after the
-     * arming prompt succeeded, so the timed key is inside its window. If it
-     * fails, biometric unlock still works; only no-UI autofill
-     * suggestions are unavailable until the next arm.
-     */
-    private fun armGraceCopy(dek: ByteArray) {
-        try {
-            val cipher = newEncryptCipher(getOrCreateGraceKey())
-            val encrypted = cipher.doFinal(dek)
-            prefs.edit()
-                .putString(PREF_GRACE_WRAPPED_DEK, Base64.encodeToString(encrypted, Base64.NO_WRAP))
-                .putString(PREF_GRACE_IV, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
-                .apply()
-        } catch (e: Exception) {
-            prefs.edit().remove(PREF_GRACE_WRAPPED_DEK).remove(PREF_GRACE_IV).apply()
-            deleteKey(GRACE_KEY_ALIAS)
-        }
     }
 
     private fun newEncryptCipher(key: Key): Cipher =
@@ -209,27 +144,6 @@ class BiometricGatedKeyStore(context: Context) {
             // pairs with BiometricPrompt.CryptoObject. Below API 30 the
             // default validity duration (-1) already means the same thing.
             specBuilder.setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)
-        }
-        return generateKey(specBuilder)
-    }
-
-    private fun getOrCreateGraceKey(): Key {
-        androidKeyStore.getKey(GRACE_KEY_ALIAS, null)?.let { return it }
-
-        val specBuilder = baseSpec(GRACE_KEY_ALIAS)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Bounded grace window, not "every single op" -- see
-            // tryRevealWithoutPrompt()'s doc comment for why: an
-            // AutofillService's onFillRequest() runs with no UI and
-            // genuinely cannot show a live BiometricPrompt, so a 0-second
-            // window would silently break autofill suggestions entirely.
-            // AutofillAuthActivity's actual value reveal still always goes
-            // through a fresh, explicit BiometricPrompt regardless of this
-            // window -- this only affects the metadata-matching step.
-            specBuilder.setUserAuthenticationParameters(GRACE_WINDOW_SECONDS, KeyProperties.AUTH_BIOMETRIC_STRONG)
-        } else {
-            @Suppress("DEPRECATION")
-            specBuilder.setUserAuthenticationValidityDurationSeconds(GRACE_WINDOW_SECONDS)
         }
         return generateKey(specBuilder)
     }
@@ -264,6 +178,12 @@ class BiometricGatedKeyStore(context: Context) {
             deleteKey(LEGACY_KEY_ALIAS)
             prefs.edit().remove(LEGACY_PREF_WRAPPED_DEK).remove(LEGACY_PREF_IV).apply()
         }
+        // The timed grace key (no-UI release) is gone; the unlock key is kept,
+        // so biometric unlock keeps working with no re-arm.
+        if (androidKeyStore.containsAlias(GRACE_KEY_ALIAS) || prefs.contains(PREF_GRACE_WRAPPED_DEK)) {
+            deleteKey(GRACE_KEY_ALIAS)
+            prefs.edit().remove(PREF_GRACE_WRAPPED_DEK).remove(PREF_GRACE_IV).apply()
+        }
     }
 
     companion object {
@@ -280,7 +200,5 @@ class BiometricGatedKeyStore(context: Context) {
         private const val LEGACY_KEY_ALIAS = "atomicvault_dek_biometric_key"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
         private const val GCM_TAG_BITS = 128
-        // Bounded post-auth grace window for tryRevealWithoutPrompt() only.
-        private const val GRACE_WINDOW_SECONDS = 30
     }
 }

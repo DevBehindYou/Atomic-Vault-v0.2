@@ -5,6 +5,40 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 3: Autofill built for Gboard and every keyboard
+
+- **Suggestions in the keyboard strip.** On Android 11+ every AtomicVault
+  suggestion carries an inline chip (Gboard, Samsung, SwiftKey...) as well as
+  the classic dropdown. Long-pressing a chip opens AtomicVault; it used to start
+  the fill itself (B10).
+- **Vault locked:** one "Unlock AtomicVault" chip. Tapping it authenticates once
+  and returns this screen's accounts, ready to fill (F1). It used to show
+  nothing unless a fingerprint had been used in the last 30 seconds.
+- **Vault open in the app:** one chip per matching account with its username;
+  tapping asks for the fingerprint or master password, then fills username and
+  password together.
+- **Master password everywhere (F3).** A new `VaultAuthActivity` tries the
+  Keystore-bound fingerprint first and always offers the master password, so
+  Autofill works on phones without biometrics. One `VaultUnlocker` does password
+  unlock for the app and Autofill alike.
+- **Saving always works (F2).** "Save to AtomicVault" opens a short confirm
+  screen that authenticates and saves (`AutofillSaveActivity`); the captured
+  login waits in memory only (`PendingSaves`, 5-minute expiry), never on disk.
+  Two-page logins (email, then password) are saved together (`FLAG_DELAY_SAVE`).
+- **Sign-up forms** get a "Strong password" chip that fills a generated password
+  into the new and confirm fields; the save prompt then stores it.
+- **Field detection rewritten (B11)** as `FormClassifier` (pure Kotlin, tested):
+  autofill hints > HTML autocomplete/type > input type > whole words. No more
+  "pass" matching "passport", hidden or disabled fields are never filled,
+  labels are not fields, postal/promo codes are not 2FA codes.
+- **No key without a screen.** The 30-second grace key and
+  `tryRevealWithoutPrompt` are deleted (purged on upgrade); the biometric
+  unlock key is kept, so nobody has to re-enable biometrics.
+- Autofill never acts on AtomicVault's own screens (B7, service side).
+- Settings shows whether AtomicVault is the active Autofill service (live), with
+  the Chrome step; the "Arm autofill" switch, which only toggled biometrics, is
+  gone.
+
 ### Phase 2: data safety and crash fixes
 
 - **Lock never corrupts a save (B4).** New `VaultSession` owns the open vault

@@ -27,15 +27,22 @@ biometric unlock back on once. The master password keeps working throughout.
 - [ ] The app does not appear in Settings > Languages & input > On-screen keyboards.
 - [ ] Screenshot on the onboarding screen is blocked (it was allowed before).
 
-## 3. Autofill (two bugs were fixed here, please test both)
+## 3. Autofill with Gboard (rebuilt; please test all of it)
 
-- [ ] Settings, Arm autofill, choose AtomicVault as the autofill service in Android settings.
-- [ ] In Chrome, log in to **site A** and accept "Save to AtomicVault". Do the same on **site B**. Both appear as separate items.
-- [ ] Open site B's login page: only B's login is offered. Site A's is not.
-- [ ] Log in to site A with a second account: a new item is created, the first account is untouched.
-- [ ] Add notes, a TOTP secret and a tag to a saved login, then change its password through Chrome's save prompt. The notes, TOTP secret and tag are still there afterwards.
-- [ ] A native app login: saved and offered in that app only.
-- [ ] Tapping a suggestion asks for the fingerprint before anything is filled.
+Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVault. In Chrome: Settings > Autofill services > "Autofill using another service".
+
+- [ ] Vault **locked**, open a login page in Chrome: Gboard's strip shows one **AtomicVault** chip. Tap it, use the fingerprint: the site's accounts appear as chips; tap one and both username and password fill.
+- [ ] Same with the fingerprint cancelled: the master password works on that screen.
+- [ ] Phone with **no fingerprint enrolled** (or biometrics off in AtomicVault): the same flow works with the master password.
+- [ ] Vault **open** in the app (switch to Chrome within the auto-lock time): chips show each account's username; tapping asks for the fingerprint and fills.
+- [ ] Long-press a chip: AtomicVault opens (it must not fill).
+- [ ] A **sign-up** page: a "Strong password" chip fills both password fields; after signing up, "Save to AtomicVault" stores it.
+- [ ] Sign in to a new site and tap **Save** on Android's prompt **hours after** last unlocking: the save screen asks to unlock and the login is saved (it used to be dropped).
+- [ ] Google-style login (email page, then password page): one save prompt at the end stores both.
+- [ ] Site A and site B in Chrome: B's page never offers A's login; saving on B never changes A's item.
+- [ ] A native app login: saved, then offered in that app only.
+- [ ] Nothing is offered inside AtomicVault itself (unlock, editor fields).
+- [ ] Android 9 or 10 phone (if available): the same suggestions appear as a dropdown under the field.
 
 ## 4. Vault basics
 

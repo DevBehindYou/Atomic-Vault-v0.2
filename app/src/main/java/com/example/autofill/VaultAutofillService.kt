@@ -1,311 +1,167 @@
 package com.example.autofill
 
-import android.app.PendingIntent
 import android.content.Intent
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.CancellationSignal
 import android.service.autofill.AutofillService
-import android.service.autofill.Dataset
 import android.service.autofill.FillCallback
 import android.service.autofill.FillRequest
 import android.service.autofill.FillResponse
-import android.service.autofill.InlinePresentation
 import android.service.autofill.SaveCallback
-import android.service.autofill.SaveInfo
 import android.service.autofill.SaveRequest
-import android.widget.RemoteViews
-import android.widget.inline.InlinePresentationSpec
-import androidx.annotation.RequiresApi
-import androidx.autofill.inline.UiVersions
-import androidx.autofill.inline.v1.InlineSuggestionUi
-import com.atomicvault.android.R
-import com.example.database.CredentialInput
-import com.example.database.VaultDatabase
-import com.example.database.VaultRepositoryImpl
-import com.example.keystore.BiometricGatedKeyStore
+import android.view.autofill.AutofillValue
+import android.view.inputmethod.InlineSuggestionsRequest
+import com.example.database.VaultSession
+import com.example.password.GeneratorOptions
+import com.example.password.PasswordGenerator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-@RequiresApi(Build.VERSION_CODES.O)
+/**
+ * AtomicVault's Autofill service. On Android 11+ its suggestions appear as
+ * chips in the keyboard's own suggestion strip (Gboard and most others),
+ * otherwise as a dropdown under the field.
+ *
+ * What the user sees:
+ *  - Vault open in the app: one chip per matching account ("github.com ·
+ *    ashu@..."). Tapping it asks for the fingerprint (or master password),
+ *    then fills username and password together.
+ *  - Vault locked: a single "Unlock AtomicVault" chip. Tapping it
+ *    authenticates once and then shows this screen's accounts, ready to fill.
+ *  - Sign-up / change-password forms: a "Strong password" chip that fills a
+ *    freshly generated password; the save prompt then stores it.
+ *  - After signing in: Android's "Save to AtomicVault" prompt, which always
+ *    works (it used to be silently dropped unless a fingerprint had been used
+ *    in the last 30 seconds).
+ *
+ * No key is ever released without a screen: matching while locked shows only
+ * the generic unlock chip, and nothing about the vault's contents.
+ */
 class VaultAutofillService : AutofillService() {
 
-    // onFillRequest/onSaveRequest are platform callbacks invoked on the
-    // service's main thread. Both open a short-lived SQLCipher connection
-    // and run real queries -- previously done synchronously right there,
-    // which risks the OS treating a slow/loaded device's autofill
-    // response as an ANR and risks visibly stalling whatever OTHER app
-    // the user is actually in. Both callback types are explicitly
-    // designed to be completed asynchronously (that's what FillCallback/
-    // SaveCallback are for), so the real work now runs here instead.
-    private val serviceJob = SupervisorJob()
-    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onDestroy() {
+        scope.cancel()
         super.onDestroy()
-        serviceJob.cancel()
     }
 
-    override fun onFillRequest(
-        request: FillRequest,
-        cancellationSignal: CancellationSignal,
-        callback: FillCallback
-    ) {
+    override fun onFillRequest(request: FillRequest, cancellationSignal: CancellationSignal, callback: FillCallback) {
         val structure = request.fillContexts.lastOrNull()?.structure
         if (structure == null) {
             callback.onSuccess(null)
             return
         }
+        val inlineRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) request.inlineSuggestionsRequest else null
 
-        val keyStore = BiometricGatedKeyStore(this)
-        if (!keyStore.isArmed()) {
-            callback.onSuccess(null)
-            return
-        }
-
-        // Metadata-matching only -- see tryRevealWithoutPrompt()'s doc
-        // comment. A null here means "outside the post-auth grace window,"
-        // i.e. no recent biometric auth, so we correctly show nothing
-        // rather than silently bypassing protection.
-        val job = serviceScope.launch {
-            val dek = keyStore.tryRevealWithoutPrompt()
-            if (dek == null) {
-                callback.onSuccess(null)
-                return@launch
-            }
-
-            var db: net.sqlcipher.database.SQLiteDatabase? = null
-            try {
-                // Parse inside the try so the DEK is zeroed in finally on
-                // every exit, including the early "nothing to fill" returns.
-                val parsed = AssistStructureParser.parse(structure)
-                if (parsed.usernameId == null && parsed.passwordId == null) {
-                    callback.onSuccess(null)
-                    return@launch
-                }
-
-                db = VaultDatabase.open(this@VaultAutofillService, dek)
-                val openDb = db
-
-                // Trust-level matching (see CredentialMatcher): only matches
-                // at Level 2 (domain) or above are auto-offered. A Level 0
-                // heuristic match alone is never automatically surfaced --
-                // per the product review's explicit rule.
-                val matches = CredentialMatcher.findAutoOfferMatches(
-                    context = this@VaultAutofillService,
-                    db = openDb,
-                    packageName = parsed.packageName,
-                    webDomain = parsed.webDomain
-                )
-
-                if (matches.isEmpty()) {
-                    callback.onSuccess(null)
-                    return@launch
-                }
-
-                // Inline suggestions (Android 11+): if the current IME asked
-                // for them, build an InlinePresentation for each dataset IN
-                // ADDITION to the existing RemoteViews dropdown presentation --
-                // same masked value, same setAuthentication() gate either
-                // way. This does NOT change when the real credential value
-                // becomes available; it only changes where the suggestion is
-                // visually offered. See the design plan's note on this.
-                val inlineSpecs: List<InlinePresentationSpec> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    request.inlineSuggestionsRequest?.inlinePresentationSpecs ?: emptyList()
-                } else emptyList()
-                val maxInline = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    request.inlineSuggestionsRequest?.maxSuggestionCount ?: 0
-                } else 0
-
-                val responseBuilder = FillResponse.Builder()
-                val offered = matches.take(5)
-
-                offered.forEachIndexed { index, match ->
-                    val presentation = RemoteViews(packageName, android.R.layout.simple_list_item_1).apply {
-                        setTextViewText(android.R.id.text1, "AtomicVault: ${match.title}")
-                    }
-
-                    val authIntent = Intent(this@VaultAutofillService, AutofillAuthActivity::class.java).apply {
-                        putExtra("EXTRA_ITEM_ID", match.id)
-                        putExtra("EXTRA_USERNAME_ID", parsed.usernameId)
-                        putExtra("EXTRA_PASSWORD_ID", parsed.passwordId)
-                    }
-
-                    val pendingIntent = PendingIntent.getActivity(
-                        this@VaultAutofillService,
-                        match.id.hashCode(),
-                        authIntent,
-                        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE
-                    )
-
-                    val inlinePresentation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && index < maxInline) {
-                        val spec = inlineSpecs.getOrNull(index) ?: inlineSpecs.lastOrNull()
-                        spec?.let { buildInlinePresentation(it, match.title, pendingIntent) }
-                    } else null
-
-                    val datasetBuilder = Dataset.Builder(presentation)
-                        .setAuthentication(pendingIntent.intentSender)
-
-                    if (parsed.usernameId != null) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
-                            datasetBuilder.setValue(parsed.usernameId, null, null, presentation, inlinePresentation)
-                        } else {
-                            datasetBuilder.setValue(parsed.usernameId, null, presentation)
-                        }
-                    }
-                    if (parsed.passwordId != null) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
-                            datasetBuilder.setValue(parsed.passwordId, null, null, presentation, inlinePresentation)
-                        } else {
-                            datasetBuilder.setValue(parsed.passwordId, null, presentation)
-                        }
-                    }
-
-                    responseBuilder.addDataset(datasetBuilder.build())
-                }
-
-                // Also set SaveInfo so user can save credentials
-                val saveRequiredIds = mutableListOf<android.view.autofill.AutofillId>()
-                if (parsed.passwordId != null) saveRequiredIds.add(parsed.passwordId)
-                if (parsed.usernameId != null) saveRequiredIds.add(parsed.usernameId)
-
-                if (saveRequiredIds.isNotEmpty()) {
-                    val saveInfo = SaveInfo.Builder(
-                        SaveInfo.SAVE_DATA_TYPE_PASSWORD,
-                        saveRequiredIds.toTypedArray()
-                    ).build()
-                    responseBuilder.setSaveInfo(saveInfo)
-                }
-
-                callback.onSuccess(responseBuilder.build())
+        val job = scope.launch {
+            val response = try {
+                buildResponse(AssistStructureParser.parse(structure), inlineRequest)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                callback.onSuccess(null)
-            } finally {
-                java.util.Arrays.fill(dek, 0.toByte())
-                // Every VaultDatabase.open() here is a short-lived, one-off
-                // connection -- unlike VaultViewModel's activeDb, which is
-                // held for the whole unlocked session and closed in
-                // lockVault(). Without this, every single fill request leaks
-                // one SQLCipher connection.
-                db?.close()
+                null
+            }
+            try {
+                callback.onSuccess(response)
+            } catch (e: IllegalStateException) {
+                // The request was cancelled or already answered.
             }
         }
         cancellationSignal.setOnCancelListener { job.cancel() }
     }
 
-    /**
-     * Builds the inline (Android 11+ keyboard-strip) presentation for one
-     * suggestion. Never includes the real credential value -- title only,
-     * same as the RemoteViews dropdown presentation. Returns null on any
-     * failure (unsupported style, etc.) so the caller can fall back to
-     * the RemoteViews-only presentation without the whole fill request
-     * failing.
-     */
-    @RequiresApi(Build.VERSION_CODES.R)
-    @android.annotation.SuppressLint("RestrictedApi")
-    private fun buildInlinePresentation(
-        spec: InlinePresentationSpec,
-        title: String,
-        pendingIntent: PendingIntent
-    ): InlinePresentation? {
-        return try {
-            val supportedStyles = UiVersions.getVersions(spec.style)
-            if (!supportedStyles.contains(UiVersions.INLINE_UI_VERSION_1)) {
-                return null
-            }
-            val content = InlineSuggestionUi.newContentBuilder(pendingIntent)
-                .setTitle("AtomicVault: $title")
-                .setStartIcon(Icon.createWithResource(this, R.mipmap.ic_launcher))
-                .build()
-            InlinePresentation(content.slice, spec, false)
-        } catch (e: Exception) {
-            null
+    private fun buildResponse(parsed: ParsedForm, inlineRequest: InlineSuggestionsRequest?): FillResponse? {
+        // Never fill AtomicVault's own screens (the app also opts out of Autofill).
+        if (parsed.packageName == packageName) return null
+        val form = parsed.form
+        if (!form.hasLoginFields) return null
+
+        if (form.isNewPassword && form.passwords.isNotEmpty()) return newPasswordResponse(parsed, inlineRequest)
+
+        // Vault open in the app: show matching accounts by name, values after auth.
+        val matches = VaultSession.useIfUnlocked { handle ->
+            CredentialMatcher.findAutoOfferMatches(this, handle.db, parsed.packageName, parsed.webDomain)
+                .take(AutofillUi.MAX_SUGGESTIONS)
+                .map { match -> match to handle.repository.getItem(match.id)?.username.orEmpty() }
         }
-    }
-
-    override fun onSaveRequest(request: SaveRequest, callback: SaveCallback) {
-        val structure = request.fillContexts.lastOrNull()?.structure
-        if (structure == null) {
-            callback.onSuccess()
-            return
-        }
-
-        val keyStore = BiometricGatedKeyStore(this)
-        if (!keyStore.isArmed()) {
-            callback.onSuccess()
-            return
-        }
-
-        // Same grace-window constraint as onFillRequest -- see
-        // tryRevealWithoutPrompt()'s doc comment. If we're outside the
-        // window, decline the save rather than risk any partial/unsafe
-        // path; the user can save manually from the app instead.
-        serviceScope.launch {
-            val dek = keyStore.tryRevealWithoutPrompt()
-            if (dek == null) {
-                callback.onSuccess()
-                return@launch
-            }
-
-            // A parse failure must still zero the DEK and complete the
-            // callback, otherwise the save UI never gets its response.
-            val parsed = try {
-                AssistStructureParser.parse(structure)
+        if (matches == null) {
+            val auth = AutofillUi.authSender(
+                this,
+                AutofillAuthActivity.intent(this, AutofillAuthActivity.MODE_LIST, parsed, inlineRequest = inlineRequest)
+            )
+            return try {
+                AutofillUi.lockedResponse(this, parsed, inlineRequest, auth)
             } catch (e: Exception) {
                 null
             }
-            if (parsed != null && !parsed.savePasswordValue.isNullOrBlank()) {
-                var db: net.sqlcipher.database.SQLiteDatabase? = null
-                try {
-                    db = VaultDatabase.open(this@VaultAutofillService, dek)
-                    val openDb = db
-                    val repo = VaultRepositoryImpl(openDb, dek)
-                    val savedUser = parsed.saveUsernameValue.orEmpty().trim()
-                    val savedPassword = parsed.savePasswordValue.orEmpty()
-
-                    // Decide which existing item (if any) this save is FOR. Uses the
-                    // same trust threshold as fill-time auto-offer (Level 2+) so a
-                    // low-confidence match can never overwrite a different site's
-                    // credential, and only updates an item that holds the same
-                    // username -- see AutofillSave for the two bugs this prevents.
-                    val candidates = CredentialMatcher.findMatches(
-                        this@VaultAutofillService, openDb, parsed.packageName, parsed.webDomain
-                    )
-                    val targetId = AutofillSave.chooseTarget(candidates, savedUser) { id ->
-                        repo.getItem(id)?.username
-                    }
-                    val existing = targetId?.let { repo.getItem(it) }
-
-                    if (existing != null) {
-                        // Update only what changed; notes, TOTP, custom fields, tags and
-                        // folder ride along untouched (updateItem is a full replace).
-                        if (existing.password != savedPassword || (savedUser.isNotEmpty() && existing.username != savedUser)) {
-                            repo.updateItem(
-                                existing.id,
-                                AutofillSave.mergeInto(existing, savedUser, savedPassword, parsed.webDomain, parsed.packageName)
-                            )
-                        }
-                    } else {
-                        repo.createItem(
-                            AutofillSave.newItem(savedUser, savedPassword, parsed.webDomain, parsed.packageName)
-                        )
-                    }
-                } catch (e: Exception) {
-                    // Ignore save error
-                } finally {
-                    java.util.Arrays.fill(dek, 0.toByte())
-                    db?.close()
-                }
-            } else {
-                java.util.Arrays.fill(dek, 0.toByte())
-            }
-
-            callback.onSuccess()
         }
+
+        val builder = FillResponse.Builder()
+        val fields = parsed.fillableIds.filter { it != form.otp }
+        matches.forEachIndexed { index, (match, username) ->
+            val auth = AutofillUi.authSender(
+                this,
+                AutofillAuthActivity.intent(this, AutofillAuthActivity.MODE_ITEM, parsed, itemId = match.id)
+            )
+            builder.addDataset(
+                AutofillUi.dataset(this, fields, null, match.title, username.ifEmpty { null }, inlineRequest, index, auth)
+            )
+        }
+        val saveInfo = AutofillUi.saveInfo(parsed)
+        if (matches.isEmpty() && saveInfo == null) return null
+        saveInfo?.let { builder.setSaveInfo(it) }
+        return builder.build()
+    }
+
+    /**
+     * Sign-up and change-password forms: offer a generated password. It is
+     * not a stored secret, so it needs no unlock; the save prompt that follows
+     * the sign-up stores it with the username.
+     */
+    private fun newPasswordResponse(parsed: ParsedForm, inlineRequest: InlineSuggestionsRequest?): FillResponse {
+        val generated = PasswordGenerator.generatePassword(GeneratorOptions(length = 20))
+        val value = AutofillValue.forText(generated)
+        val fields = parsed.form.passwords
+        val builder = FillResponse.Builder()
+            .addDataset(
+                AutofillUi.dataset(
+                    this, fields, fields.map { value },
+                    title = "Strong password", subtitle = "Generated by AtomicVault",
+                    inlineRequest = inlineRequest, index = 0, auth = null
+                )
+            )
+        AutofillUi.saveInfo(parsed)?.let { builder.setSaveInfo(it) }
+        return builder.build()
+    }
+
+    override fun onSaveRequest(request: SaveRequest, callback: SaveCallback) {
+        val parsed = try {
+            AssistStructureParser.parseForSave(request.fillContexts.map { it.structure })
+        } catch (e: Exception) {
+            null
+        }
+        val password = parsed?.form?.passwordValue
+        if (parsed == null || parsed.packageName == packageName || password.isNullOrEmpty()) {
+            callback.onSuccess()
+            return
+        }
+
+        val token = PendingSaves.put(
+            PendingSave(
+                username = parsed.form.usernameValue.orEmpty().trim(),
+                password = password,
+                webDomain = parsed.webDomain,
+                packageName = parsed.packageName
+            )
+        )
+        // Android opens this screen right away; it authenticates and saves.
+        val intent = Intent(this, AutofillSaveActivity::class.java)
+            .putExtra(AutofillSaveActivity.EXTRA_TOKEN, token)
+        callback.onSuccess(AutofillUi.saveSender(this, intent))
     }
 }
