@@ -51,9 +51,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.example.backup.BackupCodec
 import com.example.backup.BackupFile
 import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicOutlinedButton
+import kotlinx.coroutines.launch
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.AtomicTopBar
@@ -89,6 +91,8 @@ fun BackupScreen(
     var importPassphrase by remember { mutableStateOf("") }
     var importBusy by remember { mutableStateOf(false) }
     var importError by remember { mutableStateOf<String?>(null) }
+    var checkResult by remember { mutableStateOf<String?>(null) }
+    val checkScope = androidx.compose.runtime.rememberCoroutineScope()
     var showImportConfirmDialog by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -351,6 +355,55 @@ fun BackupScreen(
                     Spacer(modifier = Modifier.height(AtomicSpacing.xl))
 
                     val canImport = selectedFileUri != null && importPassphrase.isNotEmpty() && !importBusy
+
+                    // Restore drill: decrypt and count without touching the vault,
+                    // so a backup can be trusted before it is ever needed.
+                    AtomicOutlinedButton(
+                        text = "Check backup (no changes)",
+                        onClick = {
+                            val uri = selectedFileUri ?: return@AtomicOutlinedButton
+                            importBusy = true
+                            importError = null
+                            checkResult = null
+                            checkScope.launch {
+                                val outcome = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                                    try {
+                                        val data = BackupCodec.importBackup(
+                                            BackupFile.readBytesFromUri(context, uri),
+                                            importPassphrase.toCharArray()
+                                        )
+                                        val byType = data.items.groupingBy { it.itemType }.eachCount()
+                                        val made = java.text.SimpleDateFormat("d MMM yyyy, HH:mm", java.util.Locale.getDefault())
+                                            .format(java.util.Date(data.exportedAt))
+                                        Result.success(
+                                            "Backup is readable: ${data.items.size} items " +
+                                                "(${byType[com.example.database.VaultItemType.LOGIN] ?: 0} logins, " +
+                                                "${byType[com.example.database.VaultItemType.PAYMENT_CARD] ?: 0} cards, " +
+                                                "${byType[com.example.database.VaultItemType.IDENTITY] ?: 0} identities), " +
+                                                "${data.folders.size} folders, made $made."
+                                        )
+                                    } catch (e: Exception) {
+                                        Result.failure(e)
+                                    }
+                                }
+                                importBusy = false
+                                outcome.onSuccess { checkResult = it }
+                                    .onFailure { importError = it.message ?: "This backup could not be read" }
+                            }
+                        },
+                        enabled = canImport,
+                        testTag = "import_check_button"
+                    )
+                    checkResult?.let {
+                        Text(
+                            text = it,
+                            color = AtomicColors.Success,
+                            fontSize = AtomicFontSize.caption,
+                            modifier = Modifier.padding(top = AtomicSpacing.xs)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(AtomicSpacing.md))
 
                     AtomicPrimaryButton(
                         text = "Import & replace",

@@ -5,6 +5,12 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 6: restore drill
+
+- **"Check backup (no changes)"** on the restore tab decrypts a backup file and
+  reports what is in it (items by type, folders, when it was made) without
+  touching the vault, so a backup can be trusted before it is needed.
+
 ### Phase 6: change-password shortcut
 
 - Website logins get **"Change password on github.com →"** in the editor, which
