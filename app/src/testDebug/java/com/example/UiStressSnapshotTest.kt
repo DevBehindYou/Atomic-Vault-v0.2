@@ -189,11 +189,11 @@ class UiStressSnapshotTest {
 
     @Test fun dialog_disclosure() = snap("dialog_disclosure", dialogOnScrim {
         com.example.ui.components.AtomicDialogPanel(
-            title = "Before you enable this",
-            message = "While it is your active keyboard, Atomic Keyboard can see what you type. It never uploads or " +
-                "stores ordinary keystrokes, and the app has no internet permission at all. It only saves something " +
-                "when you explicitly save it to AtomicVault.",
-            confirmLabel = "Continue", dismissLabel = "Keep default keyboard", onConfirm = {}, onDismiss = {}
+            title = "Restore this backup?",
+            message = "Restoring replaces every item in this vault with the items in the backup. A copy of the " +
+                "current vault is kept so the restore can be undone. Nothing is uploaded; the app has no internet " +
+                "permission at all.",
+            confirmLabel = "Restore", dismissLabel = "Keep current vault", onConfirm = {}, onDismiss = {}
         )
     })
 

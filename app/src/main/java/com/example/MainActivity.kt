@@ -1,6 +1,7 @@
 package com.example
 
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,9 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.example.security.VaultLifecycleObserver
 import com.example.ui.AtomicVaultNavGraph
@@ -20,7 +18,6 @@ import com.example.ui.VaultViewModel
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicVaultTheme
 import com.example.ui.theme.ThemePreferenceStore
-import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
 
@@ -29,6 +26,16 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Every screen of this app shows or takes a secret -- including
+        // onboarding, where the master password is created -- so screenshots,
+        // screen recording and the Recents thumbnail are blocked from the
+        // first frame, not only once a vault exists.
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+
+        // Keep Autofill services (ours included) off our own fields: nothing
+        // should offer to save the master password or the item being edited.
+        window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
 
         enableEdgeToEdge()
 
@@ -44,24 +51,6 @@ class MainActivity : FragmentActivity() {
             onLock = { viewModel.lockVault() }
         )
         lifecycle.addObserver(lifecycleObserver)
-
-        // Protect sensitive vault screens and credentials from screenshot, recents, and recording capture
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                var currentSecure: Boolean? = null
-                viewModel.uiState.collect { state ->
-                    val shouldBeSecure = state.status == VaultStatus.UNLOCKED || state.status == VaultStatus.LOCKED
-                    if (currentSecure != shouldBeSecure) {
-                        currentSecure = shouldBeSecure
-                        if (shouldBeSecure) {
-                            window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
-                        } else {
-                            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                        }
-                    }
-                }
-            }
-        }
 
         setContent {
             AtomicVaultTheme {

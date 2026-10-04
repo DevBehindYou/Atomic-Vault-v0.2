@@ -121,10 +121,9 @@ object CredentialMatcher {
         // offered one site's login on every other site (and, on save,
         // overwrote it). For web content the domain must decide.
         //
-        // The keyboard cannot see a web domain at all (EditorInfo carries only
-        // the package), so it always lands here for a browser too. An item that
-        // stores a domain was saved from a browser or web view, and the package
-        // alone must not reveal it: it needs domain evidence.
+        // An item that stores a domain was saved from a browser or web view,
+        // so the package alone must not reveal it: it needs domain evidence
+        // (some browsers and web views report no domain to Autofill).
         if (packageMatches && targetDomain.isNullOrBlank() && normalizedItemDomain.isNullOrBlank()) {
             return TrustLevel.LEVEL_3_PACKAGE
         }

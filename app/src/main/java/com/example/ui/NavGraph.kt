@@ -279,6 +279,29 @@ fun AtomicVaultNavGraph(
                 onReload = { viewModel.reloadVaultData() },
                 bottomBar = { AtomicBottomNav(AtomicTab.Vault, { navigateTab(it) }) }
             )
+
+            if (uiState.showKeyboardRemovedNotice) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                com.example.ui.components.AtomicDialog(
+                    title = "The Atomic keyboard is gone",
+                    message = "AtomicVault now fills passwords inside the keyboard you already use, " +
+                        "such as Gboard, through Android Autofill. Your keyboard is back to your phone's default. " +
+                        "Turn on AtomicVault as your autofill service to see your logins in the keyboard's suggestion strip.",
+                    confirmLabel = "Turn on Autofill",
+                    dismissLabel = "Later",
+                    onConfirm = {
+                        viewModel.dismissKeyboardRemovedNotice()
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE)
+                            .setData(android.net.Uri.parse("package:${context.packageName}"))
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            context.startActivity(android.content.Intent(android.provider.Settings.ACTION_SETTINGS))
+                        }
+                    },
+                    onDismiss = { viewModel.dismissKeyboardRemovedNotice() }
+                )
+            }
         }
 
         composable(
@@ -451,12 +474,16 @@ fun AtomicVaultNavGraph(
             ) {
                 val act = activity
                 value = if (act != null) {
+                    // Read on the main thread: the live window flags.
+                    val screenSecure = (act.window.attributes.flags and
+                        android.view.WindowManager.LayoutParams.FLAG_SECURE) != 0
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         com.example.trust.PrivacyChecks.runAll(
                             context = act,
                             sqlcipherVerified = viewModel.isSqlcipherVerified(),
                             biometricArmed = uiState.biometricArmed,
-                            integrityWarnings = uiState.integrityWarnings
+                            integrityWarnings = uiState.integrityWarnings,
+                            screenCaptureProtectionActive = screenSecure
                         )
                     }
                 } else {

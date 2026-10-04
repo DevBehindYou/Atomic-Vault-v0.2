@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import com.example.database.CredentialInput
 import com.example.database.CredentialPlain
 import com.example.database.CustomFieldPlain
@@ -30,6 +31,7 @@ import com.example.ui.identity.IdentityEditorScreen
 import com.example.ui.paymentcard.PaymentCardEditorScreen
 import com.example.ui.settings.SettingsScreen
 import com.example.ui.theme.AtomicVaultTheme
+import com.example.ui.unlock.UnlockScreen
 import com.example.ui.vaulthome.VaultHomeScreen
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Assert.assertEquals
@@ -168,14 +170,33 @@ class RegressionUiTest {
     fun `dialog confirm and dismiss are both reachable`() {
         show {
             AtomicDialogPanel(
-                title = "Before you enable this",
+                title = "Restore this backup?",
                 message = "Long explanation. ".repeat(20),
                 confirmLabel = "Continue",
-                dismissLabel = "Keep default keyboard",
+                dismissLabel = "Keep current vault",
                 onConfirm = {}, onDismiss = {}
             )
         }
         rule.onNodeWithText("Continue").assertIsDisplayed()
-        rule.onNodeWithText("Keep default keyboard").assertIsDisplayed()
+        rule.onNodeWithText("Keep current vault").assertIsDisplayed()
+    }
+
+    @Test
+    fun `unlock takes any character the system keyboard can type`() {
+        // The in-app unlock keyboard had no accented letters, no non-Latin
+        // scripts and no emoji, so a password created with Gboard could not
+        // be typed back. The unlock field now takes system keyboard input.
+        val password = "Grüße-é-नमस्ते-🔐-9"
+        var submitted: String? = null
+        show {
+            UnlockScreen(
+                uiState = VaultUiState(status = VaultStatus.LOCKED),
+                onUnlockWithPassword = { submitted = it },
+                onUnlockWithBiometric = {}
+            )
+        }
+        rule.onNodeWithTag("unlock_master_password_input").performTextInput(password)
+        rule.onNodeWithTag("unlock_submit_button").performClick()
+        assertEquals(password, submitted)
     }
 }

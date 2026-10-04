@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 # Real-runtime check on an emulator (run by android-ci.yml):
 #   1. the debug APK installs and MainActivity starts,
-#   2. the Atomic keyboard registers as an input method, can be selected, and
-#      draws when a text field is focused,
+#   2. the system keyboard shows when the master password field is focused
+#      (the app ships no keyboard of its own, and must not register one),
 #   3. a vault can be created and every bottom-navigation destination and the
 #      Home "+" menu open without a crash,
-#   4. nothing crashes along the way (logcat is scanned at the end).
+#   4. after a restart the vault is locked and unlocks with the master password
+#      typed through the system keyboard,
+#   5. nothing crashes along the way (logcat is scanned at the end).
 # Screenshots, UI dumps and logcat land in $OUT for the workflow to upload.
-# Note: once a vault exists the app sets FLAG_SECURE, so screenshots of those
-# screens are blank by design -- the UI dump text is what is asserted there.
+# Note: the app sets FLAG_SECURE on every screen, so screenshots are blank by
+# design -- the UI dump text is what is asserted.
 set -euo pipefail
 
 APK="${1:-app/build/outputs/apk/debug/app-debug.apk}"
 PKG=com.atomicvault.android.debug
-IME="$PKG/com.example.keyboard.AtomicVaultInputMethodService"
 OUT=emulator-artifacts
 mkdir -p "$OUT"
 
@@ -104,11 +105,11 @@ adb shell settings put secure show_ime_with_hard_keyboard 1
 
 adb logcat -c
 
-echo "Registering and selecting the Atomic keyboard"
+echo "Checking that the app registers no input method"
 adb shell ime list -a > "$OUT/ime_list.txt"
-grep -q "$PKG" "$OUT/ime_list.txt" || fail "Atomic keyboard is not registered as an input method"
-adb shell ime enable "$IME"
-adb shell ime set "$IME"
+if grep -q "$PKG" "$OUT/ime_list.txt"; then
+  fail "The app still registers an input method; the Atomic keyboard was removed"
+fi
 
 echo "Launching MainActivity"
 adb shell am start -n "$PKG/com.example.MainActivity"
@@ -127,7 +128,7 @@ adb shell dumpsys input_method > "$OUT/ime_dump.txt" || true
 if grep -q "mInputShown=true" "$OUT/ime_dump.txt"; then
   echo "Keyboard is showing (mInputShown=true)"
 else
-  fail "The Atomic keyboard did not show when a field was focused"
+  fail "The system keyboard did not show when the password field was focused"
 fi
 
 echo "Creating a vault"
@@ -164,10 +165,34 @@ adb shell input keyevent 4
 sleep 2
 dump || fail "UI dump failed"; grep -qi "Encrypted on this device" "$OUT/ui.xml" || fail "Back from the card editor did not return to Home"
 
+echo "Restarting the app: the vault must come back locked"
+adb shell am force-stop "$PKG"
+sleep 2
+adb shell am start -n "$PKG/com.example.MainActivity"
+wait_for_text "Unlock AtomicVault" 30
+
+echo "Unlocking with the master password through the system keyboard"
+dump || fail "UI dump failed on the unlock screen"
+C=$(nth_edit_center 1)
+[ -n "$C" ] || fail "No password field on the unlock screen"
+adb shell input tap $C
+sleep 2
+adb shell input text "CorrectHorse9Battery"
+sleep 1
+# Close the keyboard so the button is visible -- only if it is showing, since
+# BACK with no keyboard would leave the app.
+if adb shell dumpsys input_method | grep -q "mInputShown=true"; then
+  adb shell input keyevent 4
+  sleep 1
+fi
+tap_node text "Unlock" exact 1
+wait_for_text "Encrypted on this device" 60
+echo "Unlocked with the system keyboard"
+
 adb logcat -d > "$OUT/logcat.txt"
 
 if grep -q "FATAL EXCEPTION" "$OUT/logcat.txt"; then
-  echo "::error::A crash was logged while exercising the app and keyboard"
+  echo "::error::A crash was logged while exercising the app"
   grep -n -A14 "FATAL EXCEPTION" "$OUT/logcat.txt" | head -80
   exit 1
 fi

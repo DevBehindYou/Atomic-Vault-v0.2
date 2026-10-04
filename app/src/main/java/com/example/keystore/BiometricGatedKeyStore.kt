@@ -31,8 +31,8 @@ import javax.crypto.spec.GCMParameterSpec
  *    the model BiometricPrompt.CryptoObject is built for: Cipher.init()
  *    succeeds without a prior auth, and the Keystore refuses doFinal()
  *    until the prompt that owns the CryptoObject succeeds. Used by
- *    beginReveal()/finishReveal() -- app unlock, AutofillAuthActivity and
- *    KeyboardCredentialAuthActivity all go through a fresh prompt.
+ *    beginReveal()/finishReveal() -- app unlock and AutofillAuthActivity
+ *    both go through a fresh prompt.
  *
  *  - GRACE key: usable for [GRACE_WINDOW_SECONDS] after any strong
  *    biometric authentication. Cipher.init() on a timed key throws
@@ -40,7 +40,7 @@ import javax.crypto.spec.GCMParameterSpec
  *    back a CryptoObject prompt -- which is exactly why it must not be the
  *    unlock key (a single timed key made unlock a silent no-op on a cold
  *    start and made arming throw). Used only by tryRevealWithoutPrompt(),
- *    for the no-UI metadata matching in AutofillService / the IME.
+ *    for the no-UI metadata matching in AutofillService.
  *
  * Both begin/finish pairs work the same way: begin() builds a Cipher to
  * hand to BiometricPrompt.CryptoObject; finish() must only be called with
@@ -180,7 +180,7 @@ class BiometricGatedKeyStore(context: Context) {
     /**
      * Best-effort second wrap under the GRACE key. Runs right after the
      * arming prompt succeeded, so the timed key is inside its window. If it
-     * fails, biometric unlock still works; only no-UI autofill/IME
+     * fails, biometric unlock still works; only no-UI autofill
      * suggestions are unavailable until the next arm.
      */
     private fun armGraceCopy(dek: ByteArray) {

@@ -15,6 +15,23 @@ Goal set by the user:
 
 ---
 
+## Progress
+
+| Phase | Status | Commit | CI |
+|---|---|---|---|
+| 0. Baseline | Done | `049e85b` | Run #25 green (unit, lint, emulator) |
+| 1. Remove the Atomic keyboard | Pushed, awaiting CI | see CHANGELOG | — |
+| 2. Data safety | Next | | |
+| 3. Gboard Autofill | | | |
+| 4. Performance | | | |
+| 5. Platform health | | | |
+
+Note on F11 (flaky test): run #23's failure did not reproduce in runs #24 and
+#25. Failing tests are now printed in the CI log, so the next occurrence will
+name the test.
+
+---
+
 ## 0. How this plan is run
 
 Same rules as the rest of `docs/` (see SESSION-LOG "standing directives"):

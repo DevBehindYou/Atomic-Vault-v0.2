@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.backup.BackupCodec
 import com.example.crypto.Argon2Kdf
 import com.example.crypto.DekCodec
+import com.example.crypto.MasterPassword
 import com.example.database.CredentialInput
 import com.example.database.CredentialPlain
 import com.example.database.CredentialPreview
@@ -53,7 +54,9 @@ data class VaultUiState(
     val folderFilter: String? = null,
     val autofillSupported: Boolean = true,
     val autofillArmed: Boolean = false,
-    val integrityWarnings: List<String> = emptyList()
+    val integrityWarnings: List<String> = emptyList(),
+    /** One-time explanation for users upgrading from a version that shipped the Atomic keyboard. */
+    val showKeyboardRemovedNotice: Boolean = false
 )
 
 class VaultViewModel(application: Application) : AndroidViewModel(application) {
@@ -69,6 +72,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     private var activeDb: SQLiteDatabase? = null
     private var activeDek: ByteArray? = null
     private var repository: VaultRepository? = null
+
+    // Non-secret app flags that must be readable before unlock.
+    private val appPrefs = application.getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(VaultUiState())
     val uiState: StateFlow<VaultUiState> = _uiState.asStateFlow()
@@ -87,6 +93,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update {
             it.copy(
                 status = if (!hasVault) VaultStatus.ONBOARDING else VaultStatus.LOCKED,
+                // A vault that already exists was made by a version that
+                // shipped the Atomic keyboard; a fresh install never sees this.
+                showKeyboardRemovedNotice = hasVault && !appPrefs.getBoolean(PREF_KEYBOARD_NOTICE_SEEN, false),
                 biometricArmed = bioArmed,
                 autofillArmed = autofillArmed,
                 autofillSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O,
@@ -94,6 +103,11 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 error = null
             )
         }
+    }
+
+    fun dismissKeyboardRemovedNotice() {
+        appPrefs.edit().putBoolean(PREF_KEYBOARD_NOTICE_SEEN, true).apply()
+        _uiState.update { it.copy(showKeyboardRemovedNotice = false) }
     }
 
     fun clearError() {
@@ -111,12 +125,14 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 val salt = Argon2Kdf.generateSaltBase64()
-                val kek = Argon2Kdf.deriveKek(password, salt)
+                val kek = Argon2Kdf.deriveKek(MasterPassword.normalize(password), salt)
                 val dek = DekCodec.generateDek()
                 val wrappedDek = DekCodec.wrapDek(kek, dek)
+                Arrays.fill(kek, 0.toByte())
                 val kdfParamsJson = VaultMetaStore.createDefaultKdfParamsJson(salt)
 
                 metaStore.saveVaultEnvelope(salt, kdfParamsJson, wrappedDek)
+                appPrefs.edit().putBoolean(PREF_KEYBOARD_NOTICE_SEEN, true).apply()
 
                 // NOTE: biometric arming is NOT done here anymore. Wrapping the
                 // DEK with the biometric-gated Keystore key requires a live,
@@ -178,11 +194,12 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
 
-                val kek = Argon2Kdf.deriveKek(password, envelope.saltBase64)
-                val dek = try {
-                    DekCodec.unwrapDek(kek, envelope.wrappedDek)
-                } catch (e: Exception) {
-                    Arrays.fill(kek, 0.toByte())
+                val unlocked = MasterPassword.unlock(
+                    password = password,
+                    derive = { candidate -> Argon2Kdf.deriveKek(candidate, envelope.saltBase64) },
+                    unwrap = { kek -> DekCodec.unwrapDek(kek, envelope.wrappedDek) }
+                )
+                if (unlocked == null) {
                     TrustLedger.record(
                         getApplication(), TrustEventType.VAULT_UNLOCK_FAILED,
                         authenticationType = "master_password", result = "failure"
@@ -193,9 +210,18 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     return@launch
                 }
-                // KEK's only job was unwrapping the DEK above -- clear it now
-                // rather than leaving it reachable for the rest of this scope.
-                Arrays.fill(kek, 0.toByte())
+                val dek = unlocked.dek
+                if (unlocked.needsRewrap) {
+                    // Created before passwords were normalized, from a
+                    // decomposed form: wrap the same DEK under the canonical
+                    // form once, so any keyboard opens it from now on.
+                    val kek = Argon2Kdf.deriveKek(MasterPassword.normalize(password), envelope.saltBase64)
+                    try {
+                        metaStore.saveVaultEnvelope(envelope.saltBase64, envelope.kdfParamsJson, DekCodec.wrapDek(kek, dek))
+                    } finally {
+                        Arrays.fill(kek, 0.toByte())
+                    }
+                }
 
                 val db = VaultDatabase.open(getApplication(), dek)
                 val repo = VaultRepositoryImpl(db, dek)
@@ -226,7 +252,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 TrustLedger.record(getApplication(), TrustEventType.VAULT_UNLOCKED, authenticationType = "master_password")
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    _uiState.update { it.copy(busy = false, error = "Incorrect master password") }
+                    _uiState.update { it.copy(busy = false, error = "Could not open the vault: ${e.message ?: e.javaClass.simpleName}") }
                     onComplete(false)
                 }
             }
@@ -603,5 +629,10 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      */
     suspend fun getAllCredentialsForSecurity(): List<CredentialPlain> = withContext(Dispatchers.IO) {
         repository?.exportData()?.items ?: emptyList()
+    }
+
+    private companion object {
+        const val APP_PREFS = "atomicvault_app_prefs"
+        const val PREF_KEYBOARD_NOTICE_SEEN = "notice_keyboard_removed_seen"
     }
 }

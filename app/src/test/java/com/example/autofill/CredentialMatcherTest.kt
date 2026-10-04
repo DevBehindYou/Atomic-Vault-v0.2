@@ -51,7 +51,7 @@ class CredentialMatcherTest {
 
     @Test
     fun `an item that stores a web domain is not revealed by package alone`() {
-        // The keyboard only ever sees the package. A login saved from a browser
+        // Some browsers and web views report no domain. A login saved from a browser
         // (package + domain) must not appear for every site in that browser.
         val level = classify(chrome, null, "github.com", chrome)
         assertFalse("offered by package alone: $level", autoOffered(level))

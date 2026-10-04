@@ -83,11 +83,12 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Runs the built debug APK on an emulator: it must launch, the Atomic keyboard
-  # must register, bind and draw when a field is focused, and nothing may crash.
-  # Unit tests and Robolectric renders cannot see a startup or service crash.
+  # Runs the built debug APK on an emulator: it must launch, create a vault,
+  # walk the app, restart locked and unlock through the system keyboard, and
+  # nothing may crash. Unit tests and Robolectric renders cannot see a startup
+  # or service crash.
   emulator:
-    name: Emulator launch & keyboard check
+    name: Emulator launch, create & unlock check
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -108,14 +109,14 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Launch, select the Atomic keyboard, focus a field
+      - name: Launch, create a vault, walk the app, restart and unlock
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
           target: default
           arch: x86_64
           profile: pixel_6
-          script: bash .github/scripts/emulator_ime_check.sh apk/app-debug.apk
+          script: bash .github/scripts/emulator_check.sh apk/app-debug.apk
 
       - name: Upload emulator screenshots and logs
         if: ${{ !cancelled() }}

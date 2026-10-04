@@ -1,5 +1,47 @@
 # Change log
 
+## Branch `claude/atomic-vault-analysis-1fj2ok` (continues `fix/biometric-ime-autofill`)
+
+Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
+results are recorded in the plan's progress table.
+
+### Phase 1: Atomic keyboard removed
+
+- **Removed** the input method service, its reveal activity/coordinator, the
+  in-app `LiquidGlassKeyboard`, `res/xml/method.xml`, the manifest entries, the
+  R8 keep rule, the Settings section and the keyboard snapshot tests. Filling
+  now goes only through Android Autofill, which shows inside Gboard (or any
+  keyboard) on Android 11+.
+- **Unlock lockout fixed (B1).** The unlock screen forced the in-app keyboard,
+  which had no accented letters, non-Latin scripts or emoji, while onboarding
+  used the system keyboard. Unlock now uses a password field on the system
+  keyboard. Regression test: `RegressionUiTest` types `Grüße-é-नमस्ते-🔐-9`.
+- **Password normalization (B2).** New vaults and backups derive from the NFC
+  form; unlock and import try NFC, then the raw input, and a vault that only
+  opened with the raw form is re-wrapped once. `MasterPassword`,
+  `MasterPasswordTest`.
+- **Screenshots blocked on every screen (B3)**, including onboarding.
+- **Autofill kept off the app's own fields (B7, app side)**: nothing offers to
+  save the master password or an item being edited.
+- **Privacy Proof made honest**: screen protection is read from the live window
+  (it always said "not yet enabled"), and a new live check confirms the app
+  registers no keyboard service. `ManifestPrivacyClaimsTest` enforces it.
+- Unlock errors other than a wrong password now say what failed (F10, partly).
+- One-time notice for users upgrading from a version with the keyboard.
+- CI: the emulator script (`emulator_check.sh`) fails if any input method is
+  registered, and now restarts the app and unlocks through the system keyboard.
+
+### Phase 0: baseline
+
+- Failing unit tests print full stack traces in the CI log.
+- `VaultEnvelopeFixtureTest`: vault envelopes generated independently in
+  Python guard key derivation for existing users.
+- `AUDIT-REPORT.md` marked superseded. `fix/v0.2-audit-and-bugfixes` was
+  checked: its three commits are already contained in the current code and
+  the branch can be deleted.
+
+## Branch `fix/biometric-ime-autofill`
+
 Everything below is on the branch `fix/biometric-ime-autofill`, 21 commits from
 2026-09-18 to 2026-09-19, on top of `main` at `2217d9a` ("Update-c003", the
 commit that carried the earlier audit's edits). The branch is **not merged**.
@@ -21,6 +63,9 @@ Nothing in this list has been verified on a physical phone yet. See
 - The auto-lock setting changed meaning in the UI only. The stored value `0`
   always meant "lock immediately"; the chip that used to be labelled "Never"
   now says "Immediately". Nobody's actual behaviour changes.
+- **The Atomic keyboard is removed.** Anyone who had it selected falls back to
+  the system default keyboard automatically; a one-time notice explains the
+  change and offers to turn on Autofill.
 - Version is still `0.2.1` / `versionCode 2`. It needs bumping before a release
   build can update an installed 0.2.1.
 

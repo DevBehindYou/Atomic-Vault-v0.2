@@ -35,10 +35,6 @@
     public <init>();
 }
 
--keep public class * extends android.inputmethodservice.InputMethodService {
-    public <init>();
-}
-
 -keep public class * extends androidx.core.content.FileProvider {
     public <init>();
 }

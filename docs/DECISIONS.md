@@ -80,3 +80,14 @@ approved. All text goes through the theme, so it is a one-place change.
 The branch stays unmerged until the user has tested on a phone. A push to
 `main` triggers the signed release workflow, so merging is a release decision.
 A version bump (0.2.2 / `versionCode 3`) is proposed but not applied.
+
+## D11. No custom keyboard; Autofill is the only fill path (user)
+
+The Atomic keyboard (an `InputMethodService`) and the in-app unlock keyboard
+were removed. Autofill already reaches the keyboard the user prefers: on
+Android 11+ Gboard and other keyboards show Autofill suggestions in their
+strip. A keyboard sees everything typed while it is selected and could only
+fill one field, so it was both a bigger trust ask and a worse fill path. The
+in-app unlock keyboard also locked out passwords with characters it lacked.
+Master passwords are normalized to NFC so any keyboard produces the same key.
+

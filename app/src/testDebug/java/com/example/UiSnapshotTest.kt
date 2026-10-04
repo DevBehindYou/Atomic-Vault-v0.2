@@ -16,7 +16,6 @@ import com.example.database.VaultItemType
 import com.example.database.VaultSettingsPlain
 import com.example.ui.VaultStatus
 import com.example.ui.VaultUiState
-import com.example.ui.components.LiquidGlassKeyboard
 import com.example.ui.editor.CredentialEditorScreen
 import com.example.ui.generator.PasswordGeneratorScreen
 import com.example.ui.onboarding.OnboardingScreen
@@ -71,31 +70,6 @@ class UiSnapshotTest {
             }
         }
         composeTestRule.onRoot().captureRoboImage(filePath = "build/ui-snapshots/$name.png")
-    }
-
-    @Test
-    fun keyboard_letters() = snap("keyboard_letters") {
-        Box(Modifier.fillMaxSize()) {
-            androidx.compose.foundation.layout.Column(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
-                LiquidGlassKeyboard(onKeyPress = {}, onBackspace = {}, onEnter = {})
-            }
-        }
-    }
-
-    @Test
-    fun keyboard_symbols() {
-        composeTestRule.setContent {
-            AtomicVaultTheme {
-                Box(Modifier.fillMaxSize().background(AtomicColors.Background)) {
-                    androidx.compose.foundation.layout.Column(Modifier.align(androidx.compose.ui.Alignment.BottomCenter)) {
-                        LiquidGlassKeyboard(onKeyPress = {}, onBackspace = {}, onEnter = {})
-                    }
-                }
-            }
-        }
-        composeTestRule.onNodeWithText("?123").performClick()
-        composeTestRule.onNodeWithText("=\\<").performClick()
-        composeTestRule.onRoot().captureRoboImage(filePath = "build/ui-snapshots/keyboard_symbols_page2.png")
     }
 
     @Test

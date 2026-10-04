@@ -18,13 +18,14 @@ biometric unlock back on once. The master password keeps working throughout.
 - [ ] Add a fingerprint in Android settings, come back: the app says biometric unlock was reset and offers the master password (no crash, no data loss). Turn it on again.
 - [ ] Tap the fingerprint row twice quickly: only one prompt.
 
-## 2. Atomic keyboard
+## 2. Typing with your own keyboard (the Atomic keyboard was removed)
 
-- [ ] Settings, Enable Atomic Keyboard, follow the system steps. It appears in the keyboard picker.
-- [ ] Type in Chrome, Notes and a chat app: letters, shift (one-shot), space, backspace, Enter (search/send icon changes with the field), `?123` and its second page (`_ = / \`).
-- [ ] Select text and press backspace: the whole selection goes.
-- [ ] Focus a password field: the "Atomic Shield" strip appears; on a normal field it does not.
-- [ ] Switch apps and back: the keyboard still draws and nothing sensitive stays on screen.
+- [ ] Upgrade over a build that had the Atomic keyboard selected: the phone falls back to your normal keyboard, and after unlocking a one-time notice explains the change. "Later" never shows it again.
+- [ ] Fresh install: no notice.
+- [ ] Unlock with Gboard. Create a vault whose master password contains `é`, `ü` or a Hindi word, lock, unlock with the same password. It opens.
+- [ ] On the unlock and onboarding fields Gboard shows no word suggestions and does not learn the password (incognito icon on Gboard).
+- [ ] The app does not appear in Settings > Languages & input > On-screen keyboards.
+- [ ] Screenshot on the onboarding screen is blocked (it was allowed before).
 
 ## 3. Autofill (two bugs were fixed here, please test both)
 
