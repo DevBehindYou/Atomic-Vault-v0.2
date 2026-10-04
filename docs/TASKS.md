@@ -1,5 +1,12 @@
 # Tasks left
 
+> **Update 2026-10-04:** most agent-ready items below were done on branch
+> `claude/atomic-vault-analysis-1fj2ok`; see [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md)
+> (progress table) and [CHANGELOG.md](CHANGELOG.md). Done: T1 (TOTP wipe), T6
+> (backup round-trip, unit level), T8 (batched export), T4 is obsolete (the
+> keyboard was removed). Still open: T2, T3, T5, T7, T9-T12, and the phone test
+> (U1) of everything since.
+
 Status as of 2026-09-21. Branch `fix/biometric-ime-autofill` at `9631167`, CI
 green, unmerged. Priorities: **P0** blocks a release, **P1** should ship with
 it, **P2** soon after, **P3** when convenient.

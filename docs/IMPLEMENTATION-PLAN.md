@@ -20,11 +20,12 @@ Goal set by the user:
 | Phase | Status | Commit | CI |
 |---|---|---|---|
 | 0. Baseline | Done | `049e85b` | Run #25 green (unit, lint, emulator) |
-| 1. Remove the Atomic keyboard | Done | `a6c645f` | Run #26 green (unit, lint, emulator: restart + unlock via system keyboard) |
-| 2. Data safety | Pushed, awaiting CI | see CHANGELOG | — |
-| 3. Gboard Autofill | Committed, waiting for Phase 2 CI before push | see CHANGELOG | — |
-| 4. Performance | | | |
-| 5. Platform health | | | |
+| 1. Remove the Atomic keyboard | Done | `a6c645f` | Run #26 green (emulator: restart + unlock via system keyboard) |
+| 2. Data safety | Done | `c1bd5cc` | Run #27 green (unit, lint, emulator) |
+| 3. Gboard Autofill | Done in code | `84e4fdc` + lint fix `6067d63` | #28 failed on one lint error (fixed); see latest run |
+| 4. Performance + 2FA codes | Done in code | `d210431` | see latest run |
+| 5. Platform health | Partly: TOTP engine, Moshi codegen, dead backup branch closed. Open: SQLCipher artifact swap, SDK/AGP upgrade, `security-crypto` replacement, package rename | | |
+| 6. Differentiators | Phishing guard `744055c`, fill receipts `6067d63`, India identity fields `4fc26e1`. Open: offline breach check, change-password assistant, QR transfer, restore drill | | |
 
 Note on F11 (flaky test): run #23's failure did not reproduce in runs #24 and
 #25. Failing tests are now printed in the CI log, so the next occurrence will

@@ -14,11 +14,16 @@ Other files in the repo root that matter: `AUDIT-REPORT.md` (an earlier
 static-only audit; parts of it were wrong, see the change log) and
 `atomicvault_design_system_reference/` (the visual reference).
 
-## Status (2026-09-21)
+## Status (2026-10-04)
 
-- Branch `fix/biometric-ime-autofill` is pushed, CI is green, and it is **not
-  merged** and **not phone-tested**. `main` is untouched.
-- Next step is the phone test, then a version bump and merge (see TASKS U1-U2).
+- Active branch: `claude/atomic-vault-analysis-1fj2ok`, which continues
+  `fix/biometric-ime-autofill` with the work in
+  [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md): the Atomic keyboard is
+  removed, Autofill is rebuilt for Gboard, data-safety fixes, performance, 2FA
+  codes, phishing guard, fill receipts. **Not merged, not phone-tested.** `main`
+  is untouched.
+- Next step: the phone test ([PHONE-TEST-CHECKLIST.md](PHONE-TEST-CHECKLIST.md)),
+  then version bump to 0.3.0 / `versionCode 3` and merge.
 
 ## Working on this project
 

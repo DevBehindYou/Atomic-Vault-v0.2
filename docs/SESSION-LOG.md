@@ -100,6 +100,21 @@ From the ChatGPT handover files the user attached (`AtomicVault_AI_Handover`):
   `/docs`. These files were written. While cross-checking, the login editor was
   found to save `totpSecret = ""` (T1 in [TASKS.md](TASKS.md)).
 
+### 2026-10-03 to 2026-10-04 - analysis, plan and implementation (cloud session)
+
+- Analysed the repo, every branch, the Drive build log and these docs; wrote
+  [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md) (35 findings, phases 0-6).
+- The user asked to remove the Atomic keyboard, integrate with Gboard, and to
+  carry on through the phases automatically. Defaults used where the user did
+  not choose: fingerprint on every fill, one 0.3.0 release after a phone test.
+- The cloud machine cannot reach dl.google.com (Android SDK / Gradle plugin),
+  so, as before, every change was verified through GitHub Actions only.
+- Found and fixed along the way: the unlock-screen lockout for passwords with
+  characters the in-app keyboard lacked; onboarding without FLAG_SECURE; lock
+  zeroing the key under a running save; silent key-store fallback; editor
+  wiping the stored app package (in addition to TOTP); Privacy Proof always
+  reporting screen protection as off; identity editor dropping extra fields.
+
 ## The user's standing directives
 
 1. Native Android only; do not restart or re-migrate the project.
