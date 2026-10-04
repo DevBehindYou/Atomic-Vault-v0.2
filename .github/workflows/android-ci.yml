@@ -83,6 +83,14 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Upload Autofill test app
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-AutofillTest-APK-${{ github.run_number }}
+          path: autofilltest/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
   # Runs the built debug APK on an emulator: it must launch, create a vault,
   # walk the app, restart locked and unlock through the system keyboard, and
   # nothing may crash. Unit tests and Robolectric renders cannot see a startup
@@ -103,6 +111,12 @@ jobs:
           name: AtomicVault-Debug-APK-${{ github.run_number }}
           path: apk
 
+      - name: Download Autofill test app
+        uses: actions/download-artifact@v4
+        with:
+          name: AtomicVault-AutofillTest-APK-${{ github.run_number }}
+          path: testapk
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -116,7 +130,7 @@ jobs:
           target: default
           arch: x86_64
           profile: pixel_6
-          script: bash .github/scripts/emulator_check.sh apk/app-debug.apk
+          script: bash .github/scripts/emulator_check.sh apk/app-debug.apk testapk/autofilltest-debug.apk
 
       - name: Upload emulator screenshots and logs
         if: ${{ !cancelled() }}

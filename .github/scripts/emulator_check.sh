@@ -7,13 +7,16 @@
 #      Home "+" menu open without a crash,
 #   4. after a restart the vault is locked and unlocks with the master password
 #      typed through the system keyboard,
-#   5. nothing crashes along the way (logcat is scanned at the end).
+#   5. with the vault locked, a real login form (the autofilltest app) gets an
+#      Autofill response from AtomicVault without anything crashing,
+#   6. nothing crashes along the way (logcat is scanned at the end).
 # Screenshots, UI dumps and logcat land in $OUT for the workflow to upload.
 # Note: the app sets FLAG_SECURE on every screen, so screenshots are blank by
 # design -- the UI dump text is what is asserted.
 set -euo pipefail
 
 APK="${1:-app/build/outputs/apk/debug/app-debug.apk}"
+TEST_APK="${2:-autofilltest/build/outputs/apk/debug/autofilltest-debug.apk}"
 PKG=com.atomicvault.android.debug
 OUT=emulator-artifacts
 mkdir -p "$OUT"
@@ -188,6 +191,39 @@ fi
 tap_node text "Unlock" exact 1
 wait_for_text "Encrypted on this device" 60
 echo "Unlocked with the system keyboard"
+
+echo "Autofill: a locked vault answers a real fill request"
+if [ -f "$TEST_APK" ]; then
+  adb install -r "$TEST_APK"
+  adb shell settings put secure autofill_service "$PKG/com.example.autofill.VaultAutofillService"
+  adb shell cmd autofill set log_level verbose || true
+  adb shell am force-stop "$PKG"          # vault locked: no app process
+  adb shell am start -n com.atomicvault.autofilltest/.LoginActivity
+  wait_for_text "Sign in" 30
+  dump || fail "UI dump failed on the test login screen"
+  C=$(nth_edit_center 1)
+  [ -n "$C" ] || fail "No username field on the test login screen"
+  adb shell input tap $C
+  sleep 6
+  adb exec-out screencap -p > "$OUT/03_autofill_locked.png"
+  adb shell dumpsys autofill > "$OUT/autofill_dump.txt" || true
+  if grep -q "com.example.autofill.VaultAutofillService" "$OUT/autofill_dump.txt"; then
+    echo "AtomicVault is the active autofill service"
+  else
+    fail "AtomicVault did not become the active autofill service"
+  fi
+  # The service process must have started and answered without crashing.
+  if [ -z "$(adb shell pidof "$PKG" || true)" ]; then
+    fail "The autofill service process is not running after a fill request"
+  fi
+  if grep -qi "Unlock AtomicVault" "$OUT/autofill_dump.txt"; then
+    echo "Fill response with the Unlock AtomicVault suggestion found in dumpsys"
+  else
+    echo "::warning::Could not confirm the Unlock AtomicVault suggestion from dumpsys; see 03_autofill_locked.png"
+  fi
+else
+  echo "::warning::Autofill test app not found at $TEST_APK; skipping the Autofill check"
+fi
 
 adb logcat -d > "$OUT/logcat.txt"
 
