@@ -202,6 +202,10 @@ fun CredentialEditorScreen(
                 contentPadding = AtomicSpacing.lg
             ) {
                 Column {
+                    if (isEditMode && itemId != null) {
+                        FillReceiptsLine(itemId = itemId, uriMatchPattern = uriMatchPattern, androidPackageName = androidPackageName)
+                    }
+
                     // Title (Required)
                     AtomicTextField(
                         value = title,
@@ -643,6 +647,43 @@ private fun TotpCodeRow(totpSecret: String, onCopy: (String) -> Unit) {
         Text(text = "${remaining}s", color = AtomicColors.TextMuted, fontSize = AtomicFontSize.caption)
         TextButton(onClick = { onCopy(code) }) {
             Text(text = "Copy", color = AtomicColors.Accent, fontSize = AtomicFontSize.label)
+        }
+    }
+}
+
+/**
+ * "Filled 3 times · last 2 Oct, 14:05", from the Trust Ledger. Warns when a
+ * fill went to a site or app other than this login's own.
+ */
+@Composable
+private fun FillReceiptsLine(itemId: String, uriMatchPattern: String, androidPackageName: String?) {
+    val context = LocalContext.current
+    val receipts by androidx.compose.runtime.produceState<com.example.trust.TrustLedger.FillReceipts?>(
+        initialValue = null, itemId, uriMatchPattern, androidPackageName
+    ) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            com.example.trust.TrustLedger.fillReceipts(
+                context, itemId, com.example.autofill.FillReceipts.ownTargets(uriMatchPattern, androidPackageName)
+            )
+        }
+    }
+    val r = receipts ?: return
+    val text = if (r.count == 0) {
+        "Not filled by AtomicVault yet"
+    } else {
+        val last = r.lastFilledAt?.let {
+            java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(it))
+        }
+        "Filled ${r.count} time${if (r.count == 1) "" else "s"}" + (last?.let { " · last $it" } ?: "")
+    }
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = AtomicSpacing.sm).testTag("editor_fill_receipts")) {
+        Text(text = text, color = AtomicColors.TextMuted, fontSize = AtomicFontSize.caption)
+        if (r.elsewhereCount > 0) {
+            Text(
+                text = "${r.elsewhereCount} fill${if (r.elsewhereCount == 1) "" else "s"} went to a different site or app than this login's own",
+                color = AtomicColors.Warning,
+                fontSize = AtomicFontSize.caption
+            )
         }
     }
 }

@@ -249,6 +249,43 @@ object TrustLedger {
         return null
     }
 
+    /** Where and when one item was filled, from the hashed ledger entries. */
+    data class FillReceipts(
+        val count: Int,
+        val lastFilledAt: Long?,
+        /** Fills into a site/app other than the item's own (by hash), e.g. a manual "fill anyway". */
+        val elsewhereCount: Int
+    )
+
+    /**
+     * Fill receipts for [itemId]: how often it was filled, when last, and
+     * whether every fill went to its own site/app. Hashes are compared, so the
+     * ledger still never stores which sites the user has accounts on.
+     */
+    fun fillReceipts(context: Context, itemId: String, ownTargets: Collection<String>): FillReceipts {
+        val subject = sha256(itemId)
+        val own = ownTargets.filter { it.isNotBlank() }.map { sha256(it.trim().lowercase()) }.toSet()
+        var count = 0
+        var last: Long? = null
+        var elsewhere = 0
+        try {
+            database(context).rawQuery(
+                "SELECT timestamp, target_package_hash FROM trust_event WHERE event_type = ? AND subject_reference_hash = ? ORDER BY seq DESC",
+                arrayOf(TrustEventType.CREDENTIAL_FILLED.name, subject)
+            ).use { c ->
+                while (c.moveToNext()) {
+                    count++
+                    if (last == null) last = c.getLong(0)
+                    val target = if (c.isNull(1)) null else c.getString(1)
+                    if (target != null && own.isNotEmpty() && target !in own) elsewhere++
+                }
+            }
+        } catch (e: Exception) {
+            // Receipts are informational; an unreadable ledger shows none.
+        }
+        return FillReceipts(count, last, elsewhere)
+    }
+
     fun sha256(input: String): String =
         bytesToHex(MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8)))
 

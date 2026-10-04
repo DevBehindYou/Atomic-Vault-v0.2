@@ -57,8 +57,10 @@ class VaultAutofillService : AutofillService() {
             return
         }
         val inlineRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) request.inlineSuggestionsRequest else null
+        val history = fillEventHistory
 
         val job = scope.launch {
+            FillReceipts.recordFrom(this@VaultAutofillService, history)
             val response = try {
                 buildResponse(AssistStructureParser.parse(structure), inlineRequest)
             } catch (e: CancellationException) {
@@ -166,6 +168,8 @@ class VaultAutofillService : AutofillService() {
     }
 
     override fun onSaveRequest(request: SaveRequest, callback: SaveCallback) {
+        val history = fillEventHistory
+        scope.launch { FillReceipts.recordFrom(this@VaultAutofillService, history) }
         val parsed = try {
             AssistStructureParser.parseForSave(request.fillContexts.map { it.structure })
         } catch (e: Exception) {

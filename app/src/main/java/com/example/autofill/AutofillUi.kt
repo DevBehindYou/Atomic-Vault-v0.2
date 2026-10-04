@@ -127,7 +127,9 @@ object AutofillUi {
         subtitle: String?,
         inlineRequest: InlineSuggestionsRequest?,
         index: Int,
-        auth: IntentSender?
+        auth: IntentSender?,
+        /** Reported back in the fill event history when the user picks this suggestion. */
+        id: String? = null
     ): Dataset {
         val presentation = dropdown(context, title, subtitle)
         val inlinePresentation = inline(context, inlineRequest, index, title, subtitle)
@@ -144,6 +146,7 @@ object AutofillUi {
             }
         }
         if (auth != null) builder.setAuthentication(auth)
+        if (id != null) builder.setId(id)
         return builder.build()
     }
 

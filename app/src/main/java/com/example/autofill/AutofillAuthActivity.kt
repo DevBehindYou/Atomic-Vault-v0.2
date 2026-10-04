@@ -69,7 +69,7 @@ class AutofillAuthActivity : VaultAuthActivity() {
         TrustLedger.record(
             this, TrustEventType.CREDENTIAL_FILLED,
             subjectReference = itemId,
-            targetPackage = intent.getStringExtra(EXTRA_WEB_DOMAIN) ?: intent.getStringExtra(EXTRA_PACKAGE),
+            targetPackage = FillReceipts.target(intent.getStringExtra(EXTRA_WEB_DOMAIN), intent.getStringExtra(EXTRA_PACKAGE)),
             authenticationType = "vault_auth", source = "autofill"
         )
         val dataset = AutofillUi.dataset(
@@ -122,12 +122,17 @@ class AutofillAuthActivity : VaultAuthActivity() {
             val (fields, values) = valuesFor(item, usernameId, passwordIds, otpId)
             if (fields.isNotEmpty()) {
                 response.addDataset(
-                    AutofillUi.dataset(this, fields, values, item.title, item.username.ifEmpty { null }, inlineRequest, added, null)
+                    AutofillUi.dataset(
+                        this, fields, values, item.title, item.username.ifEmpty { null }, inlineRequest, added, null,
+                        // Picked later, without this screen: the service records it from the fill history.
+                        id = FillReceipts.datasetId(item.id, FillReceipts.target(webDomain, packageName))
+                    )
                 )
                 added++
             }
         }
         if (added == 0) return null
+        response.setClientState(FillReceipts.newClientState())
         return Intent().putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT, response.build())
     }
 
@@ -190,7 +195,9 @@ class AutofillAuthActivity : VaultAuthActivity() {
             parsed.form.username?.let { putExtra(EXTRA_USERNAME_ID, it) }
             parsed.form.otp?.let { putExtra(EXTRA_OTP_ID, it) }
             putParcelableArrayListExtra(EXTRA_PASSWORD_IDS, ArrayList(parsed.form.passwords))
-            if (inlineRequest != null) putExtra(EXTRA_INLINE_REQUEST, inlineRequest)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlineRequest != null) {
+                putExtra(EXTRA_INLINE_REQUEST, inlineRequest)
+            }
         }
     }
 }

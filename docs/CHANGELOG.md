@@ -5,6 +5,14 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 6: fill receipts
+
+- The login editor shows **where and when a login was filled**: "Filled 3 times
+  · last 2 Oct, 14:05", and warns if a fill ever went to a site or app other than
+  the login's own. Built on the Trust Ledger, which stores the item and target
+  only as hashes. Fills picked from the locked-vault chip are recorded from
+  Android's fill event history (`FillReceipts`), each exactly once.
+
 ### Phase 6 (first differentiator): phishing guard
 
 - **Look-alike site warning.** When a page has no saved login but resembles a
