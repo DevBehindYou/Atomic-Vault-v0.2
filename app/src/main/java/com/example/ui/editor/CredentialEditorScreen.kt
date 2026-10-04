@@ -563,7 +563,15 @@ private fun CustomFieldEditorRow(
                     onValueChange = { onUpdate(field.copy(label = it)) },
                     placeholder = "Label",
                     modifier = Modifier.weight(1f),
-                    singleLine = true
+                    singleLine = true,
+                    // A UPI PIN, ATM PIN or OTP should never be written down,
+                    // even encrypted: anyone who sees it can move money.
+                    errorMessage = if (com.example.security.IndianIds.isForbiddenSecretLabel(field.label)) {
+                        "Don't store a UPI/ATM PIN or OTP. Your bank will never ask you to write it down."
+                    } else {
+                        null
+                    },
+                    testTag = "custom_field_label"
                 )
 
                 IconButton(

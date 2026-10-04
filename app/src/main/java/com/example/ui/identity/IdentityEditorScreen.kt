@@ -35,6 +35,9 @@ private const val LABEL_FULL_NAME = "Full Name"
 private const val LABEL_EMAIL = "Email"
 private const val LABEL_PHONE = "Phone"
 private const val LABEL_ADDRESS = "Address"
+private const val LABEL_AADHAAR = "Aadhaar"
+private const val LABEL_PAN = "PAN"
+private val MANAGED_LABELS = setOf(LABEL_FULL_NAME, LABEL_EMAIL, LABEL_PHONE, LABEL_ADDRESS, LABEL_AADHAAR, LABEL_PAN)
 
 /**
  * Identity records, same pattern as Payment Cards -- reuses the existing
@@ -57,6 +60,8 @@ fun IdentityEditorScreen(
     var email by remember { mutableStateOf(fieldValue(LABEL_EMAIL)) }
     var phone by remember { mutableStateOf(fieldValue(LABEL_PHONE)) }
     var address by remember { mutableStateOf(fieldValue(LABEL_ADDRESS)) }
+    var aadhaar by remember { mutableStateOf(fieldValue(LABEL_AADHAAR)) }
+    var pan by remember { mutableStateOf(fieldValue(LABEL_PAN)) }
     var notes by remember { mutableStateOf(existing?.notes ?: "") }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -147,6 +152,36 @@ fun IdentityEditorScreen(
                     verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
                 ) {
                     AtomicTextField(
+                        value = aadhaar,
+                        onValueChange = { aadhaar = it },
+                        label = "Aadhaar number",
+                        placeholder = "12 digits",
+                        isPassword = true,
+                        warningMessage = if (aadhaar.isNotBlank() && !com.example.security.IndianIds.isValidAadhaar(aadhaar)) {
+                            "This is not a valid Aadhaar number (check digit does not match)"
+                        } else {
+                            null
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        testTag = "identity_aadhaar"
+                    )
+                    AtomicTextField(
+                        value = pan,
+                        onValueChange = { pan = it.uppercase() },
+                        label = "PAN",
+                        placeholder = "ABCDE1234F",
+                        warningMessage = if (pan.isNotBlank() && !com.example.security.IndianIds.isValidPan(pan)) {
+                            "PAN is 5 letters, 4 digits, 1 letter"
+                        } else {
+                            null
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Characters
+                        ),
+                        testTag = "identity_pan"
+                    )
+                    AtomicTextField(
                         value = address,
                         onValueChange = { address = it },
                         label = "Address",
@@ -183,7 +218,17 @@ fun IdentityEditorScreen(
                                 CustomFieldPlain(id = "", label = LABEL_EMAIL, value = email, isSensitive = false),
                                 CustomFieldPlain(id = "", label = LABEL_PHONE, value = phone, isSensitive = false),
                                 CustomFieldPlain(id = "", label = LABEL_ADDRESS, value = address, isSensitive = false)
-                            )
+                            ) + listOfNotNull(
+                                aadhaar.trim().takeIf { it.isNotEmpty() }?.let {
+                                    CustomFieldPlain(id = "", label = LABEL_AADHAAR, value = it, isSensitive = true)
+                                },
+                                pan.trim().takeIf { it.isNotEmpty() }?.let {
+                                    CustomFieldPlain(id = "", label = LABEL_PAN, value = it.uppercase(), isSensitive = true)
+                                }
+                            ) +
+                                // Any other fields (e.g. from a backup) ride along; saving
+                                // used to keep only the four fields this screen shows.
+                                existing?.customFields.orEmpty().filter { it.label !in MANAGED_LABELS }
                         )
                     )
                 },

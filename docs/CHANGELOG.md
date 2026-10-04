@@ -5,6 +5,16 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 6: India-ready identity fields
+
+- The identity editor takes an **Aadhaar number** (checked with UIDAI's Verhoeff
+  check digit, stored as a sensitive field) and a **PAN** (format-checked).
+  `IndianIds` also validates IFSC codes and UPI IDs for later item types.
+- A custom field labelled **UPI PIN, MPIN, ATM PIN or OTP** shows a warning:
+  these should never be stored, even encrypted.
+- Saving an identity no longer drops custom fields it does not show (e.g. from
+  a backup).
+
 ### Phase 6: fill receipts
 
 - The login editor shows **where and when a login was filled**: "Filled 3 times
