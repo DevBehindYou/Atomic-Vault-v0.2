@@ -230,27 +230,61 @@ if [ -f "$TEST_APK" ]; then
   if [ -z "$(adb shell pidof "$PKG" || true)" ]; then
     fail "The autofill service process is not running after a fill request"
   fi
-  # The suggestion is drawn in a system popup right under the field (no
-  # keyboard strip on this emulator). Tap there: AtomicVault's unlock screen
-  # must open -- proof the locked-vault response reached the user.
+  # What Android received from the service (log level is verbose, so the
+  # response shows whether it carries an authentication, i.e. the unlock chip).
+  grep -iE "mResponses|hasAuthentication|authentication=|datasets=|mFillUi|showing" "$OUT/autofill_dump.txt" | head -20 || true
+  # The suggestion is drawn in a system popup window (no keyboard strip on
+  # this emulator) that uiautomator cannot see. Ask the window manager where
+  # the Autofill popup is and tap its centre: AtomicVault's unlock screen must
+  # open -- proof the locked-vault response reached the user.
+  adb shell dumpsys window windows > "$OUT/windows.txt" || true
+  POPUP=$(python3 - "$OUT/windows.txt" "$PKG" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+pkg = sys.argv[2]
+blocks = re.split(r'\n(?=  Window #\d+)', text)
+for b in blocks:
+    head = b.split("\n", 1)[0]
+    if "autofill" not in head.lower() or pkg in head or "autofilltest" in head:
+        continue
+    for key in ("mFrame", "frame", "visible", "parent"):
+        m = re.search(r'\b' + key + r'=\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]', b)
+        if m:
+            x1, y1, x2, y2 = map(int, m.groups())
+            if x2 > x1 and y2 > y1:
+                print(head.strip(), file=sys.stderr)
+                print((x1 + x2) // 2, (y1 + y2) // 2)
+                sys.exit(0)
+PY
+  ) || true
+  OPENED=0
+  TAPS=()
+  if [ -n "$POPUP" ]; then
+    echo "Autofill popup found at $POPUP"
+    TAPS+=("$POPUP")
+  else
+    echo "No Autofill popup window listed; falling back to taps near the field"
+    grep -n -i "autofill" "$OUT/windows.txt" | head -10 || true
+  fi
   dump || true
   B=$(nth_edit_bottom 1)
-  OPENED=0
   if [ -n "$B" ]; then
     set -- $B
-    for dy in 70 120 170; do
-      adb shell input tap "$1" $(( $2 + dy ))
-      sleep 4
-      if dump && grep -qi "Fill with AtomicVault" "$OUT/ui.xml"; then OPENED=1; break; fi
-    done
+    for dy in 70 120 170; do TAPS+=("$1 $(( $2 + dy ))"); done
   fi
+  for t in "${TAPS[@]}"; do
+    adb shell input tap $t
+    sleep 4
+    if dump && grep -qi "Fill with AtomicVault" "$OUT/ui.xml"; then OPENED=1; break; fi
+  done
   if [ "$OPENED" = "1" ]; then
     echo "Tapping the AtomicVault suggestion opened the unlock screen"
     adb exec-out screencap -p > "$OUT/04_autofill_auth.png"
     adb shell input keyevent 4
     sleep 2
   else
-    echo "::warning::Could not open the AtomicVault suggestion by tapping under the field; see 03_autofill_locked.png"
+    echo "::warning::Could not open the AtomicVault suggestion by tapping it; see 03_autofill_locked.png"
+    adb logcat -d | grep -iE "AutofillSession|FillUi|AutofillManager|AutofillUI" | tail -25 || true
   fi
 else
   echo "::warning::Autofill test app not found at $TEST_APK; skipping the Autofill check"
