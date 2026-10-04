@@ -1,6 +1,7 @@
 package com.example.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -33,6 +34,7 @@ object AtomicFonts {
         variable(R.font.jetbrains_mono, FontWeight.Bold),
     )
 
+    @OptIn(ExperimentalTextApi::class)
     private fun variable(res: Int, weight: FontWeight) = Font(
         res,
         weight = weight,

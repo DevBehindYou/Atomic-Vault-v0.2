@@ -2,27 +2,29 @@ package com.example.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material.icons.filled.VpnKey
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Casino
+import androidx.compose.material.icons.outlined.ShowChart
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,20 +37,22 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
+import com.example.ui.theme.AtomicBorder
 import com.example.ui.theme.AtomicRadius
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.theme.AtomicType
 
 /**
- * Screen header from the design reference: an optional back tile, a
- * semibold title, and an optional small emerald caption underneath.
- * Insets itself for the status bar (Scaffold does not pad a topBar slot).
+ * Screen header (design system §9.6). Pushed screens: an ink back square
+ * and a Display title on one line. Top-level screens: the title alone.
+ * An optional mono [caption] sits under the title. A 1 dp ink rule runs
+ * across the full width underneath. Insets itself for the status bar.
  */
 @Composable
 fun AtomicTopBar(
@@ -59,147 +63,147 @@ fun AtomicTopBar(
     backTestTag: String? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
-    ) {
-        if (onBack != null) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(AtomicRadius.lg))
-                    .background(AtomicColors.GlassFill)
-                    .border(1.dp, AtomicColors.BorderSubtle, RoundedCornerShape(AtomicRadius.lg))
-                    .clickable(onClick = onBack)
-                    .semantics { contentDescription = "Back" }
-                    .then(if (backTestTag != null) Modifier.testTag(backTestTag) else Modifier),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null,
-                    tint = AtomicColors.Foreground,
-                    modifier = Modifier.size(22.dp)
+    val colors = AtomicTheme.colors
+    Column(modifier = modifier.fillMaxWidth().background(colors.background).statusBarsPadding()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 64.dp)
+                .padding(start = if (onBack != null) AtomicSpacing.sm else AtomicSpacing.lg, end = AtomicSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)
+        ) {
+            if (onBack != null) {
+                AtomicIconButton(
+                    icon = Icons.AutoMirrored.Outlined.ArrowBack,
+                    description = "Back",
+                    onClick = onBack,
+                    variant = AtomicIconButtonVariant.Back,
+                    testTag = backTestTag
                 )
             }
-        }
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = AtomicColors.Foreground,
-                fontSize = 20.sp,
-                fontWeight = AtomicFontWeight.medium,
-                letterSpacing = (-0.3).sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (caption != null) {
+            Column(modifier = Modifier.weight(1f).padding(vertical = AtomicSpacing.sm)) {
                 Text(
-                    text = caption.uppercase(),
-                    color = AtomicColors.Success,
-                    fontSize = AtomicFontSize.micro,
-                    fontWeight = AtomicFontWeight.medium,
-                    letterSpacing = 0.5.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    text = title,
+                    style = AtomicType.displayM,
+                    color = colors.textPrimary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.semantics { heading() }
                 )
+                if (caption != null) {
+                    Text(
+                        text = AtomicType.caps(caption),
+                        style = AtomicType.monoCaption,
+                        color = colors.accent,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
+            actions()
         }
-
-        actions()
+        AtomicRule()
     }
 }
 
 enum class AtomicTab(val label: String, val icon: ImageVector, val testTag: String) {
-    Vault("Vault", Icons.Filled.Shield, "nav_vault"),
-    Generate("Generate", Icons.Filled.VpnKey, "nav_generate"),
-    Audit("Audit", Icons.Filled.VerifiedUser, "nav_audit"),
-    Settings("Settings", Icons.Filled.Settings, "nav_settings")
+    Vault("Vault", Icons.Outlined.Shield, "nav_vault"),
+    Generate("Generate", Icons.Outlined.Casino, "nav_generate"),
+    // Named for what the user gets; the route and tag keep their old names.
+    Audit("Health", Icons.Outlined.ShowChart, "nav_audit"),
+    Settings("Settings", Icons.Outlined.Tune, "nav_settings")
 }
 
-/** Floating bottom navigation for the four top-level destinations. */
+/**
+ * Bottom bar (design system §9.6): paper with a 1 dp ink top rule. The
+ * active destination is one ink pill with its icon and mono label; the
+ * others are icons only, each with its name for screen readers.
+ */
 @Composable
 fun AtomicBottomNav(
     selected: AtomicTab,
     onSelect: (AtomicTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = AtomicSpacing.md, vertical = AtomicSpacing.sm)
-            .clip(RoundedCornerShape(AtomicRadius.xl))
-            .background(AtomicColors.GlassFill)
-            .border(1.dp, AtomicColors.BorderSubtle, RoundedCornerShape(AtomicRadius.xl))
-            .padding(AtomicSpacing.xs),
-        horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)
-    ) {
-        AtomicTab.entries.forEach { tab ->
-            val isSelected = tab == selected
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(AtomicRadius.lg))
-                    .background(if (isSelected) AtomicColors.SurfaceStrong else Color.Transparent)
-                    .selectable(
-                        selected = isSelected,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        role = Role.Tab,
-                        onClick = { onSelect(tab) }
+    val colors = AtomicTheme.colors
+    Column(modifier = modifier.fillMaxWidth().background(colors.background)) {
+        AtomicRule()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(72.dp)
+                .padding(horizontal = AtomicSpacing.md)
+                .selectableGroup(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AtomicTab.entries.forEach { tab ->
+                val isSelected = tab == selected
+                val shape = RoundedCornerShape(AtomicRadius.sm)
+                Row(
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 56.dp, minHeight = 48.dp)
+                        .clip(shape)
+                        .background(if (isSelected) colors.textPrimary else Color.Transparent)
+                        .selectable(
+                            selected = isSelected,
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            role = Role.Tab,
+                            onClick = { onSelect(tab) }
+                        )
+                        .semantics { contentDescription = tab.label }
+                        .padding(horizontal = if (isSelected) AtomicSpacing.lg else AtomicSpacing.sm)
+                        .testTag(tab.testTag),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm, Alignment.CenterHorizontally)
+                ) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = null,
+                        tint = if (isSelected) colors.background else colors.textPrimary,
+                        modifier = Modifier.size(22.dp)
                     )
-                    .padding(vertical = AtomicSpacing.sm)
-                    .testTag(tab.testTag),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Icon(
-                    imageVector = tab.icon,
-                    contentDescription = null,
-                    tint = if (isSelected) AtomicColors.Foreground else AtomicColors.TextSecondary,
-                    modifier = Modifier.size(22.dp)
-                )
-                Text(
-                    text = tab.label,
-                    color = if (isSelected) AtomicColors.Foreground else AtomicColors.TextSecondary,
-                    fontSize = AtomicFontSize.micro,
-                    fontWeight = AtomicFontWeight.medium,
-                    maxLines = 1
-                )
+                    if (isSelected) {
+                        Text(
+                            text = AtomicType.caps(tab.label),
+                            style = AtomicType.monoCaption,
+                            color = colors.background,
+                            maxLines = 1
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-/** 40dp rounded tile holding a single icon -- the reference's leading glyph for rows and cards. */
+/** 40 dp list-item icon tile (§7.2): 1.5 dp ink border, paper fill, ink icon. */
 @Composable
 fun IconTile(
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    tint: Color = AtomicColors.Success,
-    size: androidx.compose.ui.unit.Dp = 40.dp,
-    // Darker than the surface it sits on: Background inside a card, GlassFill on the page.
-    container: Color = AtomicColors.Background
+    tint: Color = AtomicTheme.colors.textPrimary,
+    size: Dp = 40.dp,
+    container: Color = AtomicTheme.colors.background
 ) {
+    val shape = RoundedCornerShape(AtomicRadius.sm)
     Box(
         modifier = modifier
             .size(size)
-            .clip(RoundedCornerShape(AtomicRadius.md))
-            .background(container),
+            .clip(shape)
+            .background(container)
+            .border(AtomicBorder.structure, AtomicTheme.colors.borderControl, shape),
         contentAlignment = Alignment.Center
     ) {
         Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.5f))
     }
 }
 
-/** Small status dot (emerald = good, rose = attention, grey = neutral). */
+/** 8 dp status dot (unread, live). Pair it with a word: colour is never the only signal. */
 @Composable
-fun StatusDot(color: Color, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 8.dp) {
+fun StatusDot(color: Color, modifier: Modifier = Modifier, size: Dp = 8.dp) {
     Box(modifier = modifier.size(size).clip(CircleShape).background(color))
 }

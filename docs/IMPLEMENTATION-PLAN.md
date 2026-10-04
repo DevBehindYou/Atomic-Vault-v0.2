@@ -26,7 +26,7 @@ Goal set by the user:
 | 4. Performance + 2FA codes | Done in code | `d210431` | Run #30 green (after #29 test-expectation fix `3cf6f99`) |
 | 5. Platform health | Partly: TOTP engine, Moshi codegen, dead backup branch closed. Open: SQLCipher artifact swap, SDK/AGP upgrade, `security-crypto` replacement, package rename | | |
 | 6. Differentiators | Phishing guard `744055c`, fill receipts `6067d63`, India identity fields `4fc26e1`. change-password shortcut and backup check ("restore drill") done. Open: offline breach check (needs a dataset), QR transfer | | Run #30 green |
-| 7. Atomic design system (UI/UX rebuild), ships as **0.4.0** | 7.0 done (plan, spec, [design canvas](https://claude.ai/artifact/KXY28fKQRhZcqpL4cgaGya)); 7.1 foundations in progress | see CHANGELOG | |
+| 7. Atomic design system (UI/UX rebuild), ships as **0.4.0** | 7.0 done (plan, spec, [design canvas](https://claude.ai/artifact/KXY28fKQRhZcqpL4cgaGya)); 7.1 foundations and 7.2 components pushed; 7.3 next | see CHANGELOG | |
 
 Note on F11 (flaky test): run #23's failure did not reproduce in runs #24 and
 #25. Failing tests are now printed in the CI log, so the next occurrence will

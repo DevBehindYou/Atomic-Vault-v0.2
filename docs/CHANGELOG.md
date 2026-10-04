@@ -5,6 +5,28 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.2: Atomic components (0.4.0)
+
+- **Buttons** follow the spec: Primary (accent, ink border, 3 dp hard shadow
+  that the button sinks into when pressed), Solid, Ghost and Destructive, with
+  Display labels. Disabled is 40% with no shadow; busy shows a thin bar instead
+  of a spinner.
+- **Inputs:** mono caps label above, 2 dp ink border, accent border while
+  focused, error border and helper text. Passwords show in JetBrains Mono.
+- **New shared components** (`AtomicSystem.kt`): card, panel, ink module,
+  rule and hairline, section header, title row with counter, tag and status
+  pill, value bar, text action, icon buttons (back, action, toolbar, danger),
+  stepper, segmented toggle, settings row, fact sheet, stat tile, code well,
+  and the empty, loading, warning and danger-zone states.
+- **Header and bottom bar:** pushed screens get an ink back square and a
+  Display title over a 1 dp ink rule. The bottom bar shows the active tab as
+  one ink pill with its label; the other tabs are outlined icons with names
+  for screen readers. "Audit" is now **Health**.
+- Existing screens pick these up without changes: the old surface, dialog,
+  chip, tag and strength meter are restyled to the spec.
+- Component catalogue snapshots (light, dark, 200% font) and a test that the
+  icon-only tabs are named for screen readers.
+
 ### Phase 7.1: Atomic design system foundations (0.4.0)
 
 - **Paper theme by default.** Ink on paper with one accent, Signal blue

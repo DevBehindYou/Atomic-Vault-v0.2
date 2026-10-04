@@ -167,13 +167,13 @@ wait_for_text "Encrypted on this device" 60   # Argon2id (64 MiB) + database cre
 echo "Vault created; Home is showing"
 
 echo "Walking the bottom navigation"
-tap_node text "Generate" exact 3
+tap_node content-desc "Generate" exact 3
 grep -qi "Password generator" "$OUT/ui.xml" || { dump || fail "UI dump failed"; grep -qi "Password generator" "$OUT/ui.xml" || fail "Generate tab did not open the generator"; }
-tap_node text "Audit" exact 3
-dump || fail "UI dump failed"; grep -qi "Health score\|HEALTH SCORE\|Device integrity" "$OUT/ui.xml" || fail "Audit tab did not open the security dashboard"
-tap_node text "Settings" exact 3
+tap_node content-desc "Health" exact 3
+dump || fail "UI dump failed"; grep -qi "Health score\|HEALTH SCORE\|Device integrity" "$OUT/ui.xml" || fail "Health tab did not open the security dashboard"
+tap_node content-desc "Settings" exact 3
 dump || fail "UI dump failed"; grep -qi "Lock after leaving the app" "$OUT/ui.xml" || fail "Settings tab did not open Settings"
-tap_node text "Vault" exact 3
+tap_node content-desc "Vault" exact 3
 dump || fail "UI dump failed"; grep -qi "Encrypted on this device" "$OUT/ui.xml" || fail "Vault tab did not return to Home"
 
 echo "Opening the Home add menu"
