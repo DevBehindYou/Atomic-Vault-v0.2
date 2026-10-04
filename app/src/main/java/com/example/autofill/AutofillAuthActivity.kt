@@ -45,30 +45,25 @@ class AutofillAuthActivity : VaultAuthActivity() {
     override fun onUnlocked(dek: ByteArray): Intent? {
         val usernameId = intent.autofillId(EXTRA_USERNAME_ID)
         val passwordIds = intent.autofillIds(EXTRA_PASSWORD_IDS)
-        val fields = listOfNotNull(usernameId) + passwordIds
-        if (fields.isEmpty()) return null
+        val otpId = intent.autofillId(EXTRA_OTP_ID)
+        if (usernameId == null && passwordIds.isEmpty() && otpId == null) return null
 
         return when (intent.getStringExtra(EXTRA_MODE)) {
-            MODE_ITEM -> fillItem(dek, intent.getStringExtra(EXTRA_ITEM_ID) ?: return null, usernameId, passwordIds)
-            MODE_LIST -> listMatches(dek, usernameId, passwordIds)
+            MODE_ITEM -> fillItem(dek, intent.getStringExtra(EXTRA_ITEM_ID) ?: return null, usernameId, passwordIds, otpId)
+            MODE_LIST -> listMatches(dek, usernameId, passwordIds, otpId)
             else -> null
         }
     }
 
-    private fun fillItem(dek: ByteArray, itemId: String, usernameId: AutofillId?, passwordIds: List<AutofillId>): Intent? {
+    private fun fillItem(
+        dek: ByteArray,
+        itemId: String,
+        usernameId: AutofillId?,
+        passwordIds: List<AutofillId>,
+        otpId: AutofillId?
+    ): Intent? {
         val item = TemporaryVault.use(this, dek) { it.repository.getItem(itemId) } ?: return null
-        val fields = mutableListOf<AutofillId>()
-        val values = mutableListOf<AutofillValue>()
-        if (usernameId != null && item.username.isNotEmpty()) {
-            fields += usernameId
-            values += AutofillValue.forText(item.username)
-        }
-        if (item.password.isNotEmpty()) {
-            passwordIds.forEach {
-                fields += it
-                values += AutofillValue.forText(item.password)
-            }
-        }
+        val (fields, values) = valuesFor(item, usernameId, passwordIds, otpId)
         if (fields.isEmpty()) return null
 
         TrustLedger.record(
@@ -87,7 +82,8 @@ class AutofillAuthActivity : VaultAuthActivity() {
     private fun listMatches(
         dek: ByteArray,
         usernameId: AutofillId?,
-        passwordIds: List<AutofillId>
+        passwordIds: List<AutofillId>,
+        otpId: AutofillId?
     ): Intent? {
         val packageName = intent.getStringExtra(EXTRA_PACKAGE)
         val webDomain = intent.getStringExtra(EXTRA_WEB_DOMAIN)
@@ -110,20 +106,7 @@ class AutofillAuthActivity : VaultAuthActivity() {
         val response = FillResponse.Builder()
         var added = 0
         items.forEach { item ->
-            // Only fields this item has a value for: a ready-to-fill
-            // suggestion must not carry empty values.
-            val fields = mutableListOf<AutofillId>()
-            val values = mutableListOf<AutofillValue?>()
-            if (usernameId != null && item.username.isNotEmpty()) {
-                fields += usernameId
-                values += AutofillValue.forText(item.username)
-            }
-            if (item.password.isNotEmpty()) {
-                passwordIds.forEach {
-                    fields += it
-                    values += AutofillValue.forText(item.password)
-                }
-            }
+            val (fields, values) = valuesFor(item, usernameId, passwordIds, otpId)
             if (fields.isNotEmpty()) {
                 response.addDataset(
                     AutofillUi.dataset(this, fields, values, item.title, item.username.ifEmpty { null }, inlineRequest, added, null)
@@ -135,11 +118,44 @@ class AutofillAuthActivity : VaultAuthActivity() {
         return Intent().putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT, response.build())
     }
 
+    /**
+     * The fields [item] can fill and their values -- only fields it has a
+     * value for (a ready-to-fill suggestion must not carry empty values). A
+     * one-time-code field gets the item's current 2FA code, computed here.
+     */
+    private fun valuesFor(
+        item: com.example.database.CredentialPlain,
+        usernameId: AutofillId?,
+        passwordIds: List<AutofillId>,
+        otpId: AutofillId?
+    ): Pair<List<AutofillId>, List<AutofillValue>> {
+        val fields = mutableListOf<AutofillId>()
+        val values = mutableListOf<AutofillValue>()
+        if (usernameId != null && item.username.isNotEmpty()) {
+            fields += usernameId
+            values += AutofillValue.forText(item.username)
+        }
+        if (item.password.isNotEmpty()) {
+            passwordIds.forEach {
+                fields += it
+                values += AutofillValue.forText(item.password)
+            }
+        }
+        if (otpId != null) {
+            com.example.crypto.Totp.parse(item.totpSecret)?.let { params ->
+                fields += otpId
+                values += AutofillValue.forText(com.example.crypto.Totp.code(params, System.currentTimeMillis()))
+            }
+        }
+        return fields to values
+    }
+
     companion object {
         const val EXTRA_MODE = "com.atomicvault.extra.MODE"
         const val EXTRA_ITEM_ID = "com.atomicvault.extra.ITEM_ID"
         const val EXTRA_USERNAME_ID = "com.atomicvault.extra.USERNAME_ID"
         const val EXTRA_PASSWORD_IDS = "com.atomicvault.extra.PASSWORD_IDS"
+        const val EXTRA_OTP_ID = "com.atomicvault.extra.OTP_ID"
         const val EXTRA_PACKAGE = "com.atomicvault.extra.PACKAGE"
         const val EXTRA_WEB_DOMAIN = "com.atomicvault.extra.WEB_DOMAIN"
         const val EXTRA_INLINE_REQUEST = "com.atomicvault.extra.INLINE_REQUEST"
@@ -159,6 +175,7 @@ class AutofillAuthActivity : VaultAuthActivity() {
             putExtra(EXTRA_WEB_DOMAIN, parsed.webDomain)
             itemId?.let { putExtra(EXTRA_ITEM_ID, it) }
             parsed.form.username?.let { putExtra(EXTRA_USERNAME_ID, it) }
+            parsed.form.otp?.let { putExtra(EXTRA_OTP_ID, it) }
             putParcelableArrayListExtra(EXTRA_PASSWORD_IDS, ArrayList(parsed.form.passwords))
             if (inlineRequest != null) putExtra(EXTRA_INLINE_REQUEST, inlineRequest)
         }

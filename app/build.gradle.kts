@@ -132,7 +132,6 @@ dependencies {
 
     // Serialization
     implementation(libs.moshi)
-    implementation(libs.moshi.kotlin)
     ksp(libs.moshi.codegen)
 
     // Coroutines

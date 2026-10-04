@@ -43,6 +43,7 @@ Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVau
 - [ ] A native app login: saved, then offered in that app only.
 - [ ] Nothing is offered inside AtomicVault itself (unlock, editor fields).
 - [ ] Android 9 or 10 phone (if available): the same suggestions appear as a dropdown under the field.
+- [ ] Add an authenticator key to a login (Edit > Authenticator key, e.g. from a site's 2FA setup page): the 6-digit code and countdown show and match Google Authenticator. On that site's 2FA code screen, the AtomicVault chip fills the code.
 
 ## 4. Vault basics
 

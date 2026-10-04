@@ -126,9 +126,9 @@ fun CredentialEditorScreen(
 
     val customFields = remember { mutableStateListOf<CustomFieldPlain>() }
 
-    // Stored values this editor has no field for yet. They must round-trip:
-    // saving used to write "" / null here and wiped a stored TOTP secret and
-    // the Android app a login was saved from (which Autofill matches on).
+    // Loaded with the item and saved back: saving used to write "" / null
+    // here and wiped a stored TOTP secret and the Android app a login was
+    // saved from (which Autofill matches on).
     var totpSecret by remember { mutableStateOf("") }
     var androidPackageName by remember { mutableStateOf<String?>(null) }
 
@@ -347,6 +347,32 @@ fun CredentialEditorScreen(
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                         testTag = "editor_url_input"
                     )
+
+                    Spacer(modifier = Modifier.height(AtomicSpacing.md))
+
+                    // Authenticator (TOTP) key: codes are computed on the
+                    // device; Autofill offers them on 2FA fields.
+                    AtomicTextField(
+                        value = totpSecret,
+                        onValueChange = { totpSecret = it },
+                        label = "Authenticator key (2FA)",
+                        placeholder = "Setup key or otpauth:// link",
+                        isPassword = true,
+                        warningMessage = if (totpSecret.isNotBlank() && com.example.crypto.Totp.parse(totpSecret) == null) {
+                            "Not a valid authenticator key"
+                        } else {
+                            null
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.None,
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Password
+                        ),
+                        testTag = "editor_totp_input"
+                    )
+                    TotpCodeRow(totpSecret = totpSecret, onCopy = { code ->
+                        com.example.security.ClipboardHelper.copySensitive(context, "2FA code", code)
+                        showCopiedSnackbar("2FA code")
+                    })
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.md))
 
@@ -583,6 +609,40 @@ private fun CustomFieldEditorRow(
                     onCheckedChange = { onUpdate(field.copy(isSensitive = it)) }
                 )
             }
+        }
+    }
+}
+
+/** The current 2FA code for a valid key, with seconds left; nothing otherwise. */
+@Composable
+private fun TotpCodeRow(totpSecret: String, onCopy: (String) -> Unit) {
+    val params = remember(totpSecret) { com.example.crypto.Totp.parse(totpSecret) } ?: return
+    var now by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(params) {
+        while (true) {
+            now = System.currentTimeMillis()
+            kotlinx.coroutines.delay(1_000)
+        }
+    }
+    val code = com.example.crypto.Totp.code(params, now)
+    val remaining = com.example.crypto.Totp.secondsRemaining(params, now)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = AtomicSpacing.xs)
+            .testTag("editor_totp_code"),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = code.chunked(3).joinToString(" "),
+            color = AtomicColors.Foreground,
+            fontSize = AtomicFontSize.title,
+            fontWeight = AtomicFontWeight.bold,
+            modifier = Modifier.weight(1f)
+        )
+        Text(text = "${remaining}s", color = AtomicColors.TextMuted, fontSize = AtomicFontSize.caption)
+        TextButton(onClick = { onCopy(code) }) {
+            Text(text = "Copy", color = AtomicColors.Accent, fontSize = AtomicFontSize.label)
         }
     }
 }

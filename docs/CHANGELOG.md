@@ -5,6 +5,23 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 4: performance, and 2FA codes
+
+- **Search no longer decrypts the whole vault per keystroke (P1).** Usernames
+  are decrypted once per item version and cached for the unlocked session; tags
+  load in one query instead of one per row.
+- **Backup export and the security scan read the vault in three queries** instead
+  of four per item.
+- **Moshi uses its generated adapters only (P6)**; the reflection factory (and
+  `kotlin-reflect`) is gone. `BackupRoundTripTest` checks every field of every
+  item type survives export and import.
+- **The dashboard keeps no decrypted secrets (P5)**: findings hold id, title and
+  type only.
+- **2FA codes (TOTP, RFC 6238)** computed on the device: an "Authenticator key"
+  field in the login editor shows the live code with a countdown and Copy, and
+  Autofill fills the code on one-time-code fields (SMS-style 2FA screens are
+  left to the keyboard). `TotpTest` uses the RFC's own test vectors.
+
 ### Phase 3: Autofill built for Gboard and every keyboard
 
 - **Suggestions in the keyboard strip.** On Android 11+ every AtomicVault

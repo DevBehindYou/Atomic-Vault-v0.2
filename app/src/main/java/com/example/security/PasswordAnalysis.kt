@@ -92,7 +92,10 @@ object PasswordAnalysis {
 
             if (issues.isNotEmpty()) {
                 flaggedItemIds.add(item.id)
-                findings.add(CredentialFinding(credential = item, issues = issues, entropy = entropy))
+                // The report outlives the scan on screen: keep what the screen
+                // shows (id, title, type), not the decrypted secrets.
+                val shown = item.copy(username = "", password = "", notes = "", totpSecret = "", customFields = emptyList())
+                findings.add(CredentialFinding(credential = shown, issues = issues, entropy = entropy))
             }
         }
 

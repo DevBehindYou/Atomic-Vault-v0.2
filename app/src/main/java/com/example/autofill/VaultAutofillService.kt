@@ -79,7 +79,7 @@ class VaultAutofillService : AutofillService() {
         // Never fill AtomicVault's own screens (the app also opts out of Autofill).
         if (parsed.packageName == packageName) return null
         val form = parsed.form
-        if (!form.hasLoginFields) return null
+        if (!form.hasLoginFields && form.otp == null) return null
 
         if (form.isNewPassword && form.passwords.isNotEmpty()) return newPasswordResponse(parsed, inlineRequest)
 
@@ -87,7 +87,12 @@ class VaultAutofillService : AutofillService() {
         val matches = VaultSession.useIfUnlocked { handle ->
             CredentialMatcher.findAutoOfferMatches(this, handle.db, parsed.packageName, parsed.webDomain)
                 .take(AutofillUi.MAX_SUGGESTIONS)
-                .map { match -> match to handle.repository.getItem(match.id)?.username.orEmpty() }
+                .mapNotNull { match ->
+                    val item = handle.repository.getItem(match.id) ?: return@mapNotNull null
+                    // On a 2FA-code screen only accounts with an authenticator key help.
+                    if (!form.hasLoginFields && com.example.crypto.Totp.parse(item.totpSecret) == null) null
+                    else match to item.username
+                }
         }
         if (matches == null) {
             val auth = AutofillUi.authSender(
@@ -102,7 +107,8 @@ class VaultAutofillService : AutofillService() {
         }
 
         val builder = FillResponse.Builder()
-        val fields = parsed.fillableIds.filter { it != form.otp }
+        // A 2FA-code screen fills the code; a login screen fills the login.
+        val fields = if (form.hasLoginFields) parsed.fillableIds.filter { it != form.otp } else listOfNotNull(form.otp)
         matches.forEachIndexed { index, (match, username) ->
             val auth = AutofillUi.authSender(
                 this,

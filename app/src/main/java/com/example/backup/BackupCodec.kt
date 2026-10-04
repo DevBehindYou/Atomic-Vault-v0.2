@@ -6,7 +6,6 @@ import com.example.crypto.MasterPassword
 import com.example.crypto.VaultCrypto
 import com.example.database.VaultExport
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.security.SecureRandom
 import java.util.Arrays
 
@@ -15,9 +14,11 @@ object BackupCodec {
     private const val SALT_SIZE = 16
     private const val MIN_ENCRYPTED_SIZE = 29
 
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
+    // Generated adapters only (@JsonClass(generateAdapter = true) on every
+    // export model). The reflection factory used to be registered first and
+    // shadowed them, pulling kotlin-reflect into the app and depending on R8
+    // keeping Kotlin metadata.
+    private val moshi = Moshi.Builder().build()
     private val adapter = moshi.adapter(VaultExport::class.java)
 
     fun exportBackup(data: VaultExport, passphraseChars: CharArray): ByteArray {

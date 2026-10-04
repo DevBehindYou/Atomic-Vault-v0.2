@@ -157,6 +157,7 @@ class VaultRepositoryImpl(
 
         val previews = mutableListOf<CredentialPreview>()
         val trimmedQuery = query?.trim()?.lowercase() ?: ""
+        val tagsByItem = tagsByItem()
 
         db.rawQuery(sqlBuilder.toString(), args.toTypedArray()).use { cursor ->
             while (cursor.moveToNext()) {
@@ -168,15 +169,7 @@ class VaultRepositoryImpl(
                 val updatedAt = cursor.getLong(5)
                 val itemType = parseItemType(cursor.getString(6))
 
-                val username = if (encUsername != null && encUsername.isNotEmpty()) {
-                    try {
-                        VaultCrypto.openField(dek, encUsername)
-                    } catch (e: Exception) {
-                        ""
-                    }
-                } else {
-                    ""
-                }
+                val username = cachedUsername(id, updatedAt, encUsername)
 
                 if (trimmedQuery.isNotEmpty()) {
                     val matchTitle = title.lowercase().contains(trimmedQuery)
@@ -196,12 +189,46 @@ class VaultRepositoryImpl(
                         uriMatchPattern = uriPattern,
                         updatedAt = updatedAt,
                         itemType = itemType,
-                        tags = getTagsForItem(id)
+                        tags = tagsByItem[id].orEmpty()
                     )
                 )
             }
         }
         return previews
+    }
+
+    /**
+     * Decrypted usernames for the list, keyed by item id and invalidated by
+     * updated_at. The list reloads on every search keystroke; it used to
+     * AES-decrypt every username in the vault each time. Lives exactly as
+     * long as this repository, i.e. until the vault locks.
+     */
+    private val usernameCache = HashMap<String, Pair<Long, String>>()
+
+    private fun cachedUsername(id: String, updatedAt: Long, enc: ByteArray?): String = synchronized(usernameCache) {
+        usernameCache[id]?.takeIf { it.first == updatedAt }?.second
+            ?: (if (enc != null && enc.isNotEmpty()) FieldOpener(dek).open(enc) else "").also {
+                usernameCache[id] = updatedAt to it
+            }
+    }
+
+    /** Every item's tags in one query (the list used to run one query per row). */
+    private fun tagsByItem(): Map<String, List<TagPlain>> {
+        val result = HashMap<String, MutableList<TagPlain>>()
+        db.rawQuery(
+            """
+            SELECT ct.item_id, t.id, t.name, t.color FROM credential_tag ct
+            INNER JOIN tag t ON ct.tag_id = t.id
+            ORDER BY t.name COLLATE NOCASE ASC;
+            """.trimIndent(),
+            null
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                result.getOrPut(cursor.getString(0)) { mutableListOf() }
+                    .add(TagPlain(cursor.getString(1), cursor.getString(2), if (cursor.isNull(3)) null else cursor.getString(3)))
+            }
+        }
+        return result
     }
 
     /** Falls back to LOGIN for anything unrecognized -- a forward-compatible read (e.g. after a restore from a newer version) should never crash the list screen. */
@@ -481,25 +508,58 @@ class VaultRepositoryImpl(
     }
 
     override fun exportData(): VaultExport {
-        val folders = listFolders()
-        val allItems = mutableListOf<CredentialPlain>()
-
-        val itemIds = mutableListOf<String>()
-        db.rawQuery("SELECT id FROM credential_item ORDER BY title COLLATE NOCASE ASC;", null).use { cursor ->
-            while (cursor.moveToNext()) {
-                itemIds.add(cursor.getString(0))
+        // Three queries for the whole vault instead of four per item: the
+        // security scan and every backup read everything.
+        val tagsByItem = tagsByItem()
+        val fieldsByItem = HashMap<String, MutableList<CustomFieldPlain>>()
+        val damagedItems = HashSet<String>()
+        db.rawQuery("SELECT item_id, id, label, encrypted_value, is_sensitive FROM custom_field;", null).use { c ->
+            while (c.moveToNext()) {
+                val itemId = c.getString(0)
+                val itemOpener = FieldOpener(dek)
+                val value = itemOpener.open(if (c.isNull(3)) null else c.getBlob(3))
+                if (itemOpener.damaged) damagedItems.add(itemId)
+                fieldsByItem.getOrPut(itemId) { mutableListOf() }
+                    .add(CustomFieldPlain(c.getString(1), c.getString(2), value, c.getInt(4) == 1))
             }
         }
 
-        for (id in itemIds) {
-            getItem(id)?.let { allItems.add(it) }
+        val items = mutableListOf<CredentialPlain>()
+        db.rawQuery(
+            """
+            SELECT id, folder_id, title, encrypted_username, encrypted_password, encrypted_notes,
+                   encrypted_totp_secret, uri_match_pattern, android_package_name, updated_at, item_type
+            FROM credential_item ORDER BY title COLLATE NOCASE ASC;
+            """.trimIndent(),
+            null
+        ).use { c ->
+            while (c.moveToNext()) {
+                val id = c.getString(0)
+                val itemOpener = FieldOpener(dek)
+                val item = CredentialPlain(
+                    id = id,
+                    folderId = if (c.isNull(1)) null else c.getString(1),
+                    title = c.getString(2),
+                    username = itemOpener.open(if (c.isNull(3)) null else c.getBlob(3)),
+                    password = itemOpener.open(if (c.isNull(4)) null else c.getBlob(4)),
+                    notes = itemOpener.open(if (c.isNull(5)) null else c.getBlob(5)),
+                    totpSecret = itemOpener.open(if (c.isNull(6)) null else c.getBlob(6)),
+                    uriMatchPattern = if (c.isNull(7)) null else c.getString(7),
+                    androidPackageName = if (c.isNull(8)) null else c.getString(8),
+                    customFields = fieldsByItem[id].orEmpty(),
+                    updatedAt = c.getLong(9),
+                    itemType = parseItemType(c.getString(10)),
+                    tags = tagsByItem[id].orEmpty(),
+                    damaged = itemOpener.damaged || id in damagedItems
+                )
+                items.add(item)
+            }
         }
 
-        val settings = getSettings()
         return VaultExport(
-            folders = folders,
-            items = allItems,
-            settings = settings,
+            folders = listFolders(),
+            items = items,
+            settings = getSettings(),
             tags = listTags(),
             exportedAt = System.currentTimeMillis(),
             version = 1
