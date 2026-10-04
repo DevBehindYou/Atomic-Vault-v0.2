@@ -65,6 +65,6 @@ class PhishingGuardTest {
     fun `edit distance counts swaps as one`() {
         assertEquals(1, PhishingGuard.distance("github", "githbu"))
         assertEquals(0, PhishingGuard.distance("abc", "abc"))
-        assertEquals(3, PhishingGuard.distance("gitlab", "github"))
+        assertEquals(2, PhishingGuard.distance("gitlab", "github"))
     }
 }

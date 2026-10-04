@@ -650,10 +650,20 @@ private fun CustomFieldEditorRow(
     }
 }
 
-/** The current 2FA code for a valid key, with seconds left; nothing otherwise. */
+/**
+ * The current 2FA code for a valid key, with seconds left. Hidden until the
+ * user asks for it (like a password), and only then does it tick.
+ */
 @Composable
 private fun TotpCodeRow(totpSecret: String, onCopy: (String) -> Unit) {
     val params = remember(totpSecret) { com.example.crypto.Totp.parse(totpSecret) } ?: return
+    var shown by remember(totpSecret) { mutableStateOf(false) }
+    if (!shown) {
+        TextButton(onClick = { shown = true }, modifier = Modifier.testTag("editor_totp_show")) {
+            Text(text = "Show 2FA code", color = AtomicColors.Accent, fontSize = AtomicFontSize.label)
+        }
+        return
+    }
     var now by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(params) {
         while (true) {
