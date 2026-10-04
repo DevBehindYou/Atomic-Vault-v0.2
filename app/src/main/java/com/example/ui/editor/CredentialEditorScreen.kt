@@ -354,6 +354,31 @@ fun CredentialEditorScreen(
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.md))
 
+                    // Change password: opens the site's standard change-password
+                    // page (/.well-known/change-password) in the browser. The
+                    // browser does the networking; AtomicVault stays offline,
+                    // and the new password is saved through Autofill as usual.
+                    val changeDomain = com.example.autofill.PhishingGuard.registrable(uriMatchPattern)
+                    if (isEditMode && changeDomain != null) {
+                        TextButton(
+                            onClick = {
+                                try {
+                                    context.startActivity(
+                                        android.content.Intent(
+                                            android.content.Intent.ACTION_VIEW,
+                                            android.net.Uri.parse("https://$changeDomain/.well-known/change-password")
+                                        ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    )
+                                } catch (e: Exception) {
+                                    coroutineScope.launch { snackbarHostState.showSnackbar("No browser found to open the page") }
+                                }
+                            },
+                            modifier = Modifier.testTag("editor_change_password")
+                        ) {
+                            Text(text = "Change password on $changeDomain →", color = AtomicColors.Accent, fontSize = AtomicFontSize.label)
+                        }
+                    }
+
                     // Authenticator (TOTP) key: codes are computed on the
                     // device; Autofill offers them on 2FA fields.
                     AtomicTextField(

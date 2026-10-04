@@ -5,6 +5,13 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 6: change-password shortcut
+
+- Website logins get **"Change password on github.com →"** in the editor, which
+  opens the site's standard `/.well-known/change-password` page in the browser
+  (the browser does the networking; AtomicVault stays offline). The new password
+  is captured by the Autofill save prompt as usual.
+
 ### Phase 6: India-ready identity fields
 
 - The identity editor takes an **Aadhaar number** (checked with UIDAI's Verhoeff
