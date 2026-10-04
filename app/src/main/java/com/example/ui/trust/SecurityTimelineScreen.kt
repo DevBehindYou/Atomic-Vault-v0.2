@@ -73,6 +73,7 @@ private fun eventLabel(type: TrustEventType): String = when (type) {
     TrustEventType.BACKUP_IMPORTED -> "Backup imported"
     TrustEventType.SECURITY_SETTING_CHANGED -> "Security setting changed"
     TrustEventType.INTEGRITY_CHECK_COMPLETED -> "Integrity check completed"
+    TrustEventType.PHISHING_WARNING_SHOWN -> "Look-alike site warning"
 }
 
 private fun formatDay(timestamp: Long): String = SimpleDateFormat("MMMM d", Locale.getDefault()).format(Date(timestamp))

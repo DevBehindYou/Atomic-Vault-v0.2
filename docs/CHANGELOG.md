@@ -5,6 +5,20 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 6 (first differentiator): phishing guard
+
+- **Look-alike site warning.** When a page has no saved login but resembles a
+  site the user has one for, AtomicVault says so instead of staying silent:
+  a "Not github.com" chip in the keyboard strip (vault open) or a warning screen
+  after unlocking (vault locked). It never fills on a look-alike.
+- `PhishingGuard` (pure Kotlin, offline, only the user's own saved domains):
+  digit/letter swaps (`paypa1.com`, `g00gle.com`, `rnicrosoft.com`), one or two
+  typos (`githuh.com`, `hdfcbnak.com`), the brand inside another site
+  (`github-login.com`, `github.com.account-verify.xyz`) and punycode homoglyphs
+  (`gіthub.com` with a Cyrillic і). Subdomains of saved sites and the same name
+  on another country domain (`amazon.in` vs `amazon.com`) never warn.
+- Each warning is recorded in the Trust Ledger ("Look-alike site warning").
+
 ### Phase 4: performance, and 2FA codes
 
 - **Search no longer decrypts the whole vault per keystroke (P1).** Usernames

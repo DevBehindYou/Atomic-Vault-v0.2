@@ -118,10 +118,30 @@ class VaultAutofillService : AutofillService() {
                 AutofillUi.dataset(this, fields, null, match.title, username.ifEmpty { null }, inlineRequest, index, auth)
             )
         }
+        if (matches.isEmpty() && form.hasLoginFields) {
+            // No login for this site. If it looks like one the user has a login
+            // for, say so instead of staying silent (PhishingGuard).
+            lookalikeWarning(parsed, inlineRequest)?.let { builder.addDataset(it) }
+        }
         val saveInfo = AutofillUi.saveInfo(parsed)
         if (matches.isEmpty() && saveInfo == null) return null
         saveInfo?.let { builder.setSaveInfo(it) }
         return builder.build()
+    }
+
+    private fun lookalikeWarning(parsed: ParsedForm, inlineRequest: InlineSuggestionsRequest?): android.service.autofill.Dataset? {
+        val domain = parsed.webDomain ?: return null
+        val saved = VaultSession.useIfUnlocked { CredentialMatcher.savedDomains(it.db) } ?: return null
+        val lookalike = PhishingGuard.findLookalike(domain, saved) ?: return null
+        val fields = parsed.fillableIds.filter { it != parsed.form.otp }
+        if (fields.isEmpty()) return null
+        return AutofillUi.dataset(
+            this, fields, null,
+            title = "Not ${lookalike.resembles}",
+            subtitle = "Look-alike site - tap for details",
+            inlineRequest = inlineRequest, index = 0,
+            auth = AutofillUi.authSender(this, PhishingWarningActivity.intent(this, lookalike))
+        )
     }
 
     /**

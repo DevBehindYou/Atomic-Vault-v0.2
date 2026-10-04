@@ -177,4 +177,16 @@ object CredentialMatcher {
         d = d.substringBefore("/")
         return d.ifBlank { null }
     }
+
+    /** Every website the vault has a login for (for PhishingGuard's look-alike check). */
+    fun savedDomains(db: SQLiteDatabase): List<String> {
+        val domains = mutableListOf<String>()
+        db.rawQuery(
+            "SELECT DISTINCT uri_match_pattern FROM credential_item WHERE uri_match_pattern IS NOT NULL AND uri_match_pattern != '';",
+            null
+        ).use { c ->
+            while (c.moveToNext()) domains.add(c.getString(0))
+        }
+        return domains
+    }
 }

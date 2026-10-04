@@ -89,16 +89,29 @@ class AutofillAuthActivity : VaultAuthActivity() {
         val webDomain = intent.getStringExtra(EXTRA_WEB_DOMAIN)
         val inlineRequest = intent.inlineRequest()
 
-        val items = TemporaryVault.use(this, dek) { handle ->
-            CredentialMatcher.findAutoOfferMatches(this, handle.db, packageName, webDomain)
+        // One read of the vault: the key is zeroed when it ends.
+        val (items, lookalike) = TemporaryVault.use(this, dek) { handle ->
+            val found = CredentialMatcher.findAutoOfferMatches(this, handle.db, packageName, webDomain)
                 .take(AutofillUi.MAX_SUGGESTIONS)
                 .mapNotNull { handle.repository.getItem(it.id) }
+            // Nothing saved for this site: does it look like one that is?
+            val warning = if (found.isEmpty() && webDomain != null) {
+                PhishingGuard.findLookalike(webDomain, CredentialMatcher.savedDomains(handle.db))
+            } else {
+                null
+            }
+            found to warning
         }
         if (items.isEmpty()) {
-            runOnUiThread {
-                android.widget.Toast.makeText(
-                    this, "No saved login for ${webDomain ?: "this app"} yet", android.widget.Toast.LENGTH_SHORT
-                ).show()
+            // Warn on a look-alike instead of just saying "nothing here".
+            if (lookalike != null) {
+                startActivity(PhishingWarningActivity.intent(this, lookalike))
+            } else {
+                runOnUiThread {
+                    android.widget.Toast.makeText(
+                        this, "No saved login for ${webDomain ?: "this app"} yet", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
             return null
         }
