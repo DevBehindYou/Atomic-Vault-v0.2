@@ -456,6 +456,8 @@ fun AtomicFactRow(
     modifier: Modifier = Modifier,
     mono: Boolean = true,
     last: Boolean = false,
+    /** Read by TalkBack instead of [value], e.g. "Hidden" for a masked secret, so bullets are never read out. */
+    spokenValue: String? = null,
     trailing: (@Composable () -> Unit)? = null
 ) {
     val colors = AtomicTheme.colors
@@ -476,7 +478,9 @@ fun AtomicFactRow(
                 color = colors.textPrimary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .then(if (spokenValue != null) Modifier.semantics { contentDescription = spokenValue } else Modifier)
             )
             trailing?.invoke()
         }
