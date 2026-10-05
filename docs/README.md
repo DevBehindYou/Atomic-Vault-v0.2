@@ -18,11 +18,12 @@ static-only audit; parts of it were wrong, see the change log) and
 ## Status (2026-10-05)
 
 - Active branch: `claude/stoic-lamport-t601ql`, which continues
-  `claude/atomic-vault-analysis-1fj2ok` (same history plus step 7.5c, CI #46
-  green). Not merged, not phone-tested; `main` is still at `2217d9a`.
-- Next agent-ready steps: bottom sheets (plan 7.3), tablet list + detail
-  (8.9), raw dp clean-up. Next user steps: look at the CI snapshots and do
-  the phone test.
+  `claude/atomic-vault-analysis-1fj2ok` (same history plus steps 7.5c, 7.3,
+  8.9 and 7.9b; CI #46 and #49 green). Not merged, not phone-tested; `main`
+  is still at `2217d9a`.
+- Phase 7 is done in code. Next user steps: look at the CI snapshots
+  (`tablet_list_detail.png`, `sheet_*.png` are new) and do the phone test,
+  then apply the 0.3.0 / 0.4.0 version bumps and merge.
 
 ### Earlier status (2026-10-04)
 

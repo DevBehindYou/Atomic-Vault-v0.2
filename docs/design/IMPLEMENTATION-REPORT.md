@@ -16,6 +16,7 @@ Branch `claude/atomic-vault-analysis-1fj2ok`; nothing is merged or released.
 | #42 | `5850ed6` | Everything above, obsolete test removed, design check on tests | Green: unit tests, lint, design check, snapshots, emulator flow incl. Autofill |
 | #44 | `4fd467a` | Side rail on wide screens, signing certificate on Privacy proof (7.8) | Green |
 | #45 | `94535a8` | Cards and identities open in the read view (7.5b) | Green |
+| #49 | `694ba6f` `3b6ee1f` `de38dd7` | Bottom sheet (7.3), tablet list + detail (8.9), size tokens and raw-dp check (7.9b) | Green: unit tests, lint, design check, snapshots, emulator flow incl. Autofill |
 | #46 | `d175608` | One editor scaffold, unsaved-changes check, card keeps unknown fields (7.5c) | Green: unit tests, lint, design check, snapshots, emulator flow incl. Autofill |
 
 #35 and #38 failed to compile (an experimental-API opt-in, a missing import); each was fixed in the next push.
@@ -104,19 +105,15 @@ stops them coming back.
 
 ## Remaining (genuinely not done)
 
-1. **Tablet list + detail split** (plan 8.9): wide screens get the side rail
-   and capped widths, but the vault list and item detail are not side by side
-   yet.
-2. **Bottom sheets** (plan 8.5): the dialog is restyled but is still a
-   centred dialog, not `AtomicSheet`.
-3. **Raw dp values** remain in screen code (mostly 4–12 dp gaps); the design
-   check covers colours, not sizes.
-4. **Visual review**: the rendered snapshots have not been looked at by a person,
+1. **Visual review**: the rendered snapshots have not been looked at by a person,
    and the phone test (including dark mode and 200% font) is still to do. The
    cloud sessions cannot download CI artifacts (the artifact storage host is
    blocked), so this needs the user's machine or phone.
-5. Version numbers are unchanged (0.3.0 and 0.4.0 are decided but not applied).
+2. Version numbers are unchanged (0.3.0 and 0.4.0 are decided but not applied).
 
 Done since this report was first written: card and identity read view
 (7.5b, CI #45) and the shared `ItemEditorScaffold` for all three editors
-with an unsaved-changes check (7.5c, CI #46).
+with an unsaved-changes check (7.5c, CI #46); `AtomicSheet` bottom sheet
+replacing the dialog (7.3), vault list + detail side by side at 840 dp and
+wider (8.9; 600-839 dp keeps one pane beside the rail), and size tokens with
+a design check against raw dp (7.9b), all in CI #49.

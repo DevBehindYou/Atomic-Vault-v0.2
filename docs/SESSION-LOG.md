@@ -123,6 +123,11 @@ From the ChatGPT handover files the user attached (`AtomicVault_AI_Handover`):
   The session's branch `claude/stoic-lamport-t601ql` was moved onto it.
 - Did 7.5c: `ItemEditorScaffold` for all three editors, unsaved-changes
   check, card editor no longer drops unknown custom fields. CI #46 green.
+- The user then asked for the bottom sheets and to continue automatically:
+  did 7.3 (`AtomicSheet`), 8.9 (list + detail at 840 dp and wider; the plan's
+  600 dp was too narrow beside the rail) and 7.9b (size tokens, raw-dp check).
+  CI #49 green. Pushing while a run was in progress cancels it (#48); the
+  combined run covered all three commits.
 - `gh` works in the cloud session (runs, logs), but CI artifact downloads
   are blocked by the network policy, so snapshots still cannot be viewed
   from here.
