@@ -17,7 +17,8 @@ set -euo pipefail
 
 APK="${1:-app/build/outputs/apk/debug/app-debug.apk}"
 TEST_APK="${2:-autofilltest/build/outputs/apk/debug/autofilltest-debug.apk}"
-PKG=com.atomicvault.android.debug
+# The debug build by default; CI also runs the R8-minified internal build.
+PKG="${PKG:-com.atomicvault.android.debug}"
 OUT=emulator-artifacts
 mkdir -p "$OUT"
 

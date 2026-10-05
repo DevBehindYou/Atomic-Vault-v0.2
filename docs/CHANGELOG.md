@@ -5,6 +5,18 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### CI: the minified build goes through the emulator check too (TASKS T5)
+
+- The verify job also builds `assembleInternal`: the release build type with
+  R8 shrinking, signed with the debug key, installed as
+  `com.atomicvault.android.internal`. It is its own step, so an R8 failure
+  is named as one.
+- The emulator job runs twice, as `Emulator check (debug)` and
+  `Emulator check (minified)`: create a vault, walk the app, restart, unlock
+  and the Autofill tap, on both APKs. Logs upload per variant.
+- `emulator_check.sh` takes the package from `PKG` (default: the debug
+  build).
+
 ### Phase 7.9b: no raw sizes in screen code (0.4.0)
 
 - New `AtomicSize` tokens (icons, marks, tiles, row, header and button

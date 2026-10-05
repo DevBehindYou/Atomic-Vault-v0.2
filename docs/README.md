@@ -51,7 +51,9 @@ everything goes through GitHub Actions.
    gh run list --branch <branch> --limit 3
    gh run download <run-id> -n AtomicVault-UI-Snapshots-<n>   # rendered screens
    gh run download <run-id> -n AtomicVault-Debug-APK-<n>      # installable build
-   gh run download <run-id> -n AtomicVault-Emulator-<n>       # emulator logs
+   gh run download <run-id> -n AtomicVault-Internal-APK-<n>   # R8-minified build (.internal)
+   gh run download <run-id> -n AtomicVault-Emulator-debug-<n>     # emulator logs, debug build
+   gh run download <run-id> -n AtomicVault-Emulator-minified-<n>  # emulator logs, minified build
    ```
 
    `<n>` is the workflow's run number (shown in the artifact list of the run).

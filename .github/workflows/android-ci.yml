@@ -94,24 +94,51 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      # The release build type with R8 shrinking, signed with the debug key
+      # and installed as com.atomicvault.android.internal. Minification can
+      # break Moshi, Compose or the Autofill service in ways the debug build
+      # hides, so the emulator job runs this APK too (TASKS T5).
+      - name: Minified internal APK (R8)
+        run: ./gradlew assembleInternal --stacktrace
+
+      - name: Upload minified internal APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Internal-APK-${{ github.run_number }}
+          path: app/build/outputs/apk/internal/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
   # Runs the built debug APK on an emulator: it must launch, create a vault,
   # walk the app, restart locked and unlock through the system keyboard, and
   # nothing may crash. Unit tests and Robolectric renders cannot see a startup
   # or service crash.
   emulator:
-    name: Emulator launch, create & unlock check
+    name: Emulator check (${{ matrix.variant }})
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: debug
+            artifact: Debug-APK
+            apk: app-debug.apk
+            pkg: com.atomicvault.android.debug
+          - variant: minified
+            artifact: Internal-APK
+            apk: app-internal.apk
+            pkg: com.atomicvault.android.internal
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download debug APK
+      - name: Download the APK under test
         uses: actions/download-artifact@v4
         with:
-          name: AtomicVault-Debug-APK-${{ github.run_number }}
+          name: AtomicVault-${{ matrix.artifact }}-${{ github.run_number }}
           path: apk
 
       - name: Download Autofill test app
@@ -133,13 +160,13 @@ jobs:
           target: default
           arch: x86_64
           profile: pixel_6
-          script: bash .github/scripts/emulator_check.sh apk/app-debug.apk testapk/autofilltest-debug.apk
+          script: PKG=${{ matrix.pkg }} bash .github/scripts/emulator_check.sh apk/${{ matrix.apk }} testapk/autofilltest-debug.apk
 
       - name: Upload emulator screenshots and logs
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: AtomicVault-Emulator-${{ github.run_number }}
+          name: AtomicVault-Emulator-${{ matrix.variant }}-${{ github.run_number }}
           path: emulator-artifacts/
           if-no-files-found: warn
           retention-days: 14
