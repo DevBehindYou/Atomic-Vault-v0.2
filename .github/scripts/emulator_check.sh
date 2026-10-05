@@ -181,7 +181,7 @@ dump || fail "UI dump failed"; grep -qi 'resource-id="screen_home"' "$OUT/ui.xml
 echo "Opening the Home add menu"
 tap_node content-desc "Add to vault" contains 2
 tap_node text "Payment card" contains 3
-dump || fail "UI dump failed"; grep -qi "Add payment card" "$OUT/ui.xml" || fail "Add menu did not open the payment card editor"
+dump || fail "UI dump failed"; grep -qi 'resource-id="screen_card_editor"' "$OUT/ui.xml" || fail "Add menu did not open the payment card editor"
 adb shell input keyevent 4
 sleep 2
 dump || fail "UI dump failed"; grep -qi 'resource-id="screen_home"' "$OUT/ui.xml" || fail "Back from the card editor did not return to Home"

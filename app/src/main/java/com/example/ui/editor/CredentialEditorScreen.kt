@@ -24,12 +24,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -154,9 +154,10 @@ fun CredentialEditorScreen(
 
     if (showDeleteConfirmDialog && itemId != null) {
         AtomicDialog(
-            title = "Delete credential",
-            message = "This cannot be undone.",
-            confirmLabel = "Delete",
+            title = "Delete login",
+            message = "Delete \"$title\"? It is removed from this phone. Backups you already made still contain it.",
+            confirmLabel = "Delete login",
+            dismissLabel = "Keep it",
             isDestructive = true,
             confirmTestTag = "confirm_delete_dialog_button",
             onConfirm = {
@@ -168,21 +169,12 @@ fun CredentialEditorScreen(
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState) { data ->
-                Snackbar(
-                    containerColor = AtomicColors.GlassFill.copy(alpha = 0.95f),
-                    contentColor = AtomicColors.Foreground,
-                    actionColor = AtomicColors.Accent,
-                    snackbarData = data
-                )
-            }
-        },
+        modifier = modifier.fillMaxSize().testTag("screen_login_editor"),
+        containerColor = com.example.ui.theme.AtomicTheme.colors.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             AtomicTopBar(
-                title = if (isEditMode) "Edit credential" else "New credential",
+                title = if (isEditMode) "Edit login" else "New login",
                 caption = "Encrypted on this device",
                 onBack = onBack,
                 backTestTag = "editor_back_button"
@@ -210,8 +202,8 @@ fun CredentialEditorScreen(
                     AtomicTextField(
                         value = title,
                         onValueChange = { title = it },
-                        label = "Title *",
-                        placeholder = "e.g. Google, GitHub, Work VPN",
+                        label = "Name",
+                        placeholder = "e.g. GitHub, Gmail, Work VPN",
                         singleLine = true,
                         testTag = "editor_title_input"
                     )
@@ -225,6 +217,7 @@ fun CredentialEditorScreen(
                         label = "Username",
                         placeholder = "Email or username",
                         singleLine = true,
+                        mono = true,
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                         trailingIcon = if (username.isNotEmpty()) {
                             {
@@ -236,7 +229,7 @@ fun CredentialEditorScreen(
                                     modifier = Modifier.testTag("editor_copy_username_button")
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.ContentCopy,
+                                        imageVector = Icons.Outlined.ContentCopy,
                                         contentDescription = "Copy username",
                                         tint = AtomicColors.Accent
                                     )
@@ -250,19 +243,14 @@ fun CredentialEditorScreen(
 
                     // Password with inline Show/Hide and Copy buttons
                     Column {
-                        Text(
-                            text = "Password",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = AtomicFontWeight.medium,
-                            modifier = Modifier.padding(bottom = AtomicSpacing.xs)
-                        )
-
                         AtomicTextField(
                             value = password,
                             onValueChange = { password = it },
+                            label = "Password",
                             placeholder = "Password",
                             isPassword = !passwordVisible,
+                            revealToggle = false,
+                            mono = true,
                             singleLine = true,
                             trailingIcon = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -275,7 +263,7 @@ fun CredentialEditorScreen(
                                             modifier = Modifier.testTag("editor_copy_password_button")
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Default.ContentCopy,
+                                                imageVector = Icons.Outlined.ContentCopy,
                                                 contentDescription = "Copy password",
                                                 tint = AtomicColors.Accent
                                             )
@@ -285,7 +273,7 @@ fun CredentialEditorScreen(
                                         onClick = { passwordVisible = !passwordVisible }
                                     ) {
                                         Icon(
-                                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                            imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                             contentDescription = if (passwordVisible) "Hide password" else "Show password",
                                             tint = AtomicColors.TextMuted
                                         )
@@ -309,19 +297,11 @@ fun CredentialEditorScreen(
                         Spacer(modifier = Modifier.height(AtomicSpacing.xs))
 
                         // Toggle inline password generator
-                        TextButton(
+                        com.example.ui.components.AtomicTextAction(
+                            text = if (showGenerator) "Hide generator" else "Generate a password",
                             onClick = { showGenerator = !showGenerator },
-                            modifier = Modifier.testTag("toggle_inline_generator_button"),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-                            shape = androidx.compose.ui.graphics.RectangleShape
-                        ) {
-                            Text(
-                                text = if (showGenerator) "Hide generator" else "Generate password",
-                                color = AtomicColors.Accent,
-                                fontSize = AtomicFontSize.label,
-                                fontWeight = AtomicFontWeight.medium
-                            )
-                        }
+                            testTag = "toggle_inline_generator_button"
+                        )
 
                         // Inline Password Generator Panel
                         AnimatedVisibility(
@@ -345,9 +325,10 @@ fun CredentialEditorScreen(
                     AtomicTextField(
                         value = uriMatchPattern,
                         onValueChange = { uriMatchPattern = it },
-                        label = "Website / App Match Pattern",
-                        placeholder = "e.g. github.com, com.example.app",
+                        label = "Fills on (website or app)",
+                        placeholder = "e.g. github.com or com.example.app",
                         singleLine = true,
+                        mono = true,
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                         testTag = "editor_url_input"
                     )
@@ -360,7 +341,8 @@ fun CredentialEditorScreen(
                     // and the new password is saved through Autofill as usual.
                     val changeDomain = com.example.autofill.PhishingGuard.registrable(uriMatchPattern)
                     if (isEditMode && changeDomain != null) {
-                        TextButton(
+                        com.example.ui.components.AtomicTextAction(
+                            text = "Change password on $changeDomain →",
                             onClick = {
                                 try {
                                     context.startActivity(
@@ -373,10 +355,8 @@ fun CredentialEditorScreen(
                                     coroutineScope.launch { snackbarHostState.showSnackbar("No browser found to open the page") }
                                 }
                             },
-                            modifier = Modifier.testTag("editor_change_password")
-                        ) {
-                            Text(text = "Change password on $changeDomain →", color = AtomicColors.Accent, fontSize = AtomicFontSize.label)
-                        }
+                            testTag = "editor_change_password"
+                        )
                     }
 
                     // Authenticator (TOTP) key: codes are computed on the
@@ -388,7 +368,7 @@ fun CredentialEditorScreen(
                         placeholder = "Setup key or otpauth:// link",
                         isPassword = true,
                         warningMessage = if (totpSecret.isNotBlank() && com.example.crypto.Totp.parse(totpSecret) == null) {
-                            "Not a valid authenticator key"
+                            "This isn't an authenticator key. Paste the setup key or the otpauth:// link from the site."
                         } else {
                             null
                         },
@@ -430,7 +410,7 @@ fun CredentialEditorScreen(
                     // Folder selection (if folders exist)
                     if (folders.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                        SectionLabel(text = "Folder")
+                        com.example.ui.components.AtomicSectionHeader("Folder")
 
                         Row(
                             modifier = Modifier
@@ -450,7 +430,8 @@ fun CredentialEditorScreen(
                                     label = folder.name,
                                     selected = selectedFolderId == folder.id,
                                     onClick = { selectedFolderId = folder.id },
-                                    testTag = "editor_folder_${folder.id}"
+                                    testTag = "editor_folder_${folder.id}",
+                                    caps = false
                                 )
                             }
                         }
@@ -461,7 +442,7 @@ fun CredentialEditorScreen(
                     // from Settings, not here, matching how folders work.
                     if (allTags.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                        SectionLabel(text = "Tags")
+                        com.example.ui.components.AtomicSectionHeader("Tags")
 
                         Row(
                             modifier = Modifier
@@ -480,7 +461,8 @@ fun CredentialEditorScreen(
                                             selectedTagIds.add(tag.id)
                                         }
                                     },
-                                    testTag = "editor_tag_${tag.id}"
+                                    testTag = "editor_tag_${tag.id}",
+                                    caps = false
                                 )
                             }
                         }
@@ -492,7 +474,8 @@ fun CredentialEditorScreen(
             Spacer(modifier = Modifier.height(AtomicSpacing.lg))
 
             // Custom Fields Section
-            SectionLabel(text = "Custom Fields")
+            com.example.ui.components.AtomicSectionHeader("Custom fields")
+            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
 
             for (i in customFields.indices) {
                 val cf = customFields[i]
@@ -504,7 +487,8 @@ fun CredentialEditorScreen(
                 Spacer(modifier = Modifier.height(AtomicSpacing.sm))
             }
 
-            TextButton(
+            com.example.ui.components.AtomicTextAction(
+                text = "+ Add custom field",
                 onClick = {
                     customFields.add(
                         CustomFieldPlain(
@@ -515,23 +499,14 @@ fun CredentialEditorScreen(
                         )
                     )
                 },
-                modifier = Modifier.testTag("add_custom_field_button"),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-                shape = androidx.compose.ui.graphics.RectangleShape
-            ) {
-                Text(
-                    text = "+ Add custom field",
-                    color = AtomicColors.Accent,
-                    fontSize = AtomicFontSize.label,
-                    fontWeight = AtomicFontWeight.medium
-                )
-            }
+                testTag = "add_custom_field_button"
+            )
 
             Spacer(modifier = Modifier.height(AtomicSpacing.xl))
 
             // Save Button
             AtomicPrimaryButton(
-                text = if (isEditMode) "Save changes" else "Create credential",
+                text = if (isEditMode) "Save login" else "Add login",
                 onClick = {
                     val input = CredentialInput(
                         folderId = selectedFolderId,
@@ -553,12 +528,17 @@ fun CredentialEditorScreen(
 
             // Delete Button (Edit Mode only)
             if (isEditMode) {
-                Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                AtomicDestructiveButton(
-                    text = "Delete credential",
-                    onClick = { showDeleteConfirmDialog = true },
-                    testTag = "editor_delete_button"
-                )
+                Spacer(modifier = Modifier.height(AtomicSpacing.xl))
+                com.example.ui.components.AtomicDangerZone(
+                    label = "Delete",
+                    warning = "Removes this login from the vault on this phone."
+                ) {
+                    AtomicDestructiveButton(
+                        text = "Delete login",
+                        onClick = { showDeleteConfirmDialog = true },
+                        testTag = "editor_delete_button"
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(48.dp))
@@ -604,7 +584,7 @@ private fun CustomFieldEditorRow(
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Icons.Outlined.Close,
                         contentDescription = "Remove field",
                         tint = AtomicColors.Danger
                     )
@@ -630,7 +610,7 @@ private fun CustomFieldEditorRow(
                 horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
             ) {
                 Icon(
-                    imageVector = if (field.isSensitive) Icons.Default.Lock else Icons.Default.LockOpen,
+                    imageVector = if (field.isSensitive) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                     tint = if (field.isSensitive) AtomicColors.Success else AtomicColors.TextMuted

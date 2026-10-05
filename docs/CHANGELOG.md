@@ -5,6 +5,24 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.6: privacy proof, timeline, editors (0.4.0)
+
+- **Privacy proof:** the pass count as a hero number, a warning box with a
+  link when the event log chain is broken, one fact sheet per category (accent
+  shadow when every check passes, error shadow when one fails) with a `PASS` /
+  `FAIL` pill per check, and the timeline as a settings row.
+- **Security timeline:** ISO dates as section headers, the time on every row,
+  source and result as tags, failures in red with the word, filter chips
+  (All, Failures, Fills), and an empty state that says what will appear.
+- **Login editor:** `NEW LOGIN` / `EDIT LOGIN`; usernames, passwords and the
+  site in mono; copy and reveal together on the password (the masked field used
+  to hide the copy button); `GENERATE A PASSWORD`, change-password and
+  `+ ADD CUSTOM FIELD` as text actions; folder and tag chips keep their names'
+  case; `SAVE LOGIN` / `ADD LOGIN`; delete sits in a danger zone and the
+  confirm says backups still contain it. Outlined icons.
+- Card and identity editors: clearer delete confirmations; screen ids for the
+  emulator check.
+
 ### Phase 7.6: Generate, Health, Settings (0.4.0)
 
 - **Generate:** the password in a shadowed white card in JetBrains Mono, a

@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.database.CredentialInput
 import com.example.database.CustomFieldPlain
@@ -70,7 +71,7 @@ fun IdentityEditorScreen(
     if (showDeleteDialog && existing != null && onDelete != null) {
         AtomicDialog(
             title = "Delete identity",
-            message = "This cannot be undone.",
+            message = "This identity is removed from the vault on this phone. Backups you already made still contain it.",
             confirmLabel = "Delete",
             isDestructive = true,
             confirmTestTag = "identity_delete_confirm",
@@ -83,7 +84,7 @@ fun IdentityEditorScreen(
     }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.testTag("screen_identity_editor"),
         containerColor = AtomicColors.Background,
         topBar = {
             AtomicTopBar(

@@ -89,7 +89,9 @@ fun AtomicTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     testTag: String? = null,
     /** Show the value in mono (usernames, codes, domains). Passwords always are. */
-    mono: Boolean = false
+    mono: Boolean = false,
+    /** False when the caller supplies its own reveal control in [trailingIcon]. */
+    revealToggle: Boolean = true
 ) {
     val colors = AtomicTheme.colors
     var passwordVisible by remember { mutableStateOf(false) }
@@ -133,14 +135,14 @@ fun AtomicTextField(
             minLines = minLines,
             maxLines = maxLines,
             isError = errorMessage != null,
-            visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+            visualTransformation = if (isPassword && !(revealToggle && passwordVisible)) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             interactionSource = interactionSource,
             shape = shape,
             leadingIcon = leadingIcon,
             trailingIcon = {
-                if (isPassword) {
+                if (isPassword && revealToggle) {
                     IconButton(
                         onClick = { passwordVisible = !passwordVisible },
                         modifier = Modifier.semantics {
