@@ -13,6 +13,7 @@ Branch `claude/atomic-vault-analysis-1fj2ok`; nothing is merged or released.
 | #39 | `f091a3b` | Generate, Health, Settings, Backup | Green, emulator included |
 | #40 | `7af9198` | Privacy proof, timeline, editors | Green, emulator included |
 | #41 | `52e4533` | Old design layer removed, design check in CI | Failed: one test still used the deleted background (fixed in the next commit; the design check now scans tests too) |
+| #42 | `5850ed6` | Everything above, obsolete test removed, design check on tests | Green: unit tests, lint, design check, snapshots, emulator flow incl. Autofill |
 
 #35 and #38 failed to compile (an experimental-API opt-in, a missing import); each was fixed in the next push.
 
