@@ -257,20 +257,8 @@ fun AtomicVaultNavGraph(
                     onSelectFolder = { viewModel.setFolderFilter(it) },
                     onSelectTag = { viewModel.setTagFilter(it) },
                     onItemClick = { itemId ->
-                        // Route by item type so a Payment Card / Identity opens
-                        // its own editor rather than the generic Login one --
-                        // resolved here in NavGraph (which already has
-                        // uiState.previews) rather than changing
-                        // VaultHomeScreen's own click-handling code.
-                        val type = uiState.previews.firstOrNull { it.id == itemId }?.itemType
-                        when (type) {
-                            com.example.database.VaultItemType.PAYMENT_CARD ->
-                                navController.navigate(Screen.PaymentCardEditor.createRoute(itemId))
-                            com.example.database.VaultItemType.IDENTITY ->
-                                navController.navigate(Screen.IdentityEditor.createRoute(itemId))
-                            else ->
-                                navController.navigate(Screen.ItemDetail.createRoute(itemId))
-                        }
+                        // Every item opens in its read view; EDIT there picks the type's editor.
+                        navController.navigate(Screen.ItemDetail.createRoute(itemId))
                     },
                     onAddNewClick = {
                         navController.navigate(Screen.Editor.createRoute(null))
@@ -320,7 +308,15 @@ fun AtomicVaultNavGraph(
             ItemDetailScreen(
                 itemId = itemId,
                 onLoadItem = { id -> viewModel.getItem(id) },
-                onEdit = { navController.navigate(Screen.Editor.createRoute(itemId)) },
+                onEdit = {
+                    // Each type has its own editor.
+                    val route = when (uiState.previews.firstOrNull { it.id == itemId }?.itemType) {
+                        com.example.database.VaultItemType.PAYMENT_CARD -> Screen.PaymentCardEditor.createRoute(itemId)
+                        com.example.database.VaultItemType.IDENTITY -> Screen.IdentityEditor.createRoute(itemId)
+                        else -> Screen.Editor.createRoute(itemId)
+                    }
+                    navController.navigate(route)
+                },
                 onBack = { navController.popBackStack() },
                 refreshKey = uiState.previews.firstOrNull { it.id == itemId }?.updatedAt
             )
@@ -391,7 +387,12 @@ fun AtomicVaultNavGraph(
                         }
                     },
                     onBack = { navController.popBackStack() },
-                    onDelete = { id -> viewModel.deleteItem(id) { navController.popBackStack() } }
+                    onDelete = { id ->
+                        viewModel.deleteItem(id) {
+                            // The item's detail screen is underneath: skip it.
+                            if (!navController.popBackStack(Screen.Home.route, inclusive = false)) navController.popBackStack()
+                        }
+                    }
                 )
             }
         }
@@ -419,7 +420,12 @@ fun AtomicVaultNavGraph(
                         }
                     },
                     onBack = { navController.popBackStack() },
-                    onDelete = { id -> viewModel.deleteItem(id) { navController.popBackStack() } }
+                    onDelete = { id ->
+                        viewModel.deleteItem(id) {
+                            // The item's detail screen is underneath: skip it.
+                            if (!navController.popBackStack(Screen.Home.route, inclusive = false)) navController.popBackStack()
+                        }
+                    }
                 )
             }
         }

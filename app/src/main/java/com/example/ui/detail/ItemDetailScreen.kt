@@ -167,6 +167,7 @@ private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, 
     val colors = AtomicTheme.colors
     val context = LocalContext.current
     var revealed by remember(item.id) { mutableStateOf(false) }
+    var revealedFields by remember(item.id) { mutableStateOf(emptySet<String>()) }
 
     Column(
         modifier = modifier
@@ -183,7 +184,8 @@ private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, 
                 )
             }
 
-            AtomicFactSheet {
+            val isLogin = item.itemType == com.example.database.VaultItemType.LOGIN
+            if (isLogin) AtomicFactSheet {
                 val rows = buildList {
                     if (item.username.isNotEmpty()) add("username")
                     if (item.password.isNotEmpty()) add("password")
@@ -217,7 +219,7 @@ private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, 
 
             TotpSection(item.totpSecret, onCopy)
 
-            FillReceipts(item)
+            if (isLogin) FillReceipts(item)
 
             val changeDomain = com.example.autofill.PhishingGuard.registrable(item.uriMatchPattern)
             if (changeDomain != null) {
@@ -249,14 +251,37 @@ private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, 
             }
 
             if (item.customFields.isNotEmpty()) {
-                AtomicSectionHeader("Custom fields")
+                AtomicSectionHeader(
+                    when (item.itemType) {
+                        com.example.database.VaultItemType.PAYMENT_CARD -> "Card"
+                        com.example.database.VaultItemType.IDENTITY -> "Details"
+                        else -> "Custom fields"
+                    }
+                )
                 AtomicFactSheet {
-                    item.customFields.forEachIndexed { i, field ->
+                    val shown = item.customFields.filter { it.value.isNotEmpty() }
+                    shown.forEachIndexed { i, field ->
+                        val revealed = field.id + field.label in revealedFields
                         AtomicFactRow(
                             label = field.label,
-                            value = if (field.isSensitive) "•".repeat(8) else field.value,
-                            last = i == item.customFields.lastIndex
+                            value = when {
+                                !field.isSensitive || revealed -> field.value
+                                // Card numbers keep their last four digits visible, like on a statement.
+                                field.value.filter { it.isDigit() }.length >= 12 -> "•••• " + field.value.filter { it.isDigit() }.takeLast(4)
+                                else -> "•".repeat(8)
+                            },
+                            last = i == shown.lastIndex
                         ) {
+                            if (field.isSensitive) {
+                                AtomicIconButton(
+                                    if (revealed) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    if (revealed) "Hide ${field.label}" else "Show ${field.label}",
+                                    {
+                                        val key = field.id + field.label
+                                        revealedFields = if (revealed) revealedFields - key else revealedFields + key
+                                    }
+                                )
+                            }
                             AtomicIconButton(Icons.Outlined.ContentCopy, "Copy ${field.label}", { onCopy(field.label, field.value) })
                         }
                     }

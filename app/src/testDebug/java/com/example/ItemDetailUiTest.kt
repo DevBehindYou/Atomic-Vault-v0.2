@@ -73,6 +73,28 @@ class ItemDetailUiTest {
     }
 
     @Test
+    fun cardNumberShowsLastFourUntilRevealed() {
+        val card = CredentialPlain(
+            id = "2", title = "HDFC Regalia",
+            itemType = com.example.database.VaultItemType.PAYMENT_CARD,
+            customFields = listOf(
+                com.example.database.CustomFieldPlain("", "Card number", "4111 1111 1111 4021", true),
+                com.example.database.CustomFieldPlain("", "Expiry", "08/29", false)
+            )
+        )
+        rule.setContent {
+            AtomicVaultTheme { ItemDetailScreen(itemId = "2", onLoadItem = { card }, onEdit = {}, onBack = {}) }
+        }
+        rule.waitUntil(5_000) {
+            rule.onAllNodes(androidx.compose.ui.test.hasText("•••• 4021")).fetchSemanticsNodes().isNotEmpty()
+        }
+        assertTrue(rule.onAllNodes(androidx.compose.ui.test.hasText("4111 1111 1111 4021")).fetchSemanticsNodes().isEmpty())
+        rule.onNode(androidx.compose.ui.test.hasContentDescription("Show Card number")).performClick()
+        rule.onNodeWithText("4111 1111 1111 4021").assertIsDisplayed()
+        rule.onNodeWithText("08/29").assertIsDisplayed()
+    }
+
+    @Test
     fun snapshot() {
         rule.setContent {
             AtomicVaultTheme { ItemDetailScreen(itemId = "1", onLoadItem = { item }, onEdit = {}, onBack = {}) }

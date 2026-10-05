@@ -5,6 +5,16 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.5b: cards and identities open in the read view (0.4.0)
+
+- Every item opens in the read view; `EDIT` opens the editor for its type.
+- Cards show a `CARD` section, identities `DETAILS`. Sensitive fields (card
+  number, CVV, Aadhaar, PAN) are masked with their own reveal and copy; a card
+  number shows its last four digits while masked (`•••• 4021`). Fill receipts
+  and the login fact sheet only appear for logins.
+- Deleting from the card or identity editor returns to the vault, not to the
+  deleted item's read view.
+
 ### Phase 7.8: wide layouts and "verify it yourself" (0.4.0)
 
 - **Side navigation on wide screens.** At 600 dp and wider (large phones in

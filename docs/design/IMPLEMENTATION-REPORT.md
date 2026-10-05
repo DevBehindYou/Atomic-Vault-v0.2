@@ -106,8 +106,8 @@ stops them coming back.
    yet.
 2. **Bottom sheets** (plan 8.5): the dialog is restyled but is still a
    centred dialog, not `AtomicSheet`.
-3. **Card and identity editors**: not yet on a shared `ItemEditorScaffold`, and
-   cards and identities still open straight into their editors (no read view).
+3. **Card and identity editors**: not yet on a shared `ItemEditorScaffold`
+   (they now open from the read view like logins).
 4. **Raw dp values** remain in screen code (mostly 4–12 dp gaps); the design
    check covers colours, not sizes.
 6. **Visual review**: the rendered snapshots have not been looked at by a person,
