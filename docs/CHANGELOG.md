@@ -5,6 +5,25 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Lint clean-up (TASKS T9)
+
+- **Corrupt launcher bitmaps removed.** The xxhdpi and xxxhdpi
+  `ic_launcher*.webp` files were damaged (lint read them as 36803 x 9421313
+  px). They were never shown, since every supported phone (API 28+) uses the
+  adaptive icon, so all density bitmaps are deleted and the adaptive icon
+  moves from `mipmap-anydpi-v26` to `mipmap-anydpi`.
+- Removed the seven unused template colours, the redundant activity label
+  and a dead API check; `AtomicTag` takes `modifier` first among its
+  optional parameters; the button press offset uses the lambda overload so
+  it no longer recomposes per animation frame.
+- Kept on purpose, with the reason next to the suppression: `commit()` in
+  the key-envelope store (must be on disk before the database), the
+  own-package service query, the inline-suggestions flag (API 30+), and the
+  Autofill dropdown background (drawn inside other apps).
+- Lint goes from 62 to 43 warnings; all 43 left are dependency, Gradle
+  plugin and target-SDK version notices (Phase 5 upgrade work).
+- CI prints the lint text report into the job log.
+
 ### CI: the minified build goes through the emulator check too (TASKS T5)
 
 - The verify job also builds `assembleInternal`: the release build type with
