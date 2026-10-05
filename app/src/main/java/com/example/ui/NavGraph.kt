@@ -379,6 +379,8 @@ fun AtomicVaultNavGraph(
             (load as? ItemLoad.Ready)?.let { ready ->
                 com.example.ui.paymentcard.PaymentCardEditorScreen(
                     existing = ready.item,
+                    folders = uiState.folders,
+                    allTags = uiState.tags,
                     onSave = { input ->
                         if (itemId != null) {
                             viewModel.updateItem(itemId, input) { navController.popBackStack() }
@@ -412,6 +414,8 @@ fun AtomicVaultNavGraph(
             (load as? ItemLoad.Ready)?.let { ready ->
                 com.example.ui.identity.IdentityEditorScreen(
                     existing = ready.item,
+                    folders = uiState.folders,
+                    allTags = uiState.tags,
                     onSave = { input ->
                         if (itemId != null) {
                             viewModel.updateItem(itemId, input) { navController.popBackStack() }

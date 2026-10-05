@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -36,6 +37,8 @@ import com.example.ui.unlock.UnlockScreen
 import com.example.ui.vaulthome.VaultHomeScreen
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -102,7 +105,7 @@ class RegressionUiTest {
     fun `saving an edited card keeps its tags`() {
         var saved: CredentialInput? = null
         show { PaymentCardEditorScreen(existing = card, onSave = { saved = it }, onBack = {}) }
-        rule.onNodeWithTag("payment_card_save").performScrollTo().performClick()
+        rule.onNodeWithTag("payment_card_save").performClick()
         assertEquals(listOf("t1"), saved?.tagIds)
     }
 
@@ -110,7 +113,7 @@ class RegressionUiTest {
     fun `saving an edited identity keeps its tags`() {
         var saved: CredentialInput? = null
         show { IdentityEditorScreen(existing = identity, onSave = { saved = it }, onBack = {}) }
-        rule.onNodeWithTag("identity_save").performScrollTo().performClick()
+        rule.onNodeWithTag("identity_save").performClick()
         assertEquals(listOf("t2"), saved?.tagIds)
     }
 
@@ -136,9 +139,42 @@ class RegressionUiTest {
         rule.waitUntil(5_000) {
             rule.onAllNodesWithText("Bank").fetchSemanticsNodes().isNotEmpty()
         }
-        rule.onNodeWithTag("editor_save_button").performScrollTo().performClick()
+        rule.onNodeWithTag("editor_save_button").performClick()
         assertEquals("JBSWY3DPEHPK3PXP", saved?.totpSecret)
         assertEquals("com.example.bank", saved?.androidPackageName)
+    }
+
+    @Test
+    fun `saving an edited card keeps fields this screen does not show`() {
+        // The card editor rebuilt its custom fields from the four it shows and
+        // dropped any other field (for example one that came in a backup).
+        val withExtra = card.copy(
+            customFields = card.customFields + CustomFieldPlain("x", "Bank helpline", "1800 123", false)
+        )
+        var saved: CredentialInput? = null
+        show { PaymentCardEditorScreen(existing = withExtra, onSave = { saved = it }, onBack = {}) }
+        rule.onNodeWithTag("payment_card_save").performClick()
+        assertEquals("1800 123", saved?.customFields?.firstOrNull { it.label == "Bank helpline" }?.value)
+    }
+
+    @Test
+    fun `leaving an untouched editor does not ask to discard`() {
+        var left = false
+        show { PaymentCardEditorScreen(existing = card, onSave = {}, onBack = { left = true }) }
+        rule.onNodeWithContentDescription("Back").performClick()
+        assertTrue(left)
+        rule.onNodeWithTag("editor_discard_confirm").assertDoesNotExist()
+    }
+
+    @Test
+    fun `leaving an edited form asks before discarding`() {
+        var left = false
+        show { IdentityEditorScreen(existing = identity, onSave = {}, onBack = { left = true }) }
+        rule.onNodeWithTag("identity_full_name").performTextInput(" Jr")
+        rule.onNodeWithContentDescription("Back").performClick()
+        assertFalse(left)
+        rule.onNodeWithTag("editor_discard_confirm").performClick()
+        assertTrue(left)
     }
 
     @Test

@@ -5,6 +5,31 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.5c: one editor layout for logins, cards and identities (0.4.0)
+
+- **`ItemEditorScaffold`** (`ui/editor/ItemEditorScaffold.kt`): the pushed
+  header, sections with mono headers, the save button pinned at the bottom
+  (it stays above the keyboard and the navigation bar), and delete in a
+  danger zone with a confirm that names the item. All three editors use it.
+- **Unsaved changes are no longer lost silently.** Back (the arrow or the
+  system gesture) on a form that differs from what was loaded asks
+  "Discard changes?" with `KEEP EDITING`. An untouched or empty form leaves
+  at once, so the emulator's back-from-new-card step is unchanged. Picking
+  the same tags in another order does not count as a change.
+- **Fixed: editing a card dropped fields the screen does not show** (for
+  example one that came in through a backup). The identity editor already
+  kept them; the card editor now does too.
+- Cards and identities get the folder and tag pickers logins have
+  (`ORGANISE`, shown only when the vault has folders or tags).
+- Sections: login `LOGIN · WEBSITE OR APP · 2FA · NOTES · ORGANISE · CUSTOM
+  FIELDS`; card `CARD · NOTES`; identity `DETAILS · ID NUMBERS · NOTES`.
+  Titles `NEW CARD` / `EDIT CARD`, save `ADD CARD` / `SAVE CARD` (same pattern
+  for identities). Card number, expiry, CVV, email, phone and PAN in mono;
+  the CVV uses the number-password keyboard.
+- Tests: card keeps unknown fields; untouched editor leaves without asking;
+  edited editor asks and leaves only on confirm; `editorHasChanges` unit
+  tests. All test tags are unchanged.
+
 ### Phase 7.5b: cards and identities open in the read view (0.4.0)
 
 - Every item opens in the read view; `EDIT` opens the editor for its type.
