@@ -70,7 +70,7 @@ class UiStressSnapshotTest {
             val base = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
                 AtomicVaultTheme {
-                    Box(Modifier.fillMaxSize().background(AtomicColors.Background)) { content() }
+                    Box(Modifier.fillMaxSize().background(AtomicColors.palette.background)) { content() }
                 }
             }
         }

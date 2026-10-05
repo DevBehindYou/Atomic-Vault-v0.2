@@ -15,8 +15,6 @@ object AtomicRadius {
     val sm = 4.dp
     val md = 6.dp
     val lg = 8.dp
-    /** Legacy name for "card": maps to the default now (removed in 7.9). */
-    val xl = 4.dp
     /** Bottom-sheet top corners. */
     val sheet = 28.dp
     val pill = 999.dp

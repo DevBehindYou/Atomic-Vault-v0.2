@@ -49,8 +49,6 @@ import com.example.ui.components.AtomicOutlinedButton
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
 import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
 import com.example.ui.theme.AtomicSpacing
 import com.example.ui.theme.AtomicVaultTheme
 import com.example.ui.theme.ThemePreferenceStore

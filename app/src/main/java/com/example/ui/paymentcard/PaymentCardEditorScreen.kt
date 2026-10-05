@@ -27,8 +27,6 @@ import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.AtomicTopBar
-import com.example.ui.components.GlassVariant
-import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicSpacing
 
@@ -83,7 +81,7 @@ fun PaymentCardEditorScreen(
 
     Scaffold(
         modifier = modifier.testTag("screen_card_editor"),
-        containerColor = AtomicColors.Background,
+        containerColor = com.example.ui.theme.AtomicTheme.colors.background,
         topBar = {
             AtomicTopBar(
                 title = if (existing != null) "Edit payment card" else "Add payment card",
@@ -102,9 +100,8 @@ fun PaymentCardEditorScreen(
         ) {
             Spacer(modifier = Modifier.height(AtomicSpacing.xs))
 
-            LiquidGlassSurface(
+            com.example.ui.components.AtomicCard(
                 modifier = Modifier.fillMaxWidth(),
-                variant = GlassVariant.Card,
                 contentPadding = AtomicSpacing.lg
             ) {
                 Column(
@@ -150,9 +147,8 @@ fun PaymentCardEditorScreen(
                 }
             }
 
-            LiquidGlassSurface(
+            com.example.ui.components.AtomicCard(
                 modifier = Modifier.fillMaxWidth(),
-                variant = GlassVariant.Card,
                 contentPadding = AtomicSpacing.lg
             ) {
                 AtomicTextField(

@@ -21,9 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,8 +57,6 @@ import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
 import com.example.ui.theme.AtomicRadius
 import com.example.ui.theme.AtomicSpacing
 import com.example.ui.theme.AtomicType

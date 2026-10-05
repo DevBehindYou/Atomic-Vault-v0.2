@@ -155,11 +155,8 @@ val DarkAtomicPalette = AtomicPalette(
 
 /**
  * Holds the active palette. Reading [palette] in composition makes the
- * reader recompose on a theme change.
- *
- * The other properties are the pre-0.4.0 names, kept as read-only aliases
- * so screens move to the new roles one at a time (plan section 8.4). They
- * are removed in step 7.9; new code uses AtomicTheme.colors.
+ * reader recompose on a theme change. Screens read colours through
+ * AtomicTheme.colors, which AtomicVaultTheme provides from here.
  */
 object AtomicColors {
     var palette by mutableStateOf(LightAtomicPalette)
@@ -170,36 +167,4 @@ object AtomicColors {
     fun applyTheme(dark: Boolean) {
         palette = if (dark) DarkAtomicPalette else LightAtomicPalette
     }
-
-    val Background get() = palette.background
-    val Foreground get() = palette.textPrimary
-    val GlassFill get() = palette.card
-    val GlassBorder get() = palette.borderControl
-    val GlassHighlight get() = palette.line
-    val Surface get() = palette.card
-    val SurfaceStrong get() = palette.panel
-    val FieldFill get() = palette.card
-    val OnSuccess get() = palette.onAccent
-    val Border get() = palette.borderControl
-    val BorderSubtle get() = palette.line
-    val BorderStrong get() = palette.borderControl
-    val TextPrimary get() = palette.textPrimary
-    val TextBody get() = palette.textBody
-    val TextSecondary get() = palette.textSecondary
-    val TextMuted get() = palette.textMuted
-    val Danger get() = palette.error
-    val DangerLight get() = palette.errorContainer
-    /** The system has no success green: positive states use the accent. */
-    val Success get() = palette.accent
-    val SuccessLight get() = palette.accentTint
-    val Warning get() = palette.onErrorContainer
-    val WarningLight get() = palette.errorContainer
-    val Info get() = palette.textPrimary
-    val InfoLight get() = palette.line
-    val Text get() = palette.textPrimary
-    val Hairline get() = palette.line
-    val Accent get() = palette.accent
-    val AccentPressed get() = palette.accentPressed
-    val AccentText get() = palette.onAccent
-    val AccentLight get() = palette.accentTint
 }

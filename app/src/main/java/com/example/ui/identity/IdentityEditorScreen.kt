@@ -27,8 +27,6 @@ import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.AtomicTopBar
-import com.example.ui.components.GlassVariant
-import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.theme.AtomicColors
 import com.example.ui.theme.AtomicSpacing
 
@@ -85,7 +83,7 @@ fun IdentityEditorScreen(
 
     Scaffold(
         modifier = modifier.testTag("screen_identity_editor"),
-        containerColor = AtomicColors.Background,
+        containerColor = com.example.ui.theme.AtomicTheme.colors.background,
         topBar = {
             AtomicTopBar(
                 title = if (existing != null) "Edit identity" else "Add identity",
@@ -104,9 +102,8 @@ fun IdentityEditorScreen(
         ) {
             Spacer(modifier = Modifier.height(AtomicSpacing.xs))
 
-            LiquidGlassSurface(
+            com.example.ui.components.AtomicCard(
                 modifier = Modifier.fillMaxWidth(),
-                variant = GlassVariant.Card,
                 contentPadding = AtomicSpacing.lg
             ) {
                 Column(
@@ -143,9 +140,8 @@ fun IdentityEditorScreen(
                 }
             }
 
-            LiquidGlassSurface(
+            com.example.ui.components.AtomicCard(
                 modifier = Modifier.fillMaxWidth(),
-                variant = GlassVariant.Card,
                 contentPadding = AtomicSpacing.lg
             ) {
                 Column(

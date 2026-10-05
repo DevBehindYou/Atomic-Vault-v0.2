@@ -72,22 +72,6 @@ object AtomicType {
     fun caps(text: String): String = text.uppercase()
 }
 
-/** Legacy size tokens, kept while screens move to [AtomicType] (removed in 7.9). */
-object AtomicFontSize {
-    val title = 24.sp
-    val heading = 17.sp
-    val body = 16.sp
-    val label = 15.sp
-    val caption = 13.sp
-    val micro = 12.sp
-}
-
-object AtomicFontWeight {
-    val regular = FontWeight.W400
-    val medium = FontWeight.W600
-    val bold = FontWeight.W700
-}
-
 /**
  * Material slots. Body and labels are Hanken Grotesk, so every Text that
  * inherits the theme style uses the family; headlines are Display.

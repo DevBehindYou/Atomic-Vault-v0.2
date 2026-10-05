@@ -5,6 +5,17 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.9: the old design layer is gone (0.4.0)
+
+- Deleted `LiquidGlassSurface`, `AmbientVaultBackground`, the 30 legacy colour
+  aliases, `AtomicFontSize`/`AtomicFontWeight`, the spring and glass easing,
+  and the legacy radius. Editors use Atomic cards and theme colours.
+- The login editor no longer repeats the 2FA code and fill receipts: the item
+  detail view shows both.
+- **Design check in CI** (`.github/scripts/design_check.sh`, runs before the
+  build): fails on a hard-coded colour outside `ui/theme`, any pre-0.4.0
+  design name, filled icons, spring animations, or downloadable fonts.
+
 ### Phase 7.6: privacy proof, timeline, editors (0.4.0)
 
 - **Privacy proof:** the pass count as a hero number, a warning box with a

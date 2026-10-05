@@ -66,7 +66,7 @@ class UiSnapshotTest {
     private fun snap(name: String, content: @Composable () -> Unit) {
         composeTestRule.setContent {
             AtomicVaultTheme {
-                Box(Modifier.fillMaxSize().background(AtomicColors.Background)) { content() }
+                Box(Modifier.fillMaxSize().background(AtomicColors.palette.background)) { content() }
             }
         }
         composeTestRule.onRoot().captureRoboImage(filePath = "build/ui-snapshots/$name.png")

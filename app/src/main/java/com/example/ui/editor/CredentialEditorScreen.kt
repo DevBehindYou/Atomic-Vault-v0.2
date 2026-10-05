@@ -76,17 +76,15 @@ import com.example.ui.components.AtomicSwitch
 import com.example.ui.components.AtomicDialog
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.AtomicTopBar
-import com.example.ui.components.GlassVariant
-import com.example.ui.components.LiquidGlassSurface
 import com.example.ui.components.EntropyMeter
 import com.example.ui.components.FilterChipPill
 import com.example.ui.components.SectionLabel
 import com.example.ui.generator.PasswordGeneratorPanel
 import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
 import com.example.ui.theme.AtomicRadius
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicType
+import com.example.ui.theme.AtomicTheme
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -188,16 +186,11 @@ fun CredentialEditorScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.sm)
         ) {
-            LiquidGlassSurface(
+            com.example.ui.components.AtomicCard(
                 modifier = Modifier.fillMaxWidth(),
-                variant = GlassVariant.Card,
                 contentPadding = AtomicSpacing.lg
             ) {
                 Column {
-                    if (isEditMode && itemId != null) {
-                        FillReceiptsLine(itemId = itemId, uriMatchPattern = uriMatchPattern, androidPackageName = androidPackageName)
-                    }
-
                     // Title (Required)
                     AtomicTextField(
                         value = title,
@@ -231,7 +224,7 @@ fun CredentialEditorScreen(
                                     Icon(
                                         imageVector = Icons.Outlined.ContentCopy,
                                         contentDescription = "Copy username",
-                                        tint = AtomicColors.Accent
+                                        tint = AtomicTheme.colors.accent
                                     )
                                 }
                             }
@@ -265,7 +258,7 @@ fun CredentialEditorScreen(
                                             Icon(
                                                 imageVector = Icons.Outlined.ContentCopy,
                                                 contentDescription = "Copy password",
-                                                tint = AtomicColors.Accent
+                                                tint = AtomicTheme.colors.accent
                                             )
                                         }
                                     }
@@ -275,7 +268,7 @@ fun CredentialEditorScreen(
                                         Icon(
                                             imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                             contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                                            tint = AtomicColors.TextMuted
+                                            tint = AtomicTheme.colors.textSecondary
                                         )
                                     }
                                 }
@@ -378,10 +371,6 @@ fun CredentialEditorScreen(
                         ),
                         testTag = "editor_totp_input"
                     )
-                    TotpCodeRow(totpSecret = totpSecret, onCopy = { code ->
-                        com.example.security.ClipboardHelper.copySensitive(context, "2FA code", code)
-                        showCopiedSnackbar("2FA code")
-                    })
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.md))
 
@@ -401,9 +390,8 @@ fun CredentialEditorScreen(
 
             if (folders.isNotEmpty() || allTags.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                LiquidGlassSurface(
+                com.example.ui.components.AtomicCard(
                     modifier = Modifier.fillMaxWidth(),
-                    variant = GlassVariant.Card,
                     contentPadding = AtomicSpacing.lg
                 ) {
                     Column {
@@ -552,9 +540,8 @@ private fun CustomFieldEditorRow(
     onUpdate: (CustomFieldPlain) -> Unit,
     onRemove: () -> Unit
 ) {
-    LiquidGlassSurface(
+    com.example.ui.components.AtomicCard(
         modifier = Modifier.fillMaxWidth(),
-        variant = GlassVariant.Card,
         contentPadding = AtomicSpacing.md
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -586,7 +573,7 @@ private fun CustomFieldEditorRow(
                     Icon(
                         imageVector = Icons.Outlined.Close,
                         contentDescription = "Remove field",
-                        tint = AtomicColors.Danger
+                        tint = AtomicTheme.colors.error
                     )
                 }
             }
@@ -613,12 +600,12 @@ private fun CustomFieldEditorRow(
                     imageVector = if (field.isSensitive) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = if (field.isSensitive) AtomicColors.Success else AtomicColors.TextMuted
+                    tint = if (field.isSensitive) AtomicTheme.colors.accent else AtomicTheme.colors.textSecondary
                 )
                 Text(
                     text = if (field.isSensitive) "Masked (sensitive)" else "Plain text",
-                    fontSize = AtomicFontSize.caption,
-                    color = AtomicColors.TextSecondary,
+                    style = AtomicType.bodySmall,
+                    color = AtomicTheme.colors.textSecondary,
                     modifier = Modifier.weight(1f)
                 )
                 AtomicSwitch(
@@ -626,87 +613,6 @@ private fun CustomFieldEditorRow(
                     onCheckedChange = { onUpdate(field.copy(isSensitive = it)) }
                 )
             }
-        }
-    }
-}
-
-/**
- * The current 2FA code for a valid key, with seconds left. Hidden until the
- * user asks for it (like a password), and only then does it tick.
- */
-@Composable
-private fun TotpCodeRow(totpSecret: String, onCopy: (String) -> Unit) {
-    val params = remember(totpSecret) { com.example.crypto.Totp.parse(totpSecret) } ?: return
-    var shown by remember(totpSecret) { mutableStateOf(false) }
-    if (!shown) {
-        TextButton(onClick = { shown = true }, modifier = Modifier.testTag("editor_totp_show")) {
-            Text(text = "Show 2FA code", color = AtomicColors.Accent, fontSize = AtomicFontSize.label)
-        }
-        return
-    }
-    var now by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(params) {
-        while (true) {
-            now = System.currentTimeMillis()
-            kotlinx.coroutines.delay(1_000)
-        }
-    }
-    val code = com.example.crypto.Totp.code(params, now)
-    val remaining = com.example.crypto.Totp.secondsRemaining(params, now)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = AtomicSpacing.xs)
-            .testTag("editor_totp_code"),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = code.chunked(3).joinToString(" "),
-            color = AtomicColors.Foreground,
-            fontSize = AtomicFontSize.title,
-            fontWeight = AtomicFontWeight.bold,
-            modifier = Modifier.weight(1f)
-        )
-        Text(text = "${remaining}s", color = AtomicColors.TextMuted, fontSize = AtomicFontSize.caption)
-        TextButton(onClick = { onCopy(code) }) {
-            Text(text = "Copy", color = AtomicColors.Accent, fontSize = AtomicFontSize.label)
-        }
-    }
-}
-
-/**
- * "Filled 3 times · last 2 Oct, 14:05", from the Trust Ledger. Warns when a
- * fill went to a site or app other than this login's own.
- */
-@Composable
-private fun FillReceiptsLine(itemId: String, uriMatchPattern: String, androidPackageName: String?) {
-    val context = LocalContext.current
-    val receipts by androidx.compose.runtime.produceState<com.example.trust.TrustLedger.FillReceipts?>(
-        initialValue = null, itemId, uriMatchPattern, androidPackageName
-    ) {
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            com.example.trust.TrustLedger.fillReceipts(
-                context, itemId, com.example.autofill.FillReceipts.ownTargets(uriMatchPattern, androidPackageName)
-            )
-        }
-    }
-    val r = receipts ?: return
-    val text = if (r.count == 0) {
-        "Not filled by AtomicVault yet"
-    } else {
-        val last = r.lastFilledAt?.let {
-            java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale.getDefault()).format(java.util.Date(it))
-        }
-        "Filled ${r.count} time${if (r.count == 1) "" else "s"}" + (last?.let { " · last $it" } ?: "")
-    }
-    Column(modifier = Modifier.fillMaxWidth().padding(bottom = AtomicSpacing.sm).testTag("editor_fill_receipts")) {
-        Text(text = text, color = AtomicColors.TextMuted, fontSize = AtomicFontSize.caption)
-        if (r.elsewhereCount > 0) {
-            Text(
-                text = "${r.elsewhereCount} fill${if (r.elsewhereCount == 1) "" else "s"} went to a different site or app than this login's own",
-                color = AtomicColors.Warning,
-                fontSize = AtomicFontSize.caption
-            )
         }
     }
 }

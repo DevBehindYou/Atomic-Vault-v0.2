@@ -34,8 +34,6 @@ import androidx.compose.ui.unit.sp
 import com.example.security.ClipboardHelper
 import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
 import com.example.ui.theme.AtomicSpacing
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
