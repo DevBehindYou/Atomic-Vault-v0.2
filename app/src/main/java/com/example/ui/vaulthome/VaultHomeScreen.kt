@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
@@ -95,7 +96,9 @@ fun VaultHomeScreen(
     onLockClick: () -> Unit,
     onReload: () -> Unit,
     modifier: Modifier = Modifier,
-    bottomBar: @Composable () -> Unit = {}
+    bottomBar: @Composable () -> Unit = {},
+    /** The item open beside the list on wide screens; its row is marked selected. */
+    selectedItemId: String? = null
 ) {
     val colors = AtomicTheme.colors
     LaunchedEffect(Unit) {
@@ -211,7 +214,7 @@ fun VaultHomeScreen(
                     contentPadding = PaddingValues(top = AtomicSpacing.xs, bottom = 96.dp)
                 ) {
                     items(items = uiState.previews, key = { it.id }, contentType = { "item" }) { preview ->
-                        VaultItemRow(preview = preview, onClick = { onItemClick(preview.id) })
+                        VaultItemRow(preview = preview, selected = preview.id == selectedItemId, onClick = { onItemClick(preview.id) })
                     }
                 }
             }
@@ -289,7 +292,7 @@ private fun FirstUse(onAddNewClick: () -> Unit) {
  * script), the username in mono, and up to three tags.
  */
 @Composable
-private fun VaultItemRow(preview: CredentialPreview, onClick: () -> Unit) {
+private fun VaultItemRow(preview: CredentialPreview, selected: Boolean, onClick: () -> Unit) {
     val colors = AtomicTheme.colors
     val subtitle = when {
         preview.username.isNotEmpty() -> preview.username
@@ -299,7 +302,11 @@ private fun VaultItemRow(preview: CredentialPreview, onClick: () -> Unit) {
         else -> ""
     }
     AtomicCard(
-        modifier = Modifier.fillMaxWidth().testTag("credential_row_${preview.id}"),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { this.selected = selected }
+            .testTag("credential_row_${preview.id}"),
+        selected = selected,
         contentPadding = 12.dp,
         onClick = onClick
     ) {

@@ -85,7 +85,9 @@ fun ItemDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     /** Changes when the item is saved (its updatedAt), so returning from EDIT shows the new values. */
-    refreshKey: Any? = null
+    refreshKey: Any? = null,
+    /** False in the wide-screen side pane, where the list beside it is the way back. */
+    showBack: Boolean = true
 ) {
     val colors = AtomicTheme.colors
     val context = LocalContext.current
@@ -114,13 +116,15 @@ fun ItemDetailScreen(
             modifier = Modifier.fillMaxWidth().height(64.dp).padding(start = AtomicSpacing.sm, end = AtomicSpacing.sm),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AtomicIconButton(
-                icon = Icons.AutoMirrored.Outlined.ArrowBack,
-                description = "Back",
-                onClick = onBack,
-                variant = AtomicIconButtonVariant.Back,
-                testTag = "detail_back"
-            )
+            if (showBack) {
+                AtomicIconButton(
+                    icon = Icons.AutoMirrored.Outlined.ArrowBack,
+                    description = "Back",
+                    onClick = onBack,
+                    variant = AtomicIconButtonVariant.Back,
+                    testTag = "detail_back"
+                )
+            }
             Text(
                 text = item?.title.orEmpty(),
                 style = AtomicType.itemTitle.copy(fontSize = AtomicType.displayS.fontSize),

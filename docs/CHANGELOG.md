@@ -5,6 +5,20 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Plan 8.9: list and item side by side on tablets (0.4.0)
+
+- At 840 dp and wider (tablets, unfolded foldables in landscape) Vault shows
+  the list in a 360 dp column and the selected item's read view beside it.
+  Tapping an item selects it instead of opening a new screen; the open
+  item's row has the accent border and reads as selected to TalkBack. `EDIT`
+  still opens the full editor. With nothing picked, the right side says to
+  pick an item; after a delete it goes back to that.
+- 600-839 dp keeps the side rail with one pane. The plan asked for the split
+  here too, but beside the rail and the 360 dp list the read view would be
+  about 160 dp wide.
+- Tests: split panes present, open item selected and no back arrow in the
+  pane; snapshot `tablet_list_detail.png`.
+
 ### Phase 7.3: confirmations and inputs open as bottom sheets (0.4.0)
 
 - **`AtomicSheet` replaces `AtomicDialog`** (still the app's one overlay,

@@ -7,7 +7,15 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import com.example.database.CredentialPlain
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.activity.compose.LocalActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
@@ -155,6 +163,14 @@ fun AtomicVaultNavGraph(
         }
     }
 
+    // Each item type has its own editor.
+    fun editRoute(itemId: String): String =
+        when (uiState.previews.firstOrNull { it.id == itemId }?.itemType) {
+            com.example.database.VaultItemType.PAYMENT_CARD -> Screen.PaymentCardEditor.createRoute(itemId)
+            com.example.database.VaultItemType.IDENTITY -> Screen.IdentityEditor.createRoute(itemId)
+            else -> Screen.Editor.createRoute(itemId)
+        }
+
     val startDestination = when (uiState.status) {
         VaultStatus.ONBOARDING -> Screen.Onboarding.route
         VaultStatus.LOCKED -> Screen.Unlock.route
@@ -250,15 +266,51 @@ fun AtomicVaultNavGraph(
         }
 
         composable(Screen.Home.route) {
+            // Expanded widths (840 dp and up) show the list and the selected
+            // item side by side; narrower screens open the item as its own
+            // screen. 600-839 dp keeps one pane: beside the rail and a 360 dp
+            // list, the read view would be too narrow to use.
+            val split = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 840
+            var selectedId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+            val selectedPreview = uiState.previews.firstOrNull { it.id == selectedId }
             AdaptiveNav(AtomicTab.Vault, { navigateTab(it) }) { bar ->
+              ListDetail(
+                split = split,
+                detail = {
+                    if (selectedPreview != null) {
+                        ItemDetailScreen(
+                            itemId = selectedPreview.id,
+                            onLoadItem = { id -> viewModel.getItem(id) },
+                            onEdit = { navController.navigate(editRoute(selectedPreview.id)) },
+                            onBack = { selectedId = null },
+                            refreshKey = selectedPreview.updatedAt,
+                            showBack = false
+                        )
+                    } else {
+                        com.example.ui.components.AtomicEmptyState(
+                            message = if (uiState.previews.isEmpty()) {
+                                "Items you add appear here."
+                            } else {
+                                "Pick an item on the left to see it here."
+                            },
+                            modifier = Modifier.fillMaxSize().padding(com.example.ui.theme.AtomicSpacing.xl)
+                        )
+                    }
+                }
+              ) {
                 VaultHomeScreen(
                     uiState = uiState,
                     onSearchChange = { viewModel.setSearchQuery(it) },
                     onSelectFolder = { viewModel.setFolderFilter(it) },
                     onSelectTag = { viewModel.setTagFilter(it) },
+                    selectedItemId = if (split) selectedPreview?.id else null,
                     onItemClick = { itemId ->
                         // Every item opens in its read view; EDIT there picks the type's editor.
-                        navController.navigate(Screen.ItemDetail.createRoute(itemId))
+                        if (split) {
+                            selectedId = itemId
+                        } else {
+                            navController.navigate(Screen.ItemDetail.createRoute(itemId))
+                        }
                     },
                     onAddNewClick = {
                         navController.navigate(Screen.Editor.createRoute(null))
@@ -274,6 +326,7 @@ fun AtomicVaultNavGraph(
                     onReload = { viewModel.reloadVaultData() },
                     bottomBar = bar
                 )
+              }
     
                 if (uiState.showKeyboardRemovedNotice) {
                     val context = androidx.compose.ui.platform.LocalContext.current
@@ -309,15 +362,7 @@ fun AtomicVaultNavGraph(
             ItemDetailScreen(
                 itemId = itemId,
                 onLoadItem = { id -> viewModel.getItem(id) },
-                onEdit = {
-                    // Each type has its own editor.
-                    val route = when (uiState.previews.firstOrNull { it.id == itemId }?.itemType) {
-                        com.example.database.VaultItemType.PAYMENT_CARD -> Screen.PaymentCardEditor.createRoute(itemId)
-                        com.example.database.VaultItemType.IDENTITY -> Screen.IdentityEditor.createRoute(itemId)
-                        else -> Screen.Editor.createRoute(itemId)
-                    }
-                    navController.navigate(route)
-                },
+                onEdit = { navController.navigate(editRoute(itemId)) },
                 onBack = { navController.popBackStack() },
                 refreshKey = uiState.previews.firstOrNull { it.id == itemId }?.updatedAt
             )
@@ -604,6 +649,30 @@ fun AtomicVaultNavGraph(
  * phones in landscape, foldables, tablets) get the side rail and the screen
  * gets no bottom bar.
  */
+@Composable
+internal fun ListDetail(
+    split: Boolean,
+    detail: @Composable () -> Unit,
+    list: @Composable () -> Unit
+) {
+    if (!split) {
+        list()
+        return
+    }
+    androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxSize()) {
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.width(360.dp).fillMaxHeight().testTag("pane_list")
+        ) { list() }
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.width(com.example.ui.theme.AtomicBorder.rule).fillMaxHeight()
+                .background(com.example.ui.theme.AtomicTheme.colors.borderControl)
+        )
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.weight(1f).fillMaxHeight().testTag("pane_detail")
+        ) { detail() }
+    }
+}
+
 @Composable
 private fun AdaptiveNav(
     tab: AtomicTab,
