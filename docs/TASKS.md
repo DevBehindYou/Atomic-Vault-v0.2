@@ -72,7 +72,7 @@ it, **P2** soon after, **P3** when convenient.
   `applicationId`/`namespace` are `com.atomicvault.android` (audit finding d).
   Do it only as a dedicated, mechanical change after the release, never mixed
   with feature work.
-- **T12. README.** It lists the stack and two build commands; add the CI-only
+- **T12. README.** (Done 2026-10-05.) It listed the stack and two build commands; add the CI-only
   workflow, how to download artifacts, and a pointer to `docs/`.
 
 ## Known limitations (not planned as bugs)
