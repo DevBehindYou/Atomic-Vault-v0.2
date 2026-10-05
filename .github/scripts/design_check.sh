@@ -7,7 +7,7 @@ status=0
 
 check() {  # check <description> <grep -E pattern> [path-exclude-regex]
   local hits
-  hits=$(grep -rnE --include=*.kt "$2" "$SRC" | grep -vE "${3:-^$}" || true)
+  hits=$(grep -rnE --include=*.kt "$2" ${4:-$SRC} | grep -vE "${3:-^$}" || true)
   if [ -n "$hits" ]; then
     echo "::error::$1"
     echo "$hits" | head -20
@@ -16,7 +16,7 @@ check() {  # check <description> <grep -E pattern> [path-exclude-regex]
 }
 
 check "Hard-coded colour outside ui/theme (use AtomicTheme.colors)" 'Color\(0x' '/ui/theme/'
-check "Pre-0.4.0 design layer referenced" '\b(LiquidGlassSurface|GlassVariant|AmbientVaultBackground|AtomicFontSize|AtomicFontWeight|GlassSpring|GlassEasing)\b'
+check "Pre-0.4.0 design layer referenced (app or tests)" '\b(LiquidGlassSurface|GlassVariant|AmbientVaultBackground|AtomicFontSize|AtomicFontWeight|GlassSpring|GlassEasing)\b' '^$' app/src
 check "Filled icons (the design system uses Outlined only)" 'Icons\.(Default|Filled)\.|icons\.filled\.'
 check "Spring or bounce animation (the design system uses ease or linear only)" '\bspring\(|DampingRatio'
 check "Downloadable fonts would contact Google; bundle fonts in res/font" 'GoogleFont|googlefonts'

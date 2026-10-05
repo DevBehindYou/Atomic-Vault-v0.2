@@ -73,3 +73,23 @@ Settings now reads **Lock after leaving the app**: Immediately, 1, 5 or 15 min.
 - [ ] Landscape: Unlock and Onboarding scroll, keyboard usable.
 - [ ] Screenshots are blocked on vault screens and in Recents (expected).
 - [ ] Bottom bar and system gesture bar do not overlap.
+
+## 7. The new look (0.4.0, Atomic design system)
+
+Test this on the 0.4.0 build; the 0.3.0 phone test is on commit `cd7b0d0`.
+
+- [ ] First start is paper (light). If you had picked dark before, it stays dark.
+- [ ] Settings › Appearance: Light, Dark and Match system each apply at once
+      and survive a restart; the status bar icons stay readable in each.
+- [ ] Titles and buttons are tall capitals (Bebas Neue); body text is calm;
+      passwords and usernames are in a monospace font and keep their case.
+- [ ] A login opens in a read view: copy username, reveal and copy password,
+      "Show 2FA code", fill receipts. EDIT opens the editor; after saving, the
+      read view shows the new values; delete returns to the vault.
+- [ ] Health shows the score with one reason; a finding opens the item.
+- [ ] Phone font size at the largest setting: nothing clipped, titles wrap.
+- [ ] Phone "Remove animations" on: buttons and sheets still work, with no movement.
+- [ ] Autofill in Chrome and an app: the unlock screen says "Fill · <site>"
+      and "Unlock and fill"; a look-alike site shows "This is not <site>".
+- [ ] Launcher icon is the atom mark on dark.
+- [ ] Anything that looks wrong or unclear: note the screen.
