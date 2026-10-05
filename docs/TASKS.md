@@ -6,6 +6,11 @@
 > (backup round-trip, unit level), T8 (batched export), T4 is obsolete (the
 > keyboard was removed). Still open: T2, T3, T5, T7, T9-T12, and the phone test
 > (U1) of everything since.
+>
+> **Update 2026-10-05:** T5 and T12 done on `claude/stoic-lamport-t601ql`
+> (CI #52). T7, T2 and T9 are open as pull requests into that branch
+> (#2, #3, #4). T3 still needs the user's decision (U4); T10 and T11 are
+> unchanged.
 
 Status as of 2026-09-21. Branch `fix/biometric-ime-autofill` at `9631167`, CI
 green, unmerged. Priorities: **P0** blocks a release, **P1** should ship with
@@ -46,7 +51,7 @@ it, **P2** soon after, **P3** when convenient.
 - **T4. Keyboard switch key.** Add a globe key (`switchToNextInputMethod`) so
   users are never stuck; pick a numeric layout for number fields; portrait and
   landscape sizing.
-- **T5. Release-build smoke test.** Run the R8-minified `assembleInternal`
+- **T5. Release-build smoke test.** (Done 2026-10-05, CI #52: the minified `internal` build passes the full emulator check.) Run the R8-minified `assembleInternal`
   build through the emulator check, since minification can break Moshi, Compose
   or the Autofill/IME services in ways the debug build hides.
 - **T6. Backup round-trip test.** `BackupCodec` has unit tests, but export then
