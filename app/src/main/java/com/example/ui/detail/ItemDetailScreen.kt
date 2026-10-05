@@ -1,5 +1,6 @@
 package com.example.ui.detail
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -113,7 +114,7 @@ fun ItemDetailScreen(
         val item = (load as? DetailLoad.Ready)?.item
         // Header: the user's own name for the item, in its real case.
         Row(
-            modifier = Modifier.fillMaxWidth().height(64.dp).padding(start = AtomicSpacing.sm, end = AtomicSpacing.sm),
+            modifier = Modifier.fillMaxWidth().height(AtomicSize.header).padding(start = AtomicSpacing.sm, end = AtomicSpacing.sm),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (showBack) {
@@ -180,7 +181,7 @@ private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, 
             .padding(AtomicSpacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.lg)) {
+        Column(modifier = Modifier.widthIn(max = AtomicSize.contentMaxWidth).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.lg)) {
             if (item.damaged) {
                 AtomicWarningBox(
                     title = "A field could not be decrypted",
@@ -321,7 +322,7 @@ private fun TotpSection(totpSecret: String, onCopy: (String, String) -> Unit) {
     }
     val code = Totp.code(params, now)
     val remaining = Totp.secondsRemaining(params, now)
-    Column(modifier = Modifier.fillMaxWidth().testTag("detail_totp_code"), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().testTag("detail_totp_code"), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = code.chunked(3).joinToString(" "),
@@ -332,7 +333,7 @@ private fun TotpSection(totpSecret: String, onCopy: (String, String) -> Unit) {
             Text(AtomicType.caps("$remaining s"), style = AtomicType.monoCaption, color = colors.textSecondary)
             AtomicIconButton(Icons.Outlined.ContentCopy, "Copy 2FA code", { onCopy("2FA code", code) })
         }
-        AtomicBar(fraction = remaining / params.periodSeconds.toFloat(), color = colors.accent, height = 4.dp)
+        AtomicBar(fraction = remaining / params.periodSeconds.toFloat(), color = colors.accent, height = AtomicSize.bar)
     }
 }
 
@@ -357,7 +358,7 @@ private fun FillReceipts(item: CredentialPlain) {
             color = colors.textPrimary
         )
     }
-    Column(modifier = Modifier.fillMaxWidth().testTag("detail_fill_receipts"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().testTag("detail_fill_receipts"), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)) {
         val last = r.lastFilledAt?.let {
             java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.ROOT).format(java.util.Date(it))
         }

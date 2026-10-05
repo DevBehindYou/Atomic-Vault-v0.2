@@ -1,5 +1,6 @@
 package com.example.ui.editor
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -420,7 +421,7 @@ private fun CustomFieldEditorRow(
 
                 IconButton(
                     onClick = onRemove,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(AtomicSize.tile)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Close,
@@ -451,7 +452,7 @@ private fun CustomFieldEditorRow(
                 Icon(
                     imageVector = if (field.isSensitive) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(AtomicSize.iconSm),
                     tint = if (field.isSensitive) AtomicTheme.colors.accent else AtomicTheme.colors.textSecondary
                 )
                 Text(

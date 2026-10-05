@@ -112,7 +112,7 @@ fun SecurityDashboardScreen(
             } else {
                 item { HealthModule(r) }
                 item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
                         AtomicStatTile(
                             "${r.reusedCount}", "Reused", Modifier.weight(1f),
                             valueColor = if (r.reusedCount > 0) colors.error else colors.textPrimary
@@ -160,9 +160,9 @@ private fun HealthModule(report: VaultSecurityReport) {
     }
     AtomicModule(modifier = Modifier.fillMaxWidth().testTag("health_score_card")) {
         Text(AtomicType.caps("Vault health"), style = AtomicType.monoCaption, color = colors.accentOnModule)
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
             Text("${report.score}", style = AtomicType.displayXL.copy(fontSize = AtomicType.displayXL.fontSize * 1.3f), color = colors.onModule)
-            Text(AtomicType.caps("of 100"), style = AtomicType.monoCaption, color = colors.onModuleMuted, modifier = Modifier.padding(bottom = 10.dp))
+            Text(AtomicType.caps("of 100"), style = AtomicType.monoCaption, color = colors.onModuleMuted, modifier = Modifier.padding(bottom = AtomicSpacing.md))
         }
         AtomicBar(
             fraction = report.score / 100f,
@@ -219,7 +219,7 @@ private fun FindingCard(finding: CredentialFinding, onClick: () -> Unit) {
         contentPadding = AtomicSpacing.lg,
         onClick = onClick
     ) {
-        Column(modifier = Modifier.padding(start = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(modifier = Modifier.padding(start = AtomicSpacing.sm), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
             Text(AtomicType.caps(priority), style = AtomicType.monoCaption, color = if (barColor == colors.error) colors.error else colors.textSecondary)
             Text(
                 text = finding.credential.title,
@@ -228,7 +228,7 @@ private fun FindingCard(finding: CredentialFinding, onClick: () -> Unit) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.xs), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)) {
                 for (issue in finding.issues) IssueBadge(issue = issue)
             }
             Text(text = finding.issues.joinToString(" ") { issueHint(it) }, style = AtomicType.bodySmall, color = colors.textSecondary)

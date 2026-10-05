@@ -1,5 +1,6 @@
 package com.example.ui.trust
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -71,7 +72,7 @@ fun PrivacyProofScreen(
             verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
         ) {
             item {
-                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)) {
                     Text(
                         text = "$passed / $total",
                         style = AtomicType.displayXL,
@@ -81,7 +82,7 @@ fun PrivacyProofScreen(
                         text = AtomicType.caps("Checks passed · run now"),
                         style = AtomicType.monoCaption,
                         color = colors.textSecondary,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = AtomicSpacing.sm)
                     )
                 }
                 Text(
@@ -158,7 +159,7 @@ fun PrivacyProofScreen(
 private fun PrivacyCheckRow(check: PrivacyCheck) {
     val colors = AtomicTheme.colors
     Row(
-        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).padding(12.dp),
+        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = AtomicSize.row).padding(AtomicSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
     ) {

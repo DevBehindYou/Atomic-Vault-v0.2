@@ -1,5 +1,6 @@
 package com.example.ui.vaulthome
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -211,7 +212,7 @@ fun VaultHomeScreen(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm),
                     // Room below the last entry so the add stack never covers it.
-                    contentPadding = PaddingValues(top = AtomicSpacing.xs, bottom = 96.dp)
+                    contentPadding = PaddingValues(top = AtomicSpacing.xs, bottom = AtomicSize.fabClearance)
                 ) {
                     items(items = uiState.previews, key = { it.id }, contentType = { "item" }) { preview ->
                         VaultItemRow(preview = preview, selected = preview.id == selectedItemId, onClick = { onItemClick(preview.id) })
@@ -228,11 +229,11 @@ private fun HomeHeader(onLockClick: () -> Unit) {
     val colors = AtomicTheme.colors
     Column(modifier = Modifier.fillMaxWidth().background(colors.background).statusBarsPadding()) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(64.dp).padding(start = AtomicSpacing.lg, end = AtomicSpacing.sm),
+            modifier = Modifier.fillMaxWidth().height(AtomicSize.header).padding(start = AtomicSpacing.lg, end = AtomicSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
         ) {
-            AtomMark(size = 36.dp)
+            AtomMark(size = AtomicSize.markSm)
             Column(modifier = Modifier.weight(1f)) {
                 Text(AtomicType.caps("Atomic"), style = AtomicType.monoCaption, color = colors.textSecondary)
                 Text("AtomicVault", style = AtomicType.displayS, color = colors.textPrimary)
@@ -255,18 +256,18 @@ private fun FirstUse(onAddNewClick: () -> Unit) {
     val colors = AtomicTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md), modifier = Modifier.padding(top = AtomicSpacing.sm)) {
         Row(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
-            AtomicCard(modifier = Modifier.weight(1f), contentPadding = 12.dp) {
+            AtomicCard(modifier = Modifier.weight(1f), contentPadding = AtomicSpacing.md) {
                 Text("0", style = AtomicType.displayM, color = colors.textPrimary)
                 Text(AtomicType.caps("Items on this phone"), style = AtomicType.monoCaption, color = colors.textSecondary)
             }
-            AtomicCard(modifier = Modifier.weight(1f), selected = true, contentPadding = 12.dp) {
+            AtomicCard(modifier = Modifier.weight(1f), selected = true, contentPadding = AtomicSpacing.md) {
                 Text("None", style = AtomicType.displayM, color = colors.accent)
                 Text(AtomicType.caps("Cloud copies"), style = AtomicType.monoCaption, color = colors.textSecondary)
             }
         }
         AtomicPanel(modifier = Modifier.fillMaxWidth(), contentPadding = AtomicSpacing.lg) {
             Text(AtomicType.caps("Empty vault · Start here"), style = AtomicType.monoCaption, color = colors.accent)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(AtomicSpacing.md))
             Text(
                 text = buildAnnotatedString {
                     append("Add your first login. ")
@@ -275,7 +276,7 @@ private fun FirstUse(onAddNewClick: () -> Unit) {
                 style = AtomicType.displayM,
                 color = colors.textPrimary
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(AtomicSpacing.md))
             Text(
                 text = "Turn on Autofill in Settings and sign in to any app as usual. AtomicVault offers to save the login, so the vault fills itself.",
                 style = AtomicType.body,
@@ -307,10 +308,10 @@ private fun VaultItemRow(preview: CredentialPreview, selected: Boolean, onClick:
             .semantics { this.selected = selected }
             .testTag("credential_row_${preview.id}"),
         selected = selected,
-        contentPadding = 12.dp,
+        contentPadding = AtomicSpacing.md,
         onClick = onClick
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)) {
             ItemBadge(preview)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -330,8 +331,8 @@ private fun VaultItemRow(preview: CredentialPreview, selected: Boolean, onClick:
                     )
                 }
                 if (preview.tags.isNotEmpty()) {
-                    Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Spacer(Modifier.height(AtomicSpacing.sm))
+                    Row(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)) {
                         for (tag in preview.tags.take(3)) {
                             AtomicTag(label = tag.name, tone = AtomicTagTone.Quiet, caps = false)
                         }
@@ -355,14 +356,14 @@ private fun ItemBadge(preview: CredentialPreview) {
     val shape = RoundedCornerShape(AtomicRadius.sm)
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(AtomicSize.tile)
             .clip(shape)
             .background(colors.background)
             .border(AtomicBorder.structure, colors.borderControl, shape),
         contentAlignment = Alignment.Center
     ) {
         if (icon != null) {
-            Icon(imageVector = icon, contentDescription = null, tint = colors.textPrimary, modifier = Modifier.size(20.dp))
+            Icon(imageVector = icon, contentDescription = null, tint = colors.textPrimary, modifier = Modifier.size(AtomicSize.icon))
         } else {
             // Display face: a capital letter in any case the title starts with.
             Text(
@@ -398,13 +399,13 @@ private fun AddStack(
         }
         Row(
             modifier = Modifier
-                .defaultMinSize(minHeight = 52.dp)
+                .defaultMinSize(minHeight = AtomicSize.buttonLg)
                 .hardShadow(AtomicElevation.shadow2, colors.accent, shape)
                 .clip(shape)
                 .background(colors.textPrimary)
                 .clickable(role = Role.Button, onClick = { open = !open })
                 .semantics { contentDescription = if (open) "Close add menu" else "Add to vault" }
-                .padding(horizontal = 18.dp)
+                .padding(horizontal = AtomicSpacing.lg)
                 .testTag("fab_add_credential"),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -423,12 +424,12 @@ private fun AddOption(label: String, testTag: String, onClick: () -> Unit) {
     val shape = RoundedCornerShape(AtomicRadius.sm)
     Box(
         modifier = Modifier
-            .defaultMinSize(minHeight = 48.dp)
+            .defaultMinSize(minHeight = AtomicSize.touch)
             .clip(shape)
             .background(colors.background)
             .border(AtomicBorder.structure, colors.borderControl, shape)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 14.dp)
+            .padding(horizontal = AtomicSpacing.lg)
             .testTag(testTag),
         contentAlignment = Alignment.Center
     ) {

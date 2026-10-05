@@ -1,5 +1,6 @@
 package com.example.ui.settings
 
+import com.example.ui.theme.AtomicSize
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -120,7 +121,7 @@ internal fun AutofillSection() {
             style = AtomicType.body,
             color = colors.textPrimary
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(AtomicSpacing.xs))
         Text(
             text = "Suggestions appear in your keyboard's strip (Gboard and others) or under the field, and each fill asks " +
                 "for your fingerprint or master password. In Chrome, also choose Settings › Autofill services › " +
@@ -211,7 +212,7 @@ internal fun OrganiseSection(
 private fun NameRow(name: String, deleteDescription: String, onDelete: () -> Unit) {
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = AtomicSize.touch),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(name, style = AtomicType.body, color = AtomicTheme.colors.textPrimary, modifier = Modifier.weight(1f))

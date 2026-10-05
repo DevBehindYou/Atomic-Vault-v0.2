@@ -1,5 +1,6 @@
 package com.example.ui.onboarding
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -92,15 +93,15 @@ fun OnboardingScreen(
             .testTag("screen_onboarding"),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) {
+        Column(modifier = Modifier.widthIn(max = AtomicSize.formMaxWidth).fillMaxWidth()) {
             // Hero: eyebrow and split headline on the dot grid.
-            Column(modifier = Modifier.fillMaxWidth().dotGrid().padding(top = 40.dp, bottom = AtomicSpacing.xl)) {
+            Column(modifier = Modifier.fillMaxWidth().dotGrid().padding(top = AtomicSpacing.xxxl, bottom = AtomicSpacing.xl)) {
                 Text(
                     text = AtomicType.caps("New vault · Set your key"),
                     style = AtomicType.monoCaption,
                     color = colors.accent
                 )
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(AtomicSpacing.md))
                 Text(
                     text = buildAnnotatedString {
                         append("Create your vault. ")
@@ -110,7 +111,7 @@ fun OnboardingScreen(
                     color = colors.textPrimary,
                     modifier = Modifier.semantics { heading() }
                 )
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(AtomicSpacing.md))
                 Text(
                     text = "Your master password encrypts everything in AtomicVault. It is never stored, and no one can recover it for you.",
                     style = AtomicType.body,
@@ -132,7 +133,7 @@ fun OnboardingScreen(
                 testTag = "onboarding_master_password_input"
             )
             if (password.isNotEmpty()) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(AtomicSpacing.md))
                 EntropyMeter(bits = entropyBits, strength = strength, modifier = Modifier.fillMaxWidth())
             }
 
@@ -155,9 +156,9 @@ fun OnboardingScreen(
                 testTag = "onboarding_confirm_password_input"
             )
             if (isMatch) {
-                Spacer(Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = colors.accent, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.height(AtomicSpacing.sm))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = colors.accent, modifier = Modifier.size(AtomicSize.iconSm))
                     Text(text = "Passwords match", style = AtomicType.bodySmall, color = colors.textPrimary)
                 }
             }
@@ -186,7 +187,7 @@ fun OnboardingScreen(
 
             AtomicPanel(modifier = Modifier.fillMaxWidth()) {
                 Text(text = AtomicType.caps("How it is protected"), style = AtomicType.monoCaption, color = colors.textSecondary)
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(AtomicSpacing.sm))
                 Text(
                     text = AtomicType.caps("Argon2id 64 MiB · Hardware Keystore · No network"),
                     style = AtomicType.monoCaption,

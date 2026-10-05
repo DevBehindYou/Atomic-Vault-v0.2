@@ -1,5 +1,6 @@
 package com.example.ui.trust
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -162,13 +163,13 @@ private fun TimelineRow(entry: TrustLedgerEntry, previews: List<CredentialPrevie
     val failed = entry.result != "success"
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).padding(vertical = AtomicSpacing.sm),
+            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = AtomicSize.row).padding(vertical = AtomicSpacing.sm),
             horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
         ) {
-            Text(text = formatTime(entry.timestamp), style = AtomicType.monoCaption, color = colors.textSecondary, modifier = Modifier.padding(top = 2.dp))
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(text = formatTime(entry.timestamp), style = AtomicType.monoCaption, color = colors.textSecondary, modifier = Modifier.padding(top = AtomicSpacing.hairline))
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)) {
                 Text(text = resolveLabel(entry, previews), style = AtomicType.body, color = if (failed) colors.error else colors.textPrimary)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
                     AtomicTag(label = entry.source, tone = AtomicTagTone.Quiet)
                     entry.authenticationType?.let { AtomicTag(label = it.replace('_', ' '), tone = AtomicTagTone.Quiet) }
                     AtomicTag(label = entry.result, tone = if (failed) AtomicTagTone.Danger else AtomicTagTone.Quiet)

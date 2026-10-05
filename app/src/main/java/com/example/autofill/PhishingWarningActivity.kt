@@ -1,5 +1,6 @@
 package com.example.autofill
 
+import com.example.ui.theme.AtomicSize
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -74,7 +75,7 @@ class PhishingWarningActivity : FragmentActivity() {
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.xl)
                         .testTag("screen_phishing_warning"),
-                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                    verticalArrangement = Arrangement.spacedBy(AtomicSpacing.lg)
                 ) {
                     // Loud on purpose: the one error-bordered block in the app.
                     val shape = RoundedCornerShape(AtomicRadius.sm)
@@ -85,10 +86,10 @@ class PhishingWarningActivity : FragmentActivity() {
                             .background(colors.errorContainer)
                             .border(AtomicBorder.danger, colors.error, shape)
                             .padding(AtomicSpacing.lg),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = colors.onErrorContainer, modifier = Modifier.size(22.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+                            Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = colors.onErrorContainer, modifier = Modifier.size(AtomicSize.iconLg))
                             Text(AtomicType.caps("Stop · Look-alike site"), style = AtomicType.monoCaption, color = colors.onErrorContainer)
                         }
                         Text(

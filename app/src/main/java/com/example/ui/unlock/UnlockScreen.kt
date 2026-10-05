@@ -1,5 +1,6 @@
 package com.example.ui.unlock
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -98,17 +99,17 @@ fun UnlockScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Forms stay readable on tablets: one column, at most 480 dp wide.
-        Column(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth()) {
-            Spacer(Modifier.height(56.dp))
-            AtomMark(size = 64.dp)
-            Spacer(Modifier.height(22.dp))
+        Column(modifier = Modifier.widthIn(max = AtomicSize.formMaxWidth).fillMaxWidth()) {
+            Spacer(Modifier.height(AtomicSpacing.hero))
+            AtomMark(size = AtomicSize.markLg)
+            Spacer(Modifier.height(AtomicSpacing.xl))
 
             Text(
                 text = AtomicType.caps("Vault / Locked"),
                 style = AtomicType.monoCaption,
                 color = colors.accent
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(AtomicSpacing.md))
             Text(
                 text = buildAnnotatedString {
                     append("Locked. ")
@@ -118,7 +119,7 @@ fun UnlockScreen(
                 color = colors.textPrimary,
                 modifier = Modifier.semantics { heading() }
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(AtomicSpacing.md))
             Text(
                 text = "Everything stays encrypted on this phone. Nothing leaves it.",
                 style = AtomicType.body,

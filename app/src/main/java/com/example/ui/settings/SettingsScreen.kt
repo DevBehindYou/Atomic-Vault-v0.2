@@ -1,5 +1,6 @@
 package com.example.ui.settings
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -167,7 +168,7 @@ fun SettingsScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(
-                modifier = Modifier.widthIn(max = 640.dp).fillMaxWidth(),
+                modifier = Modifier.widthIn(max = AtomicSize.wideMaxWidth).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
             ) {
                 AtomicTitleRow(title = "Settings")

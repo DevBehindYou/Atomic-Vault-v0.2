@@ -5,6 +5,20 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.9b: no raw sizes in screen code (0.4.0)
+
+- New `AtomicSize` tokens (icons, marks, tiles, row, header and button
+  heights, bar height, list pane and content widths, FAB clearance) and
+  `AtomicSpacing.hairline` / `xxxl` / `hero`. Every raw `dp` in screen code
+  (about 75 values in 15 files, Autofill activities included) now uses a
+  token.
+- Gaps that were off the 4 dp grid are rounded onto it, as the spec says
+  (§0): 6→8, 10→12, 14→16, 18→16, 22→24. Expect slightly roomier spacing
+  in a few places (unlock and create-vault headers, tag rows, timeline, the
+  look-alike warning); the warning icon is 24 dp instead of 22.
+- The design check now fails on any raw `dp` outside `ui/theme` and
+  `ui/components` (`0.dp` allowed).
+
 ### Plan 8.9: list and item side by side on tablets (0.4.0)
 
 - At 840 dp and wider (tablets, unfolded foldables in landscape) Vault shows

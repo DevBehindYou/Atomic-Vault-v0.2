@@ -1,5 +1,6 @@
 package com.example.ui.generator
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,7 +70,7 @@ fun PasswordGeneratorScreen(
                 .padding(AtomicSpacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth()) {
+            Column(modifier = Modifier.widthIn(max = AtomicSize.contentMaxWidth).fillMaxWidth()) {
                 AtomicTitleRow(title = "Generate", counter = "On this phone")
                 Spacer(Modifier.height(AtomicSpacing.lg))
                 PasswordGeneratorPanel(

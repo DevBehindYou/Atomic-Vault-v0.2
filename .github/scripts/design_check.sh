@@ -19,6 +19,7 @@ check "Hard-coded colour outside ui/theme (use AtomicTheme.colors)" 'Color\(0x' 
 check "Pre-0.4.0 design layer referenced (app or tests)" '\b(LiquidGlassSurface|GlassVariant|AmbientVaultBackground|AtomicFontSize|AtomicFontWeight|GlassSpring|GlassEasing|AtomicDialog|AtomicDialogPanel)\b' '^$' app/src
 check "Filled icons (the design system uses Outlined only)" 'Icons\.(Default|Filled)\.|icons\.filled\.'
 check "Spring or bounce animation (the design system uses ease or linear only)" '\bspring\(|DampingRatio'
+check "Raw dp size in screen code (use AtomicSpacing or AtomicSize; 0.dp is allowed)" '\b([1-9][0-9]*|0\.[0-9]*[1-9][0-9]*)(\.[0-9]+)?\.dp\b' '/ui/theme/|/ui/components/'
 check "Downloadable fonts would contact Google; bundle fonts in res/font" 'GoogleFont|googlefonts'
 
 if [ "$status" = 0 ]; then echo "Design check passed"; fi

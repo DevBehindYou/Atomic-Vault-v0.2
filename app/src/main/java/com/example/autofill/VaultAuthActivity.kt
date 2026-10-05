@@ -1,5 +1,6 @@
 package com.example.autofill
 
+import com.example.ui.theme.AtomicSize
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -219,8 +220,8 @@ abstract class VaultAuthActivity : FragmentActivity() {
                 .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.xl)
                 .testTag("screen_vault_auth")
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AtomMark(size = 40.dp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)) {
+                AtomMark(size = AtomicSize.markMd)
                 Text(
                     text = AtomicType.caps(eyebrow),
                     style = AtomicType.monoCaption,
@@ -235,7 +236,7 @@ abstract class VaultAuthActivity : FragmentActivity() {
                 color = colors.textPrimary,
                 modifier = Modifier.semantics { heading() }
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(AtomicSpacing.md))
             Text(text = promptSubtitle, style = AtomicType.body, color = colors.textSecondary)
             Spacer(Modifier.height(AtomicSpacing.xl))
             AtomicTextField(

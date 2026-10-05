@@ -1,5 +1,7 @@
 package com.example.ui
 
+import com.example.ui.theme.AtomicSize
+import com.example.ui.theme.AtomicSpacing
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -661,7 +663,7 @@ internal fun ListDetail(
     }
     androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxSize()) {
         androidx.compose.foundation.layout.Box(
-            modifier = Modifier.width(360.dp).fillMaxHeight().testTag("pane_list")
+            modifier = Modifier.width(AtomicSize.listPane).fillMaxHeight().testTag("pane_list")
         ) { list() }
         androidx.compose.foundation.layout.Box(
             modifier = Modifier.width(com.example.ui.theme.AtomicBorder.rule).fillMaxHeight()

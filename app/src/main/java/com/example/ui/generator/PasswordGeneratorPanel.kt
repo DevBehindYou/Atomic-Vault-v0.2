@@ -1,5 +1,6 @@
 package com.example.ui.generator
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -190,7 +191,7 @@ private fun GeneratorToggleRow(
     val colors = AtomicTheme.colors
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp).padding(vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = AtomicSize.row).padding(vertical = AtomicSpacing.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
