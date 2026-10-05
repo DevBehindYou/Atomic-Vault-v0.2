@@ -15,7 +15,16 @@ Other files in the repo root that matter: `AUDIT-REPORT.md` (an earlier
 static-only audit; parts of it were wrong, see the change log) and
 `atomicvault_design_system_reference/` (the earlier dark visual reference, superseded by `docs/design/ATOMIC-DESIGN-SYSTEM.md`, see D15).
 
-## Status (2026-10-04)
+## Status (2026-10-05)
+
+- Active branch: `claude/stoic-lamport-t601ql`, which continues
+  `claude/atomic-vault-analysis-1fj2ok` (same history plus step 7.5c, CI #46
+  green). Not merged, not phone-tested; `main` is still at `2217d9a`.
+- Next agent-ready steps: bottom sheets (plan 7.3), tablet list + detail
+  (8.9), raw dp clean-up. Next user steps: look at the CI snapshots and do
+  the phone test.
+
+### Earlier status (2026-10-04)
 
 - Active branch: `claude/atomic-vault-analysis-1fj2ok`, which continues
   `fix/biometric-ime-autofill` with the work in

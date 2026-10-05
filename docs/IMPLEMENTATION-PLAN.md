@@ -26,7 +26,7 @@ Goal set by the user:
 | 4. Performance + 2FA codes | Done in code | `d210431` | Run #30 green (after #29 test-expectation fix `3cf6f99`) |
 | 5. Platform health | Partly: TOTP engine, Moshi codegen, dead backup branch closed. Open: SQLCipher artifact swap, SDK/AGP upgrade, `security-crypto` replacement, package rename | | |
 | 6. Differentiators | Phishing guard `744055c`, fill receipts `6067d63`, India identity fields `4fc26e1`. change-password shortcut and backup check ("restore drill") done. Open: offline breach check (needs a dataset), QR transfer | | Run #30 green |
-| 7. Atomic design system (UI/UX rebuild), ships as **0.4.0** | Done in code, all screens; see [design/IMPLEMENTATION-REPORT.md](design/IMPLEMENTATION-REPORT.md) for what remains (tablet layouts, bottom sheets, card/identity read view) | `5eedb09`…`52e4533` | #36, #37, #39, #40, #42 green (emulator incl. Autofill tap) |
+| 7. Atomic design system (UI/UX rebuild), ships as **0.4.0** | Done in code, all screens, including the card/identity read view (7.5b) and one editor scaffold (7.5c); see [design/IMPLEMENTATION-REPORT.md](design/IMPLEMENTATION-REPORT.md) for what remains (tablet list + detail, bottom sheets, raw dp, visual review) | `5eedb09`…`d175608` | #36, #37, #39, #40, #42, #44, #45, #46 green (emulator incl. Autofill tap) |
 
 Note on F11 (flaky test): run #23's failure did not reproduce in runs #24 and
 #25. Failing tests are now printed in the CI log, so the next occurrence will

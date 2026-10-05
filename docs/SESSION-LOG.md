@@ -115,6 +115,18 @@ From the ChatGPT handover files the user attached (`AtomicVault_AI_Handover`):
   wiping the stored app package (in addition to TOTP); Privacy Proof always
   reporting screen protection as off; identity editor dropping extra fields.
 
+### 2026-10-05 - continuing Phase 7 (cloud session)
+
+- The user asked to analyse the whole project and continue where the last
+  agent stopped. That was `claude/atomic-vault-analysis-1fj2ok` at `94535a8`
+  (7.5b, CI #45 green), not `main`, which still holds only the old audit.
+  The session's branch `claude/stoic-lamport-t601ql` was moved onto it.
+- Did 7.5c: `ItemEditorScaffold` for all three editors, unsaved-changes
+  check, card editor no longer drops unknown custom fields. CI #46 green.
+- `gh` works in the cloud session (runs, logs), but CI artifact downloads
+  are blocked by the network policy, so snapshots still cannot be viewed
+  from here.
+
 ## The user's standing directives
 
 1. Native Android only; do not restart or re-migrate the project.

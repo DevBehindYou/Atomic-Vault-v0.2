@@ -14,6 +14,9 @@ Branch `claude/atomic-vault-analysis-1fj2ok`; nothing is merged or released.
 | #40 | `7af9198` | Privacy proof, timeline, editors | Green, emulator included |
 | #41 | `52e4533` | Old design layer removed, design check in CI | Failed: one test still used the deleted background (fixed in the next commit; the design check now scans tests too) |
 | #42 | `5850ed6` | Everything above, obsolete test removed, design check on tests | Green: unit tests, lint, design check, snapshots, emulator flow incl. Autofill |
+| #44 | `4fd467a` | Side rail on wide screens, signing certificate on Privacy proof (7.8) | Green |
+| #45 | `94535a8` | Cards and identities open in the read view (7.5b) | Green |
+| #46 | `d175608` | One editor scaffold, unsaved-changes check, card keeps unknown fields (7.5c) | Green: unit tests, lint, design check, snapshots, emulator flow incl. Autofill |
 
 #35 and #38 failed to compile (an experimental-API opt-in, a missing import); each was fixed in the next push.
 
@@ -106,10 +109,14 @@ stops them coming back.
    yet.
 2. **Bottom sheets** (plan 8.5): the dialog is restyled but is still a
    centred dialog, not `AtomicSheet`.
-3. **Card and identity editors**: not yet on a shared `ItemEditorScaffold`
-   (they now open from the read view like logins).
-4. **Raw dp values** remain in screen code (mostly 4–12 dp gaps); the design
+3. **Raw dp values** remain in screen code (mostly 4–12 dp gaps); the design
    check covers colours, not sizes.
-6. **Visual review**: the rendered snapshots have not been looked at by a person,
-   and the phone test (including dark mode and 200% font) is still to do.
-7. Version numbers are unchanged (0.3.0 and 0.4.0 are decided but not applied).
+4. **Visual review**: the rendered snapshots have not been looked at by a person,
+   and the phone test (including dark mode and 200% font) is still to do. The
+   cloud sessions cannot download CI artifacts (the artifact storage host is
+   blocked), so this needs the user's machine or phone.
+5. Version numbers are unchanged (0.3.0 and 0.4.0 are decided but not applied).
+
+Done since this report was first written: card and identity read view
+(7.5b, CI #45) and the shared `ItemEditorScaffold` for all three editors
+with an unsaved-changes check (7.5c, CI #46).
