@@ -64,6 +64,14 @@ import com.example.ui.theme.AtomicFontSize
 import com.example.ui.theme.AtomicFontWeight
 import com.example.ui.theme.AtomicRadius
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicType
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.components.AtomicButtonVariant
+import com.example.ui.components.AtomicButton
+import com.example.ui.components.AtomicDangerZone
+import com.example.ui.components.AtomicPanel
+import com.example.ui.components.AtomicWarningBox
+import com.example.ui.components.AtomicSegmented
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,10 +114,11 @@ fun BackupScreen(
 
     if (showImportConfirmDialog && selectedFileUri != null) {
         AtomicDialog(
-            title = "Replace vault?",
-            message = "This replaces all current credentials with the backup contents. " +
-                "Until you lock the vault you can undo it; after that it cannot be undone.",
-            confirmLabel = "Replace",
+            title = "Replace this vault?",
+            message = "Every item in this vault is replaced by the items in ${selectedFileName ?: "the backup"}. " +
+                "You can undo until you lock the vault; after that it is final.",
+            confirmLabel = "Replace with backup",
+            dismissLabel = "Keep my vault",
             isDestructive = true,
             confirmTestTag = "confirm_import_replace_button",
             onConfirm = {
@@ -145,7 +154,7 @@ fun BackupScreen(
     if (restored != null && onUndoRestore != null) {
         AtomicDialog(
             title = "Backup restored",
-            message = "$restored items restored. The vault as it was before is kept in memory until you lock, " +
+            message = "Restored $restored items. The vault as it was before is kept in memory until you lock, " +
                 "so you can still undo this.",
             confirmLabel = "Done",
             dismissLabel = "Close",
@@ -179,12 +188,12 @@ fun BackupScreen(
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        modifier = modifier.fillMaxSize().testTag("screen_backup"),
+        containerColor = AtomicTheme.colors.background,
         topBar = {
             AtomicTopBar(
-                title = "Backup & restore",
-                caption = "Encrypted export",
+                title = "Backup and restore",
+                caption = "Encrypted with a passphrase you choose",
                 onBack = onBack,
                 backTestTag = "backup_back_button"
             )
@@ -195,30 +204,14 @@ fun BackupScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = AtomicColors.Accent,
-                indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        color = AtomicColors.Accent
-                    )
-                }
-            ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Export", fontWeight = AtomicFontWeight.medium) },
-                    modifier = Modifier.testTag("tab_export")
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Import", fontWeight = AtomicFontWeight.medium) },
-                    modifier = Modifier.testTag("tab_import")
-                )
-            }
+            AtomicSegmented(
+                options = listOf(0, 1),
+                selected = selectedTab,
+                onSelect = { selectedTab = it },
+                label = { if (it == 0) "Export" else "Restore" },
+                modifier = Modifier.padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.md),
+                testTagPrefix = "backup_tab_"
+            )
 
             Column(
                 modifier = Modifier
@@ -229,9 +222,10 @@ fun BackupScreen(
                 if (selectedTab == 0) {
                     // EXPORT VIEW
                     Text(
-                        text = "Exports an encrypted .vault file protected by a passphrase you choose. Master password is not used.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AtomicColors.TextMuted
+                        text = "Saves every item to one encrypted file, locked with a passphrase you choose here " +
+                            "(not your master password). Keep the file and the passphrase in different places.",
+                        style = AtomicType.body,
+                        color = AtomicTheme.colors.textSecondary
                     )
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.lg))
@@ -243,7 +237,7 @@ fun BackupScreen(
                     AtomicTextField(
                         value = exportPassphrase,
                         onValueChange = { exportPassphrase = it },
-                        label = "Backup Passphrase",
+                        label = "Backup passphrase",
                         placeholder = "At least 8 characters",
                         isPassword = true,
                         warningMessage = if (exportPassphrase.isNotEmpty() && !isLengthValid) "Use at least 8 characters." else null,
@@ -255,26 +249,22 @@ fun BackupScreen(
                     AtomicTextField(
                         value = exportConfirm,
                         onValueChange = { exportConfirm = it },
-                        label = "Confirm Passphrase",
-                        placeholder = "Re-enter backup passphrase",
+                        label = "Type it again",
+                        placeholder = "The same passphrase",
                         isPassword = true,
-                        warningMessage = if (exportConfirm.isNotEmpty() && exportPassphrase != exportConfirm) "Passphrases do not match." else null,
+                        errorMessage = if (exportConfirm.isNotEmpty() && exportPassphrase != exportConfirm) "These don't match yet. Check the last few characters." else null,
                         testTag = "export_confirm_input"
                     )
 
-                    if (exportError != null) {
-                        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-                        Text(
-                            text = exportError ?: "",
-                            color = AtomicColors.Danger,
-                            fontSize = AtomicFontSize.caption
-                        )
+                    exportError?.let {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+                        AtomicWarningBox(title = "Export failed", message = it)
                     }
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.xl))
 
                     AtomicPrimaryButton(
-                        text = "Export encrypted vault",
+                        text = "Export backup",
                         onClick = {
                             exportBusy = true
                             exportError = null
@@ -293,38 +283,18 @@ fun BackupScreen(
                         testTag = "export_submit_button"
                     )
                 } else {
-                    // IMPORT VIEW
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(AtomicRadius.lg),
-                        colors = CardDefaults.cardColors(containerColor = AtomicColors.WarningLight),
-                        border = CardDefaults.outlinedCardBorder().copy(
-                            brush = androidx.compose.ui.graphics.SolidColor(AtomicColors.Warning)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(AtomicSpacing.md),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = AtomicColors.Warning,
-                                modifier = Modifier.size(22.dp)
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text(
-                                text = "Importing will replace all current vault data. Back up first if needed.",
-                                fontSize = AtomicFontSize.label,
-                                color = AtomicColors.Text
-                            )
-                        }
-                    }
+                    // RESTORE VIEW
+                    Text(
+                        text = "Choose a backup file and its passphrase. CHECK opens it and counts what is inside without " +
+                            "changing anything. Restoring replaces this vault.",
+                        style = AtomicType.body,
+                        color = AtomicTheme.colors.textSecondary
+                    )
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.lg))
 
                     AtomicOutlinedButton(
-                        text = if (selectedFileName != null) "File: $selectedFileName" else "Choose backup (.atvb) file",
+                        text = if (selectedFileName != null) "File: $selectedFileName" else "Choose backup file",
                         onClick = {
                             filePickerLauncher.launch(arrayOf("*/*"))
                         },
@@ -337,18 +307,17 @@ fun BackupScreen(
                     AtomicTextField(
                         value = importPassphrase,
                         onValueChange = { importPassphrase = it },
-                        label = "Backup Passphrase",
-                        placeholder = "Passphrase used during export",
+                        label = "Backup passphrase",
+                        placeholder = "The passphrase used when exporting",
                         isPassword = true,
                         testTag = "import_passphrase_input"
                     )
 
-                    if (importError != null) {
-                        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-                        Text(
-                            text = importError ?: "",
-                            color = AtomicColors.Danger,
-                            fontSize = AtomicFontSize.caption
+                    importError?.let {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+                        AtomicWarningBox(
+                            title = "Could not open this backup",
+                            message = "$it Check that the passphrase is the one used when exporting, and that the file is complete."
                         )
                     }
 
@@ -359,7 +328,7 @@ fun BackupScreen(
                     // Restore drill: decrypt and count without touching the vault,
                     // so a backup can be trusted before it is ever needed.
                     AtomicOutlinedButton(
-                        text = "Check backup (no changes)",
+                        text = "Check backup",
                         onClick = {
                             val uri = selectedFileUri ?: return@AtomicOutlinedButton
                             importBusy = true
@@ -395,25 +364,29 @@ fun BackupScreen(
                         testTag = "import_check_button"
                     )
                     checkResult?.let {
-                        Text(
-                            text = it,
-                            color = AtomicColors.Success,
-                            fontSize = AtomicFontSize.caption,
-                            modifier = Modifier.padding(top = AtomicSpacing.xs)
-                        )
+                        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+                        AtomicPanel(modifier = Modifier.fillMaxWidth(), on = true) {
+                            Text(AtomicType.caps("Checked · nothing changed"), style = AtomicType.monoCaption, color = AtomicTheme.colors.accent)
+                            Text(text = it, style = AtomicType.bodySmall, color = AtomicTheme.colors.textPrimary)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.md))
 
-                    AtomicPrimaryButton(
-                        text = "Import & replace",
-                        onClick = {
-                            showImportConfirmDialog = true
-                        },
-                        enabled = canImport,
-                        busy = importBusy,
-                        testTag = "import_submit_button"
-                    )
+                    AtomicDangerZone(
+                        label = "Restore · Replaces your vault",
+                        warning = "Every item in this vault is replaced by the backup's items. You can undo until you lock the vault."
+                    ) {
+                        AtomicButton(
+                            text = "Replace with backup",
+                            onClick = { showImportConfirmDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            variant = AtomicButtonVariant.Destructive,
+                            enabled = canImport,
+                            busy = importBusy,
+                            testTag = "import_submit_button"
+                        )
+                    }
                 }
             }
         }

@@ -22,6 +22,11 @@ results are recorded in the plan's progress table.
   confirmed deletes that say what happens to the logins; Backup and Privacy
   proof are settings rows. Split into `SettingsScreen.kt` and
   `SettingsSections.kt` (was one 650-line file).
+- **Backup and restore:** Export / Restore as a segmented toggle; plain
+  explanations; mismatch and failure messages that say what to check;
+  "Check backup" reports in an "on" panel (`CHECKED · NOTHING CHANGED`);
+  restoring sits in a danger zone with a destructive `REPLACE WITH BACKUP`,
+  and the confirm names the file and offers `KEEP MY VAULT`.
 
 ### Phase 7.4–7.5: first screens rebuilt (0.4.0)
 

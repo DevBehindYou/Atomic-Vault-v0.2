@@ -39,6 +39,7 @@ import com.example.ui.theme.AtomicFontWeight
 import com.example.ui.theme.AtomicSpacing
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Alignment
