@@ -277,7 +277,8 @@ fun AtomicVaultNavGraph(
     
                 if (uiState.showKeyboardRemovedNotice) {
                     val context = androidx.compose.ui.platform.LocalContext.current
-                    com.example.ui.components.AtomicDialog(
+                    com.example.ui.components.AtomicSheet(
+                        label = "Notice",
                         title = "The Atomic keyboard is gone",
                         message = "AtomicVault now fills passwords inside the keyboard you already use, " +
                             "such as Gboard, through Android Autofill. Your keyboard is back to your phone's default. " +

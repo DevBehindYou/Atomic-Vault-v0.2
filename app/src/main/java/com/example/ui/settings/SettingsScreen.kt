@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.example.database.FolderPlain
 import com.example.database.TagPlain
 import com.example.ui.VaultUiState
-import com.example.ui.components.AtomicDialog
+import com.example.ui.components.AtomicSheet
 import com.example.ui.components.AtomicSettingsRow
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.AtomicTitleRow
@@ -68,7 +68,8 @@ fun SettingsScreen(
     val biometricEnabled = uiState.biometricArmed
 
     if (showNewFolderDialog) {
-        AtomicDialog(
+        AtomicSheet(
+            label = "Organise",
             title = "New folder",
             confirmLabel = "Create folder",
             confirmEnabled = newFolderName.isNotBlank(),
@@ -94,7 +95,8 @@ fun SettingsScreen(
     }
 
     folderToDelete?.let { folder ->
-        AtomicDialog(
+        AtomicSheet(
+            label = "Delete",
             title = "Delete folder",
             message = "Delete \"${folder.name}\"? The logins inside stay in the vault, without a folder.",
             confirmLabel = "Delete folder",
@@ -109,7 +111,8 @@ fun SettingsScreen(
     }
 
     if (showNewTagDialog) {
-        AtomicDialog(
+        AtomicSheet(
+            label = "Organise",
             title = "New tag",
             confirmLabel = "Create tag",
             confirmEnabled = newTagName.isNotBlank(),
@@ -135,7 +138,8 @@ fun SettingsScreen(
     }
 
     tagToDelete?.let { tag ->
-        AtomicDialog(
+        AtomicSheet(
+            label = "Delete",
             title = "Delete tag",
             message = "Delete \"${tag.name}\"? It comes off every login it is on. The logins themselves stay.",
             confirmLabel = "Delete tag",

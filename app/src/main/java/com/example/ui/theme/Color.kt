@@ -35,6 +35,9 @@ object AtomicTokens {
     /** Dark variant (§13.9). */
     val DarkCard = Color(0xFF1E2026)
     val DarkPanel = Color(0xFF24262D)
+
+    /** Black at 54%, behind bottom sheets (§4 `scrim`). */
+    val Scrim = Color(0x8A000000)
 }
 
 /**
@@ -82,6 +85,7 @@ data class AtomicPalette(
     val focus: Color,
     val codeWell: Color,
     val onCodeWell: Color,
+    val scrim: Color = AtomicTokens.Scrim,
 )
 
 val LightAtomicPalette = AtomicPalette(

@@ -35,7 +35,7 @@ import com.example.database.TagPlain
 import com.example.ui.components.AtomicCard
 import com.example.ui.components.AtomicDangerZone
 import com.example.ui.components.AtomicDestructiveButton
-import com.example.ui.components.AtomicDialog
+import com.example.ui.components.AtomicSheet
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicRule
 import com.example.ui.components.AtomicSectionHeader
@@ -95,7 +95,8 @@ fun ItemEditorScaffold(
     BackHandler(enabled = hasUnsavedChanges) { showDiscard = true }
 
     if (showDiscard) {
-        AtomicDialog(
+        AtomicSheet(
+            label = "Unsaved changes",
             title = "Discard changes?",
             message = "Your edits are not saved. The item stays as it was.",
             confirmLabel = "Discard changes",
@@ -111,7 +112,8 @@ fun ItemEditorScaffold(
     }
 
     if (showDelete && delete != null) {
-        AtomicDialog(
+        AtomicSheet(
+            label = "Delete",
             title = delete.confirmTitle,
             message = delete.confirmMessage,
             confirmLabel = delete.buttonLabel,

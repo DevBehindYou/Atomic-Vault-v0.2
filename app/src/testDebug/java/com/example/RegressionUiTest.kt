@@ -26,7 +26,7 @@ import com.example.database.VaultItemType
 import com.example.database.VaultSettingsPlain
 import com.example.ui.VaultStatus
 import com.example.ui.VaultUiState
-import com.example.ui.components.AtomicDialogPanel
+import com.example.ui.components.AtomicSheetPanel
 import com.example.ui.components.AtomicSwitch
 import com.example.ui.components.FilterChipPill
 import com.example.ui.identity.IdentityEditorScreen
@@ -178,6 +178,18 @@ class RegressionUiTest {
     }
 
     @Test
+    fun `keep editing closes the sheet and stays on the form`() {
+        var left = false
+        show { IdentityEditorScreen(existing = identity, onSave = {}, onBack = { left = true }) }
+        rule.onNodeWithTag("identity_full_name").performTextInput(" Jr")
+        rule.onNodeWithContentDescription("Back").performClick()
+        rule.onNodeWithText("Unsaved changes", ignoreCase = true).assertIsDisplayed()
+        rule.onNodeWithText("Keep editing", ignoreCase = true).performClick()
+        rule.onNodeWithTag("editor_discard_confirm").assertDoesNotExist()
+        assertFalse(left)
+    }
+
+    @Test
     fun `a card can be deleted after confirming`() {
         var deleted: String? = null
         show { PaymentCardEditorScreen(existing = card, onSave = {}, onBack = {}, onDelete = { deleted = it }) }
@@ -233,7 +245,7 @@ class RegressionUiTest {
     @Test
     fun `dialog confirm and dismiss are both reachable`() {
         show {
-            AtomicDialogPanel(
+            AtomicSheetPanel(
                 title = "Restore this backup?",
                 message = "Long explanation. ".repeat(20),
                 confirmLabel = "Continue",

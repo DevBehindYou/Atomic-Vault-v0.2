@@ -171,24 +171,26 @@ class UiStressSnapshotTest {
     }
 
     // Dialog windows are not part of the root capture, so the sheet is laid
-    // out directly over a scrim (AtomicDialogPanel is the dialog minus its window).
+    // out directly at the bottom of a scrim (AtomicSheetPanel is the sheet
+    // minus its window).
     private fun dialogOnScrim(content: @Composable () -> Unit): @Composable () -> Unit = {
         Box(
-            Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f)),
-            contentAlignment = androidx.compose.ui.Alignment.Center
+            Modifier.fillMaxSize().background(com.example.ui.theme.AtomicTheme.colors.scrim),
+            contentAlignment = androidx.compose.ui.Alignment.BottomCenter
         ) { content() }
     }
 
-    @Test fun dialog_input() = snap("dialog_input", dialogOnScrim {
-        com.example.ui.components.AtomicDialogPanel(
-            title = "New folder", confirmLabel = "Create", onConfirm = {}, onDismiss = {}
+    @Test fun sheet_input() = snap("sheet_input", dialogOnScrim {
+        com.example.ui.components.AtomicSheetPanel(
+            label = "Organise", title = "New folder", confirmLabel = "Create", onConfirm = {}, onDismiss = {}
         ) {
             com.example.ui.components.AtomicTextField(value = "", onValueChange = {}, placeholder = "Folder name")
         }
     })
 
-    @Test fun dialog_disclosure() = snap("dialog_disclosure", dialogOnScrim {
-        com.example.ui.components.AtomicDialogPanel(
+    @Test fun sheet_disclosure() = snap("sheet_disclosure", dialogOnScrim {
+        com.example.ui.components.AtomicSheetPanel(
+            label = "Restore",
             title = "Restore this backup?",
             message = "Restoring replaces every item in this vault with the items in the backup. A copy of the " +
                 "current vault is kept so the restore can be undone. Nothing is uploaded; the app has no internet " +
@@ -197,8 +199,9 @@ class UiStressSnapshotTest {
         )
     })
 
-    @Test fun dialog_destructive() = snap("dialog_destructive", dialogOnScrim {
-        com.example.ui.components.AtomicDialogPanel(
+    @Test fun sheet_destructive() = snap("sheet_destructive", dialogOnScrim {
+        com.example.ui.components.AtomicSheetPanel(
+            label = "Delete",
             title = "Delete folder",
             message = "Delete \"Work\"? Credentials inside will be moved to unassigned.",
             confirmLabel = "Delete", isDestructive = true, onConfirm = {}, onDismiss = {}

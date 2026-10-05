@@ -5,6 +5,23 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.3: confirmations and inputs open as bottom sheets (0.4.0)
+
+- **`AtomicSheet` replaces `AtomicDialog`** (still the app's one overlay,
+  D8). Paper with 28 dp top corners over the spec's 54% black scrim, a drag
+  handle, a Signal mono label over an ink rule (`DELETE`, `ORGANISE`,
+  `RESTORE`, `UNSAVED CHANGES`, `NOTICE`), the title, then full-width
+  buttons. It sits above the keyboard and the navigation bar, and is at most
+  560 dp wide on tablets.
+- Slides up 16 dp and fades in over 350 ms (`ease`, no spring); with system
+  animations off it only fades. Closes on the scrim, back, the dismiss
+  button, or by pulling the handle down; a short pull settles back.
+- The sheet window keeps `FLAG_SECURE` from the activity, as the dialog did.
+- New `scrim` colour token. The design check now also rejects the old
+  `AtomicDialog` names.
+- Tests: stress snapshots render the sheet at the bottom of the scrim
+  (`sheet_*.png`); "Keep editing" closes the sheet without leaving.
+
 ### Phase 7.5c: one editor layout for logins, cards and identities (0.4.0)
 
 - **`ItemEditorScaffold`** (`ui/editor/ItemEditorScaffold.kt`): the pushed

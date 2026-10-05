@@ -50,7 +50,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.backup.BackupCodec
 import com.example.backup.BackupFile
-import com.example.ui.components.AtomicDialog
+import com.example.ui.components.AtomicSheet
 import com.example.ui.components.AtomicOutlinedButton
 import kotlinx.coroutines.launch
 import com.example.ui.components.AtomicPrimaryButton
@@ -108,7 +108,8 @@ fun BackupScreen(
     }
 
     if (showImportConfirmDialog && selectedFileUri != null) {
-        AtomicDialog(
+        AtomicSheet(
+            label = "Restore",
             title = "Replace this vault?",
             message = "Every item in this vault is replaced by the items in ${selectedFileName ?: "the backup"}. " +
                 "You can undo until you lock the vault; after that it is final.",
@@ -118,7 +119,7 @@ fun BackupScreen(
             confirmTestTag = "confirm_import_replace_button",
             onConfirm = {
                 showImportConfirmDialog = false
-                val uri = selectedFileUri ?: return@AtomicDialog
+                val uri = selectedFileUri ?: return@AtomicSheet
                 importBusy = true
                 importError = null
                 try {
@@ -147,7 +148,8 @@ fun BackupScreen(
 
     val restored = restoredCount
     if (restored != null && onUndoRestore != null) {
-        AtomicDialog(
+        AtomicSheet(
+            label = "Restore",
             title = "Backup restored",
             message = "Restored $restored items. The vault as it was before is kept in memory until you lock, " +
                 "so you can still undo this.",
