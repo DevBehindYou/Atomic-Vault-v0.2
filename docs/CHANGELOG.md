@@ -5,6 +5,19 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Dependencies: safe updates (Phase 5, part 1)
+
+- BouncyCastle 1.79 → 1.81 (provider fixes; the Argon2id known-answer tests
+  still pin the key derivation), `androidx.security:security-crypto`
+  1.1.0-alpha06 → 1.1.0 (first stable; same API, now marked deprecated
+  upstream), Android Gradle plugin 8.8.1 → 8.8.2 (patch), and the test
+  libraries (`androidx.test` core/runner 1.7.0, ext-junit 1.3.0, espresso
+  3.7.0).
+- **Not done here, on purpose:** Android Gradle plugin 9, Compose BOM
+  2026.09, core-ktx 1.19, lifecycle 2.11, activity 1.13, navigation 2.10 and
+  target SDK 36. They need `compileSdk` 36 and move together as one planned
+  upgrade. Replacing `security-crypto` (deprecated) is part of that work.
+
 ### CI: the minified build goes through the emulator check too (TASKS T5)
 
 - The verify job also builds `assembleInternal`: the release build type with
