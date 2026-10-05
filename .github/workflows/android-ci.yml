@@ -51,6 +51,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: ./gradlew lintDebug --stacktrace
 
+      # The text report in the log, for sessions that can read job logs but
+      # cannot download artifacts.
+      - name: Print lint report
+        if: ${{ !cancelled() }}
+        run: cat app/build/reports/lint-results-debug.txt 2>/dev/null || echo "No lint text report"
+
       # Renders the real screens (UiSnapshotTest) to PNGs for visual review.
       - name: Render UI snapshots
         if: ${{ !cancelled() }}
