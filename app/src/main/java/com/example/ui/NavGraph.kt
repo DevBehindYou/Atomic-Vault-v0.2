@@ -7,6 +7,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import com.example.database.CredentialPlain
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.activity.compose.LocalActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
@@ -249,63 +250,65 @@ fun AtomicVaultNavGraph(
         }
 
         composable(Screen.Home.route) {
-            VaultHomeScreen(
-                uiState = uiState,
-                onSearchChange = { viewModel.setSearchQuery(it) },
-                onSelectFolder = { viewModel.setFolderFilter(it) },
-                onSelectTag = { viewModel.setTagFilter(it) },
-                onItemClick = { itemId ->
-                    // Route by item type so a Payment Card / Identity opens
-                    // its own editor rather than the generic Login one --
-                    // resolved here in NavGraph (which already has
-                    // uiState.previews) rather than changing
-                    // VaultHomeScreen's own click-handling code.
-                    val type = uiState.previews.firstOrNull { it.id == itemId }?.itemType
-                    when (type) {
-                        com.example.database.VaultItemType.PAYMENT_CARD ->
-                            navController.navigate(Screen.PaymentCardEditor.createRoute(itemId))
-                        com.example.database.VaultItemType.IDENTITY ->
-                            navController.navigate(Screen.IdentityEditor.createRoute(itemId))
-                        else ->
-                            navController.navigate(Screen.ItemDetail.createRoute(itemId))
-                    }
-                },
-                onAddNewClick = {
-                    navController.navigate(Screen.Editor.createRoute(null))
-                },
-                onAddPaymentCard = { navController.navigate(Screen.PaymentCardEditor.createRoute(null)) },
-                onAddIdentity = { navController.navigate(Screen.IdentityEditor.createRoute(null)) },
-                onLockClick = {
-                    viewModel.lockVault()
-                    navController.navigate(Screen.Unlock.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
-                onReload = { viewModel.reloadVaultData() },
-                bottomBar = { AtomicBottomNav(AtomicTab.Vault, { navigateTab(it) }) }
-            )
-
-            if (uiState.showKeyboardRemovedNotice) {
-                val context = androidx.compose.ui.platform.LocalContext.current
-                com.example.ui.components.AtomicDialog(
-                    title = "The Atomic keyboard is gone",
-                    message = "AtomicVault now fills passwords inside the keyboard you already use, " +
-                        "such as Gboard, through Android Autofill. Your keyboard is back to your phone's default. " +
-                        "Turn on AtomicVault as your autofill service to see your logins in the keyboard's suggestion strip.",
-                    confirmLabel = "Turn on Autofill",
-                    dismissLabel = "Later",
-                    onConfirm = {
-                        viewModel.dismissKeyboardRemovedNotice()
-                        val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE)
-                            .setData(android.net.Uri.parse("package:${context.packageName}"))
-                        try {
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            context.startActivity(android.content.Intent(android.provider.Settings.ACTION_SETTINGS))
+            AdaptiveNav(AtomicTab.Vault, { navigateTab(it) }) { bar ->
+                VaultHomeScreen(
+                    uiState = uiState,
+                    onSearchChange = { viewModel.setSearchQuery(it) },
+                    onSelectFolder = { viewModel.setFolderFilter(it) },
+                    onSelectTag = { viewModel.setTagFilter(it) },
+                    onItemClick = { itemId ->
+                        // Route by item type so a Payment Card / Identity opens
+                        // its own editor rather than the generic Login one --
+                        // resolved here in NavGraph (which already has
+                        // uiState.previews) rather than changing
+                        // VaultHomeScreen's own click-handling code.
+                        val type = uiState.previews.firstOrNull { it.id == itemId }?.itemType
+                        when (type) {
+                            com.example.database.VaultItemType.PAYMENT_CARD ->
+                                navController.navigate(Screen.PaymentCardEditor.createRoute(itemId))
+                            com.example.database.VaultItemType.IDENTITY ->
+                                navController.navigate(Screen.IdentityEditor.createRoute(itemId))
+                            else ->
+                                navController.navigate(Screen.ItemDetail.createRoute(itemId))
                         }
                     },
-                    onDismiss = { viewModel.dismissKeyboardRemovedNotice() }
+                    onAddNewClick = {
+                        navController.navigate(Screen.Editor.createRoute(null))
+                    },
+                    onAddPaymentCard = { navController.navigate(Screen.PaymentCardEditor.createRoute(null)) },
+                    onAddIdentity = { navController.navigate(Screen.IdentityEditor.createRoute(null)) },
+                    onLockClick = {
+                        viewModel.lockVault()
+                        navController.navigate(Screen.Unlock.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    },
+                    onReload = { viewModel.reloadVaultData() },
+                    bottomBar = bar
                 )
+    
+                if (uiState.showKeyboardRemovedNotice) {
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    com.example.ui.components.AtomicDialog(
+                        title = "The Atomic keyboard is gone",
+                        message = "AtomicVault now fills passwords inside the keyboard you already use, " +
+                            "such as Gboard, through Android Autofill. Your keyboard is back to your phone's default. " +
+                            "Turn on AtomicVault as your autofill service to see your logins in the keyboard's suggestion strip.",
+                        confirmLabel = "Turn on Autofill",
+                        dismissLabel = "Later",
+                        onConfirm = {
+                            viewModel.dismissKeyboardRemovedNotice()
+                            val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE)
+                                .setData(android.net.Uri.parse("package:${context.packageName}"))
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                context.startActivity(android.content.Intent(android.provider.Settings.ACTION_SETTINGS))
+                            }
+                        },
+                        onDismiss = { viewModel.dismissKeyboardRemovedNotice() }
+                    )
+                }
             }
         }
 
@@ -422,51 +425,57 @@ fun AtomicVaultNavGraph(
         }
 
         composable(Screen.Generator.route) {
-            PasswordGeneratorScreen(
-                bottomBar = { AtomicBottomNav(AtomicTab.Generate, { navigateTab(it) }) }
-            )
+            AdaptiveNav(AtomicTab.Generate, { navigateTab(it) }) { bar ->
+                PasswordGeneratorScreen(
+                    bottomBar = bar
+                )
+            }
         }
 
         composable(Screen.Security.route) {
-            SecurityDashboardScreen(
-                integrityWarnings = uiState.integrityWarnings,
-                onLoadAllCredentials = { viewModel.getAllCredentialsForSecurity() },
-                onItemClick = { itemId ->
-                    navController.navigate(Screen.ItemDetail.createRoute(itemId))
-                },
-                bottomBar = { AtomicBottomNav(AtomicTab.Audit, { navigateTab(it) }) }
-            )
+            AdaptiveNav(AtomicTab.Audit, { navigateTab(it) }) { bar ->
+                SecurityDashboardScreen(
+                    integrityWarnings = uiState.integrityWarnings,
+                    onLoadAllCredentials = { viewModel.getAllCredentialsForSecurity() },
+                    onItemClick = { itemId ->
+                        navController.navigate(Screen.ItemDetail.createRoute(itemId))
+                    },
+                    bottomBar = bar
+                )
+            }
         }
 
         composable(Screen.Settings.route) {
-            SettingsScreen(
-                uiState = uiState,
-                onUpdateAutoLock = { seconds -> viewModel.updateAutoLockSeconds(seconds) },
-                onUpdateBiometric = { enabled ->
-                    if (enabled) {
-                        armBiometricWithPrompt { }
-                    } else {
-                        viewModel.disableBiometric()
-                    }
-                },
-                onSetAutofillArmed = { armed ->
-                    // Same Keystore-bound key as app-unlock now (see
-                    // BiometricGatedKeyStore) -- arming/disarming one arms
-                    // or disarms both.
-                    if (armed) {
-                        armBiometricWithPrompt { }
-                    } else {
-                        viewModel.disableBiometric()
-                    }
-                },
-                onCreateFolder = { name -> viewModel.createFolder(name) },
-                onDeleteFolder = { id -> viewModel.deleteFolder(id) },
-                onCreateTag = { name -> viewModel.createTag(name) },
-                onDeleteTag = { id -> viewModel.deleteTag(id) },
-                onNavigateBackup = { navController.navigate(Screen.Backup.route) },
-                onNavigatePrivacyProof = { navController.navigate(Screen.PrivacyProof.route) },
-                bottomBar = { AtomicBottomNav(AtomicTab.Settings, { navigateTab(it) }) }
-            )
+            AdaptiveNav(AtomicTab.Settings, { navigateTab(it) }) { bar ->
+                SettingsScreen(
+                    uiState = uiState,
+                    onUpdateAutoLock = { seconds -> viewModel.updateAutoLockSeconds(seconds) },
+                    onUpdateBiometric = { enabled ->
+                        if (enabled) {
+                            armBiometricWithPrompt { }
+                        } else {
+                            viewModel.disableBiometric()
+                        }
+                    },
+                    onSetAutofillArmed = { armed ->
+                        // Same Keystore-bound key as app-unlock now (see
+                        // BiometricGatedKeyStore) -- arming/disarming one arms
+                        // or disarms both.
+                        if (armed) {
+                            armBiometricWithPrompt { }
+                        } else {
+                            viewModel.disableBiometric()
+                        }
+                    },
+                    onCreateFolder = { name -> viewModel.createFolder(name) },
+                    onDeleteFolder = { id -> viewModel.deleteFolder(id) },
+                    onCreateTag = { name -> viewModel.createTag(name) },
+                    onDeleteTag = { id -> viewModel.deleteTag(id) },
+                    onNavigateBackup = { navController.navigate(Screen.Backup.route) },
+                    onNavigatePrivacyProof = { navController.navigate(Screen.PrivacyProof.route) },
+                    bottomBar = bar
+                )
+            }
         }
 
         composable(Screen.Backup.route) {
@@ -524,9 +533,21 @@ fun AtomicVaultNavGraph(
                 }
             }
 
+            val verify by androidx.compose.runtime.produceState<Pair<String?, String?>>(initialValue = null to null) {
+                val act = activity
+                if (act != null) {
+                    value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        com.example.trust.AppSignature.signingCertSha256(act) to
+                            com.example.trust.TrustLedger.headHash(act)
+                    }
+                }
+            }
+
             com.example.ui.trust.PrivacyProofScreen(
                 checks = checks,
                 chainBroken = chainBroken,
+                signingCertSha256 = verify.first,
+                ledgerHead = verify.second,
                 onBack = { navController.popBackStack() },
                 onNavigateTimeline = { navController.navigate(Screen.SecurityTimeline.route) }
             )
@@ -563,5 +584,28 @@ fun AtomicVaultNavGraph(
                 onBack = { navController.popBackStack() }
             )
         }
+    }
+}
+
+/**
+ * Top-level navigation that adapts to width (plan 8.9): phones get the
+ * bottom bar in the screen's own bottomBar slot; 600 dp and wider (large
+ * phones in landscape, foldables, tablets) get the side rail and the screen
+ * gets no bottom bar.
+ */
+@Composable
+private fun AdaptiveNav(
+    tab: AtomicTab,
+    onSelect: (AtomicTab) -> Unit,
+    content: @Composable (bar: @Composable () -> Unit) -> Unit
+) {
+    val wide = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600
+    if (wide) {
+        androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxSize()) {
+            com.example.ui.components.AtomicNavRail(selected = tab, onSelect = onSelect)
+            androidx.compose.foundation.layout.Box(modifier = Modifier.weight(1f)) { content {} }
+        }
+    } else {
+        content { AtomicBottomNav(tab, onSelect) }
     }
 }

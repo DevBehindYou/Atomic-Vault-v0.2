@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.trust.PrivacyCheck
 import com.example.ui.components.AtomicCard
+import com.example.ui.components.AtomicCodeWell
+import com.example.ui.components.AtomicModule
 import com.example.ui.components.AtomicHairline
 import com.example.ui.components.AtomicSectionHeader
 import com.example.ui.components.AtomicSettingsRow
@@ -45,7 +47,11 @@ fun PrivacyProofScreen(
     chainBroken: Boolean,
     onBack: () -> Unit,
     onNavigateTimeline: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** SHA-256 of the APK signing certificate, to compare with the release's published hash. */
+    signingCertSha256: String? = null,
+    /** Hash of the newest Trust Ledger entry. */
+    ledgerHead: String? = null
 ) {
     val colors = AtomicTheme.colors
     val passed = checks.count { it.passed }
@@ -110,6 +116,27 @@ fun PrivacyProofScreen(
                                 PrivacyCheckRow(check)
                                 if (i != categoryChecks.lastIndex) AtomicHairline()
                             }
+                        }
+                    }
+                }
+            }
+
+            if (signingCertSha256 != null || ledgerHead != null) {
+                item {
+                    AtomicModule(modifier = Modifier.fillMaxWidth().testTag("privacy_verify_block")) {
+                        Text(AtomicType.caps("Verify it yourself"), style = AtomicType.monoCaption, color = colors.accentOnModule)
+                        if (signingCertSha256 != null) {
+                            Text(AtomicType.caps("App signing certificate · SHA-256"), style = AtomicType.monoCaption, color = colors.onModuleMuted)
+                            AtomicCodeWell(signingCertSha256)
+                            Text(
+                                "Compare it with the hash published for this release. A changed or repackaged app has a different one.",
+                                style = AtomicType.bodySmall,
+                                color = colors.onModule.copy(alpha = 0.78f)
+                            )
+                        }
+                        if (ledgerHead != null) {
+                            Text(AtomicType.caps("Event log head"), style = AtomicType.monoCaption, color = colors.onModuleMuted)
+                            AtomicCodeWell(ledgerHead)
                         }
                     }
                 }

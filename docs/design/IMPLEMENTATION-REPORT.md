@@ -101,15 +101,15 @@ stops them coming back.
 
 ## Remaining (genuinely not done)
 
-1. **Tablet and landscape layouts** (plan 8.9): forms and lists cap their width,
-   but there is no navigation rail or list + detail split yet.
+1. **Tablet list + detail split** (plan 8.9): wide screens get the side rail
+   and capped widths, but the vault list and item detail are not side by side
+   yet.
 2. **Bottom sheets** (plan 8.5): the dialog is restyled but is still a
    centred dialog, not `AtomicSheet`.
 3. **Card and identity editors**: not yet on a shared `ItemEditorScaffold`, and
    cards and identities still open straight into their editors (no read view).
 4. **Raw dp values** remain in screen code (mostly 4–12 dp gaps); the design
    check covers colours, not sizes.
-5. **Verify block** on Privacy proof (APK signing certificate SHA-256): not added.
 6. **Visual review**: the rendered snapshots have not been looked at by a person,
    and the phone test (including dark mode and 200% font) is still to do.
 7. Version numbers are unchanged (0.3.0 and 0.4.0 are decided but not applied).

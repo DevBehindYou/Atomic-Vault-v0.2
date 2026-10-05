@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -206,4 +208,66 @@ fun IconTile(
 @Composable
 fun StatusDot(color: Color, modifier: Modifier = Modifier, size: Dp = 8.dp) {
     Box(modifier = modifier.size(size).clip(CircleShape).background(color))
+}
+
+/**
+ * Side navigation for widths of 600 dp and more (plan 8.9): the same four
+ * destinations, the active one an ink pill with its icon and mono label,
+ * the others named icons; an ink rule on the right edge.
+ */
+@Composable
+fun AtomicNavRail(
+    selected: AtomicTab,
+    onSelect: (AtomicTab) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = AtomicTheme.colors
+    Row(modifier = modifier.fillMaxHeight().background(colors.background)) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(96.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(vertical = AtomicSpacing.lg)
+                .selectableGroup(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
+        ) {
+            AtomMark(size = 40.dp)
+            AtomicTab.entries.forEach { tab ->
+                val isSelected = tab == selected
+                val shape = RoundedCornerShape(AtomicRadius.sm)
+                Column(
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 64.dp, minHeight = 56.dp)
+                        .clip(shape)
+                        .background(if (isSelected) colors.textPrimary else Color.Transparent)
+                        .selectable(
+                            selected = isSelected,
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            role = Role.Tab,
+                            onClick = { onSelect(tab) }
+                        )
+                        .semantics { contentDescription = tab.label }
+                        .padding(AtomicSpacing.sm)
+                        .testTag(tab.testTag),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = null,
+                        tint = if (isSelected) colors.background else colors.textPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    if (isSelected) {
+                        Text(text = AtomicType.caps(tab.label), style = AtomicType.monoCaption, color = colors.background, maxLines = 1)
+                    }
+                }
+            }
+        }
+        Box(modifier = Modifier.fillMaxHeight().width(AtomicBorder.rule).background(colors.borderControl))
+    }
 }

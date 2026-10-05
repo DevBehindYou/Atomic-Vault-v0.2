@@ -289,6 +289,9 @@ object TrustLedger {
     fun sha256(input: String): String =
         bytesToHex(MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8)))
 
+    /** Hash of the newest entry (the chain head), for the user to note and compare later. */
+    fun headHash(context: Context): String = synchronized(this) { head(database(context)).first }
+
     /** The chain head: (hash of the last entry, its seq), or GENESIS / 0 when empty. */
     private fun head(db: SQLiteDatabase): Pair<String, Long> {
         db.rawQuery("SELECT event_hash, seq FROM trust_event ORDER BY seq DESC LIMIT 1", null).use { c ->

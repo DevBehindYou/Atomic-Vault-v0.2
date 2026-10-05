@@ -5,6 +5,17 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Phase 7.8: wide layouts and "verify it yourself" (0.4.0)
+
+- **Side navigation on wide screens.** At 600 dp and wider (large phones in
+  landscape, foldables, tablets) the four destinations move to a side rail
+  with the atom mark; phones keep the bottom bar. Same tags and names, so
+  tests and screen readers see the same tabs.
+- **Privacy proof › Verify it yourself:** the SHA-256 of the certificate the
+  app is signed with (formatted like `apksigner` prints it) and the event
+  log's newest hash, in code wells. A changed or repackaged app shows a
+  different certificate hash than the one published for the release.
+
 ### Phase 7.9: the old design layer is gone (0.4.0)
 
 - Deleted `LiquidGlassSurface`, `AmbientVaultBackground`, the 30 legacy colour
