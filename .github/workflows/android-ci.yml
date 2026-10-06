@@ -257,7 +257,7 @@ jobs:
           target: default
           arch: x86_64
           profile: pixel_6
-          script: ./gradlew connectedDebugAndroidTest --stacktrace
+          script: chmod +x ./gradlew && ./gradlew connectedDebugAndroidTest --stacktrace
 
       - name: Upload instrumented test reports
         if: ${{ !cancelled() }}
