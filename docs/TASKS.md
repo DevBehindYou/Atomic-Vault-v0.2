@@ -11,6 +11,12 @@
 > (CI #52). T7, T2 and T9 are open as pull requests into that branch
 > (#2, #3, #4). T3 still needs the user's decision (U4); T10 and T11 are
 > unchanged.
+>
+> **Update 2026-10-06:** T2 (#3), T7 (#2), T9 (#4, plus dependencies #5 and
+> the toolchain/SDK 36 upgrade #10) and T10 (#7) are merged into
+> `claude/stoic-lamport-t601ql`. Left: T3 (waits on U4) and T11 (after the
+> release). The phone test (U1) now also covers the SQLCipher swap (#9) and
+> the sealed vault envelope (#8).
 
 Status as of 2026-09-21. Branch `fix/biometric-ime-autofill` at `9631167`, CI
 green, unmerged. Priorities: **P0** blocks a release, **P1** should ship with
@@ -35,7 +41,7 @@ it, **P2** soon after, **P3** when convenient.
   item's value, so editing any login wipes a stored TOTP secret (for example
   one that arrived through a backup import). Preserve the loaded value and add a
   regression test. Found 2026-09-21 while writing these docs; not yet fixed.
-- **T2. Verify biometrics on CI where possible.** The emulator job cannot enrol
+- **T2. Verify biometrics on CI where possible.** (Done 2026-10-05, #3: the `Emulator fingerprint check` job.) The emulator job cannot enrol
   a fingerprint. Try `adb emu finger touch` after scripted enrolment (needs a
   screen lock set first) so unlock, cancel and wrong-finger paths get runtime
   evidence.
@@ -57,7 +63,7 @@ it, **P2** soon after, **P3** when convenient.
 - **T6. Backup round-trip test.** `BackupCodec` has unit tests, but export then
   import of a real vault with folders, tags, cards and identities has not been
   exercised end to end. Add an instrumented or emulator-driven test.
-- **T7. Full TalkBack pass.** Switches, chips and tabs are fixed; check the
+- **T7. Full TalkBack pass.** (Done in code 2026-10-05, #2; confirm on the phone test.) Switches, chips and tabs are fixed; check the
   remaining icon buttons, list rows and dialogs, and reading order in the
   editors.
 - **T8. Batch `exportData()`.** The Security dashboard re-scan issues about
@@ -66,13 +72,13 @@ it, **P2** soon after, **P3** when convenient.
 
 ### P3
 
-- **T9. Lint clean-up.** The last report had 65 warnings, none functional: 39
+- **T9. Lint clean-up.** (Done 2026-10-05/06: #4, #5, #10.) The last report had 65 warnings, none functional: 39
   `GradleDependency`, 10 `UnusedResources`, 7 `ObsoleteSdkInt`, 3
   `AndroidGradlePluginVersion`, 2 `IconDipSize`, one each of `UnusedAttribute`,
   `RedundantLabel`, `OldTargetApi`, `DataExtractionRules`. Remove the unused
   resources and dead SDK checks; update dependencies as a separate, tested
   change.
-- **T10. Unused imports** left by the UI rewrite (compiler warnings only).
+- **T10. Unused imports** (Done 2026-10-05, #7; CI now checks.) left by the UI rewrite (compiler warnings only).
 - **T11. Kotlin package rename.** Sources are still `com.example.*` while
   `applicationId`/`namespace` are `com.atomicvault.android` (audit finding d).
   Do it only as a dedicated, mechanical change after the release, never mixed
@@ -96,7 +102,7 @@ it, **P2** soon after, **P3** when convenient.
 | Finding | Status |
 |---|---|
 | (a) Auto-lock is background-only | Partly addressed: label and options now say so; idle timer open (T3) |
-| (b) `exportData()` N+1 | Open (T8) |
+| (b) `exportData()` N+1 | Fixed (T8, batched export) |
 | (c) `ClipboardHelper` dead `SDK_INT >= P` branch | Fixed; the helper was rewritten |
 | (d) Kotlin packages still `com.example.*` | Open, deliberate (T11) |
 
