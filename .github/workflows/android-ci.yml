@@ -43,6 +43,9 @@ jobs:
       - name: Design system check
         run: bash .github/scripts/design_check.sh
 
+      - name: Unused imports check (ktlint)
+        run: bash .github/scripts/unused_imports_check.sh
+
       - name: Unit tests and debug APK
         run: |
           chmod +x ./gradlew
