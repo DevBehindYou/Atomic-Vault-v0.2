@@ -15,7 +15,22 @@ Other files in the repo root that matter: `AUDIT-REPORT.md` (an earlier
 static-only audit; parts of it were wrong, see the change log) and
 `atomicvault_design_system_reference/` (the earlier dark visual reference, superseded by `docs/design/ATOMIC-DESIGN-SYSTEM.md`, see D15).
 
-## Status (2026-10-05)
+## Status (2026-10-06)
+
+- Active branch: `claude/stoic-lamport-t601ql`. Since the last status it
+  gained, each through a pull request with green CI: TalkBack labels (T7, #2),
+  the emulator fingerprint check (T2, #3), the lint clean-up (T9, #4),
+  dependency fixes (#5), retired tables dropped (#6), unused imports removed
+  and checked in CI (T10, #7), the Keystore-sealed vault envelope replacing
+  `security-crypto` (H3, #8), the SQLCipher artifact swap plus an upgrade
+  check that unlocks an old vault with the new build (#9), and the toolchain
+  and SDK 36 upgrade (H2, #10; CI #96 green). Not merged, not phone-tested;
+  `main` is untouched.
+- Next user steps: decide on the idle auto-lock (U4 / T3), look at the CI
+  snapshots, do the phone test, then the 0.3.0 / 0.4.0 version bumps and the
+  merge to `main`. The package rename (T11) follows the release.
+
+### Status (2026-10-05)
 
 - Active branch: `claude/stoic-lamport-t601ql`, which continues
   `claude/atomic-vault-analysis-1fj2ok` (same history plus steps 7.5c, 7.3,
