@@ -5,6 +5,21 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Password history
+
+- When a login's password changes (in the editor or through an Autofill
+  save), the old one is kept, sealed like every other secret, in a new
+  `password_history` table: the last 10 per login, newest first.
+- The item's detail screen shows **Previous passwords** with the date each
+  was replaced, hidden until revealed one by one, with copy and **Clear**.
+- Deleting a login or restoring a backup removes its history. History is
+  not written to backup files.
+- The table is created on open (`CREATE TABLE IF NOT EXISTS`), so existing
+  vaults gain it without a migration step.
+- Tests: `PasswordHistoryDeviceTest` (real SQLCipher on the emulator: order,
+  no entry when unchanged, limit of 10, clear and delete, stored encrypted);
+  `DdlTest` checks the table is created.
+
 ### Toolchain and SDK 36 (Phase 5, H2)
 
 - AGP 8.8.2 -> 8.13.2, Gradle 8.13, Kotlin 2.2.21, KSP 2.3.12;

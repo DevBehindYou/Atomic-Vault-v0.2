@@ -59,6 +59,11 @@ Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVau
 - [ ] Audit tab with a payment card and an identity in the vault: they are not counted as "empty password".
 - [ ] Settings > Privacy proof: "Screen capture protection" is a pass and "No keyboard service" is a pass. The security timeline shows no "chain broken".
 
+## 4c. Password history
+
+- [ ] Change a login's password twice: its detail screen lists the two earlier ones under Previous passwords, newest first; reveal and copy work.
+- [ ] Clear removes them; deleting the login and adding it again shows no history.
+
 ## 5. Auto-lock
 
 Settings now reads **Lock after leaving the app**: Immediately, 1, 5 or 15 min.

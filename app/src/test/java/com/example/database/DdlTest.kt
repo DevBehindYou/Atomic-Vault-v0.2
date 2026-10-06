@@ -29,7 +29,7 @@ class DdlTest {
 
     @Test
     fun `tables the app uses are still created`() {
-        for (table in listOf("folder", "credential_item", "custom_field", "vault_settings", "tag", "credential_tag")) {
+        for (table in listOf("folder", "credential_item", "custom_field", "vault_settings", "tag", "credential_tag", "password_history")) {
             assertTrue(
                 "$table missing",
                 Ddl.STATEMENTS.any { Regex("CREATE TABLE IF NOT EXISTS $table\\s*\\(").containsMatchIn(it) }

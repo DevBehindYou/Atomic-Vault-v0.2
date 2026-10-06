@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -40,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.crypto.Totp
 import com.example.database.CredentialPlain
+import com.example.database.PasswordHistoryEntry
 import com.example.security.ClipboardHelper
 import com.example.trust.TrustLedger
 import com.example.ui.components.AtomicBar
@@ -86,7 +88,10 @@ fun ItemDetailScreen(
     /** Changes when the item is saved (its updatedAt), so returning from EDIT shows the new values. */
     refreshKey: Any? = null,
     /** False in the wide-screen side pane, where the list beside it is the way back. */
-    showBack: Boolean = true
+    showBack: Boolean = true,
+    /** Earlier passwords of a login, newest first. */
+    onLoadHistory: (suspend (String) -> List<PasswordHistoryEntry>)? = null,
+    onClearHistory: ((String, () -> Unit) -> Unit)? = null
 ) {
     val colors = AtomicTheme.colors
     val context = LocalContext.current
@@ -94,6 +99,11 @@ fun ItemDetailScreen(
     val scope = rememberCoroutineScope()
     val load by produceState<DetailLoad>(DetailLoad.Loading, itemId, refreshKey) {
         value = DetailLoad.Ready(withContext(Dispatchers.IO) { onLoadItem(itemId) })
+    }
+
+    var historyVersion by remember { mutableIntStateOf(0) }
+    val history by produceState(emptyList<PasswordHistoryEntry>(), itemId, refreshKey, historyVersion) {
+        value = onLoadHistory?.let { load -> withContext(Dispatchers.IO) { load(itemId) } }.orEmpty()
     }
 
     fun copy(label: String, value: String) {
@@ -146,7 +156,13 @@ fun ItemDetailScreen(
                     modifier = Modifier.padding(AtomicSpacing.lg)
                 )
             } else {
-                DetailBody(l.item, onCopy = ::copy, modifier = Modifier.weight(1f))
+                DetailBody(
+                    l.item,
+                    onCopy = ::copy,
+                    modifier = Modifier.weight(1f),
+                    history = history,
+                    onClearHistory = onClearHistory?.let { clear -> { clear(itemId) { historyVersion++ } } }
+                )
                 Column(modifier = Modifier.fillMaxWidth()) {
                     AtomicRule()
                     Column(modifier = Modifier.padding(AtomicSpacing.lg), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
@@ -166,7 +182,13 @@ fun ItemDetailScreen(
 }
 
 @Composable
-private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, modifier: Modifier = Modifier) {
+private fun DetailBody(
+    item: CredentialPlain,
+    onCopy: (String, String) -> Unit,
+    modifier: Modifier = Modifier,
+    history: List<PasswordHistoryEntry> = emptyList(),
+    onClearHistory: (() -> Unit)? = null
+) {
     val colors = AtomicTheme.colors
     val context = LocalContext.current
     var revealed by remember(item.id) { mutableStateOf(false) }
@@ -222,6 +244,8 @@ private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, 
             }
 
             TotpSection(item.totpSecret, onCopy)
+
+            if (isLogin) PasswordHistorySection(history, onCopy, onClearHistory)
 
             if (isLogin) FillReceipts(item)
 
