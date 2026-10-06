@@ -5,6 +5,20 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Import logins from other password managers (CSV)
+
+- Backup and restore gains an **Import CSV** tab: logins from a CSV export
+  of Google Password Manager / Chrome, Bitwarden, 1Password, KeePass,
+  KeePassXC, Firefox, or any file with recognisable column names (name or
+  title, url, username, password, notes, totp).
+- Adds to the vault, never replaces it. A login already in the vault (same
+  username, password and site) is skipped; Bitwarden cards and notes are
+  skipped and counted. Chrome's `android://...@package` app logins become
+  app logins. The import can be undone until the vault locks.
+- The screen warns that a CSV file is unencrypted and should be deleted.
+- Tests: `CsvImportTest` (quoting, line breaks in fields, byte-order mark,
+  each format, duplicates, refused files).
+
 ### Toolchain and SDK 36 (Phase 5, H2)
 
 - AGP 8.8.2 -> 8.13.2, Gradle 8.13, Kotlin 2.2.21, KSP 2.3.12;

@@ -59,6 +59,12 @@ Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVau
 - [ ] Audit tab with a payment card and an identity in the vault: they are not counted as "empty password".
 - [ ] Settings > Privacy proof: "Screen capture protection" is a pass and "No keyboard service" is a pass. The security timeline shows no "chain broken".
 
+## 4b. Import from another password manager
+
+- [ ] Export passwords from Google Password Manager (passwords.google.com > Settings > Export) and import the CSV under Backup and restore > Import CSV: the count matches, a login fills through Autofill.
+- [ ] Import the same file again: everything is skipped, nothing is duplicated.
+- [ ] Undo import: the vault is as before.
+
 ## 5. Auto-lock
 
 Settings now reads **Lock after leaving the app**: Immediately, 1, 5 or 15 min.

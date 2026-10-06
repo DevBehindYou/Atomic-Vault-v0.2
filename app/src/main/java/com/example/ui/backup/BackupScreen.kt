@@ -53,7 +53,9 @@ fun BackupScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     /** Puts back the vault as it was before the last restore (kept in memory until lock). */
-    onUndoRestore: ((onResult: (Result<Int>) -> Unit) -> Unit)? = null
+    onUndoRestore: ((onResult: (Result<Int>) -> Unit) -> Unit)? = null,
+    /** Adds logins from another password manager's CSV export: (added, skipped). */
+    onImportCsv: ((bytes: ByteArray, onResult: (Result<Pair<Int, Int>>) -> Unit) -> Unit)? = null
 ) {
     val context = LocalContext.current
     var restoredCount by remember { mutableStateOf<Int?>(null) }
@@ -179,10 +181,16 @@ fun BackupScreen(
                 .padding(innerPadding)
         ) {
             AtomicSegmented(
-                options = listOf(0, 1),
+                options = if (onImportCsv != null) listOf(0, 1, 2) else listOf(0, 1),
                 selected = selectedTab,
                 onSelect = { selectedTab = it },
-                label = { if (it == 0) "Export" else "Restore" },
+                label = {
+                    when (it) {
+                        0 -> "Export"
+                        1 -> "Restore"
+                        else -> "Import CSV"
+                    }
+                },
                 modifier = Modifier.padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.md),
                 testTagPrefix = "backup_tab_"
             )
@@ -193,7 +201,9 @@ fun BackupScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(AtomicSpacing.lg)
             ) {
-                if (selectedTab == 0) {
+                if (selectedTab == 2 && onImportCsv != null) {
+                    CsvImportPane(onImportCsv = onImportCsv, onUndo = onUndoRestore, onDone = onBack)
+                } else if (selectedTab == 0) {
                     // EXPORT VIEW
                     Text(
                         text = "Saves every item to one encrypted file, locked with a passphrase you choose here " +

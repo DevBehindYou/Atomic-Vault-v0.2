@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.backup.BackupCodec
+import com.example.backup.CsvImport
 import com.example.crypto.Argon2Kdf
 import com.example.crypto.DekCodec
 import com.example.crypto.MasterPassword
@@ -613,6 +614,35 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 reloadVaultData()
                 withContext(Dispatchers.Main) { onResult(Result.success(data.items.size)) }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { onResult(Result.failure(e)) }
+            }
+        }
+    }
+
+    /**
+     * Adds the logins from another password manager's CSV export. Rows that
+     * are already in the vault are skipped; the vault as it was can be put
+     * back with [undoLastRestore] until it locks. Result: (added, skipped).
+     */
+    fun importCsv(bytes: ByteArray, onResult: (Result<Pair<Int, Int>>) -> Unit) {
+        if (!VaultSession.isUnlocked) {
+            onResult(Result.failure(VaultLockedException()))
+            return
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                val parsed = CsvImport.parse(bytes.toString(Charsets.UTF_8))
+                val added = VaultSession.use { session ->
+                    val before = session.repository.exportData()
+                    val fresh = CsvImport.withoutDuplicates(parsed.items, before.items)
+                    fresh.forEach { session.repository.createItem(it) }
+                    if (fresh.isNotEmpty()) undoSnapshot = before
+                    fresh.size
+                }
+                reloadVaultData()
+                val skipped = parsed.skippedRows + parsed.items.size - added
+                withContext(Dispatchers.Main) { onResult(Result.success(added to skipped)) }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { onResult(Result.failure(e)) }
             }
