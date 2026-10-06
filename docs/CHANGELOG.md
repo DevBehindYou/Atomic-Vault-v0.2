@@ -5,6 +5,23 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Toolchain and SDK 36 (Phase 5, H2)
+
+- AGP 8.8.2 -> 8.13.2, Gradle 8.13, Kotlin 2.2.21, KSP 2.3.12;
+  `compileSdk` and `targetSdk` 35 -> 36 (app and `autofilltest`).
+- Libraries: Compose BOM 2025.10.00, core-ktx 1.17.0, lifecycle 2.9.4,
+  activity-compose 1.11.0, navigation-compose 2.9.5, SQLCipher 4.19.1,
+  Roborazzi 1.76.0. `material-icons-extended` is pinned at 1.7.8 (its last
+  release) so it resolves whatever the BOM lists.
+- Fix found by the minified emulator check: the newer R8 put a cast to
+  `InlineSuggestionsRequest` (an Android 11 class) on the shared
+  `onFillRequest` path, crashing the Autofill service on Android 9/10 with
+  `NoClassDefFoundError`. Shared code now carries the inline request and
+  presentation as `Parcelable`; every Android 11 inline type lives in
+  `@RequiresApi(R)` `InlineApi30` and is reached only behind an SDK check.
+- Not taken: AGP 9 and Kotlin 2.4 (bigger migrations, separate change);
+  biometric stays on 1.2.0-alpha05 (the fingerprint check covers it).
+
 ### Vault key envelope: off the deprecated security-crypto (Phase 5, H3)
 
 - The envelope (salt, Argon2id parameters, password-wrapped data key) is now

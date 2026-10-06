@@ -24,7 +24,7 @@ Goal set by the user:
 | 2. Data safety | Done | `c1bd5cc` | Run #27 green (unit, lint, emulator) |
 | 3. Gboard Autofill | Done in code | `84e4fdc` + lint fix `6067d63` | #28 failed on one lint error (fixed); #33 green with runtime proof: Android received a locked response with authentication (`hasAuthentication`, `showing: true`), the "Autofill UI" popup was tapped, and "Fill with AtomicVault" opened (`1b8a860`) |
 | 4. Performance + 2FA codes | Done in code | `d210431` | Run #30 green (after #29 test-expectation fix `3cf6f99`) |
-| 5. Platform health | Partly: TOTP engine, Moshi codegen, dead backup branch closed. Open: SQLCipher artifact swap, SDK/AGP upgrade, `security-crypto` replacement, package rename | | |
+| 5. Platform health | Mostly: TOTP engine, Moshi codegen, dead backup branch closed, SQLCipher artifact swap, `security-crypto` replacement, SDK 36 / AGP 8.13 upgrade. Open: package rename (after the release) | | |
 | 6. Differentiators | Phishing guard `744055c`, fill receipts `6067d63`, India identity fields `4fc26e1`. change-password shortcut and backup check ("restore drill") done. Open: offline breach check (needs a dataset), QR transfer | | Run #30 green |
 | 7. Atomic design system (UI/UX rebuild), ships as **0.4.0** | Done in code, all screens, including the card/identity read view (7.5b), one editor scaffold (7.5c), bottom sheets (7.3), tablet list + detail (8.9) and size tokens (7.9b); what remains is the visual review and phone test, see [design/IMPLEMENTATION-REPORT.md](design/IMPLEMENTATION-REPORT.md) | `5eedb09`…`de38dd7` | #36, #37, #39, #40, #42, #44, #45, #46, #49 green (emulator incl. Autofill tap) |
 
@@ -124,7 +124,7 @@ IDs are used by the phases below. **P0** = data loss, lockout or security hole.
 | ID | Pri | Finding |
 |---|---|---|
 | H1 | P1 | `net.zetetic:android-database-sqlcipher` 4.5.4 is the deprecated artifact. Its replacement is `net.zetetic:sqlcipher-android`. Also check the native libs for 16 KB page-size alignment, which Google Play requires for new uploads (`zipalign -c -P 16` / APK Analyzer). |
-| H2 | P1 | `targetSdk 35`: check the Play Console for this year's minimum target API before the next upload. |
+| H2 | Done | `targetSdk` 36 with AGP 8.13.2 / Kotlin 2.2.21 (see the change log). |
 | H3 | P2 | `androidx.security:security-crypto` is deprecated upstream. |
 | H4 | P3 | Dead code: `AmbientVaultBackground` (unused), the `vault` table (never written), `audit_log_entry` (written on every change, never read, grows forever), `autofill_service_config.xml`, unused `parent_id` folder nesting. |
 | H5 | P3 | Unmerged branch `fix/v0.2-audit-and-bugfixes` (3 backup-hardening commits, Sept 5) is not mentioned anywhere. Diff it against current `BackupCodec`/`BackupFile` and either port it or close it. |
