@@ -30,7 +30,7 @@ class VaultMetaStoreMigrationTest {
     private val wrapped = ByteArray(60) { (it * 7).toByte() }
 
     /** Reversible stand-in for the Keystore sealer, with switchable failures. */
-    private class FakeSealer(var failSeal: Boolean = false, var corruptOpen: Boolean = false) : EnvelopeSealer {
+    private inner class FakeSealer(var failSeal: Boolean = false, var corruptOpen: Boolean = false) : EnvelopeSealer {
         override fun seal(plain: ByteArray): String {
             check(!failSeal) { "seal failed" }
             return "fake:" + Base64.encodeToString(plain.map { (it.toInt() xor 0x5A).toByte() }.toByteArray(), Base64.NO_WRAP)
