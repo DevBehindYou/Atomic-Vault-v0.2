@@ -424,7 +424,7 @@ private fun CustomFieldEditorRow(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Close,
-                        contentDescription = "Remove field",
+                        contentDescription = "Remove ${field.label.ifBlank { "this field" }}",
                         tint = AtomicTheme.colors.error
                     )
                 }
@@ -462,7 +462,8 @@ private fun CustomFieldEditorRow(
                 )
                 AtomicSwitch(
                     checked = field.isSensitive,
-                    onCheckedChange = { onUpdate(field.copy(isSensitive = it)) }
+                    onCheckedChange = { onUpdate(field.copy(isSensitive = it)) },
+                    label = "Mask ${field.label.ifBlank { "this field" }}"
                 )
             }
         }

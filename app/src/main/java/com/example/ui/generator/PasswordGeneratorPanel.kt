@@ -197,7 +197,7 @@ private fun GeneratorToggleRow(
                 Text(text = label, style = AtomicType.body, color = colors.textPrimary)
                 if (subtitle != null) Text(text = subtitle, style = AtomicType.bodySmall, color = colors.textSecondary)
             }
-            AtomicSwitch(checked = checked, onCheckedChange = onCheckedChange)
+            AtomicSwitch(checked = checked, onCheckedChange = onCheckedChange, label = label)
         }
         if (!last) AtomicHairline()
     }

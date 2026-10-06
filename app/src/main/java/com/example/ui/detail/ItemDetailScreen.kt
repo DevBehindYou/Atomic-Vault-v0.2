@@ -204,7 +204,8 @@ private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, 
                         "password" -> AtomicFactRow(
                             "Password",
                             if (revealed) item.password else "•".repeat(12),
-                            last = last
+                            last = last,
+                            spokenValue = if (revealed) null else "Hidden"
                         ) {
                             AtomicIconButton(
                                 if (revealed) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
@@ -273,7 +274,13 @@ private fun DetailBody(item: CredentialPlain, onCopy: (String, String) -> Unit, 
                                 field.value.filter { it.isDigit() }.length >= 12 -> "•••• " + field.value.filter { it.isDigit() }.takeLast(4)
                                 else -> "•".repeat(8)
                             },
-                            last = i == shown.lastIndex
+                            last = i == shown.lastIndex,
+                            spokenValue = when {
+                                !field.isSensitive || revealed -> null
+                                field.value.filter { it.isDigit() }.length >= 12 ->
+                                    "Hidden, ends in " + field.value.filter { it.isDigit() }.takeLast(4).toList().joinToString(" ")
+                                else -> "Hidden"
+                            }
                         ) {
                             if (field.isSensitive) {
                                 AtomicIconButton(

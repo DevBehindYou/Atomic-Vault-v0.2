@@ -88,7 +88,8 @@ internal fun SecuritySection(
             AtomicSwitch(
                 checked = biometricEnabled,
                 onCheckedChange = onUpdateBiometric,
-                modifier = Modifier.testTag("settings_biometric_switch")
+                modifier = Modifier.testTag("settings_biometric_switch"),
+                label = "Fingerprint unlock"
             )
         }
     }

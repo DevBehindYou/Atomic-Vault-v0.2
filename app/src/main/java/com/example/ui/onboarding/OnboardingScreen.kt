@@ -177,7 +177,8 @@ fun OnboardingScreen(
                     AtomicSwitch(
                         checked = biometricEnabled,
                         onCheckedChange = { biometricEnabled = it },
-                        modifier = Modifier.testTag("onboarding_biometric_toggle")
+                        modifier = Modifier.testTag("onboarding_biometric_toggle"),
+                        label = "Fingerprint unlock"
                     )
                 }
             }

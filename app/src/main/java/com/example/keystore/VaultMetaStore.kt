@@ -59,6 +59,9 @@ data class KdfParams(val memoryKiB: Int, val iterations: Int, val parallelism: I
  * worked before and fails today reports [isUnavailable] instead, and the app
  * shows an error rather than onboarding.
  */
+// commit(), not apply(): the store kind and the key envelope must be on disk
+// before the vault database is created or opened, never written later.
+@android.annotation.SuppressLint("ApplySharedPref")
 class VaultMetaStore(context: Context) {
 
     private val prefs: SharedPreferences?

@@ -181,3 +181,46 @@ jobs:
           path: emulator-artifacts/
           if-no-files-found: warn
           retention-days: 14
+
+  # Fingerprint unlock with the emulator's virtual sensor (TASKS T2): enrols
+  # a fingerprint, arms unlock in onboarding, and checks the right finger,
+  # an unknown finger and a cancelled prompt.
+  emulator-biometric:
+    name: Emulator fingerprint check
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: AtomicVault-Debug-APK-${{ github.run_number }}
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Enrol a fingerprint, arm unlock, unlock, reject, cancel
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: bash .github/scripts/emulator_biometric_check.sh apk/app-debug.apk
+
+      - name: Upload fingerprint check logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Emulator-biometric-${{ github.run_number }}
+          path: emulator-artifacts/
+          if-no-files-found: warn
+          retention-days: 14

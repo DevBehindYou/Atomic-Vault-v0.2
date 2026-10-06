@@ -40,6 +40,9 @@ object VaultDatabase {
             for (sql in Ddl.STATEMENTS) {
                 db.execSQL(sql)
             }
+            for (sql in Ddl.RETIRED) {
+                db.execSQL(sql)
+            }
             migrateAddItemTypeColumn(db)
 
             val count = db.rawQuery("SELECT COUNT(*) FROM vault_settings;", null).use { cursor ->
