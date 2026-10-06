@@ -100,6 +100,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // OSGi bundle metadata, shipped by both bcprov (1.81+) and jspecify;
+            // meaningless on Android and a duplicate-path packaging failure.
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
 

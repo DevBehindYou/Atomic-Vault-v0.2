@@ -373,7 +373,6 @@ class VaultRepositoryImpl(
             setTagsForItem(id, input.tagIds)
             val assignedTags = getTagsForItem(id)
 
-            logAudit(id, "create", now)
             db.setTransactionSuccessful()
 
             return CredentialPlain(
@@ -434,7 +433,6 @@ class VaultRepositoryImpl(
             setTagsForItem(id, input.tagIds)
             val assignedTags = getTagsForItem(id)
 
-            logAudit(id, "update", now)
             db.setTransactionSuccessful()
 
             return CredentialPlain(
@@ -458,27 +456,15 @@ class VaultRepositoryImpl(
     }
 
     override fun deleteItem(id: String) {
-        val now = System.currentTimeMillis()
         db.beginTransaction()
         try {
             db.delete("custom_field", "item_id = ?", arrayOf(id))
             db.delete("credential_tag", "item_id = ?", arrayOf(id))
             db.delete("credential_item", "id = ?", arrayOf(id))
-            logAudit(id, "delete", now)
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
-    }
-
-    private fun logAudit(itemId: String?, action: String, timestamp: Long) {
-        val cv = ContentValues().apply {
-            put("id", genId())
-            put("item_id", itemId)
-            put("action", action)
-            put("timestamp", timestamp)
-        }
-        db.insert("audit_log_entry", null, cv)
     }
 
     override fun getSettings(): VaultSettingsPlain {
@@ -655,7 +641,6 @@ class VaultRepositoryImpl(
             }
             db.update("vault_settings", sCv, "id = 1", null)
 
-            logAudit(null, "import", now)
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
