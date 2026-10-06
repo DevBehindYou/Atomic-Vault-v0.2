@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.password.Strength
 import com.example.security.PasswordIssue
@@ -263,7 +264,7 @@ fun AtomicButton(
     Box(
         modifier = modifier
             .defaultMinSize(minHeight = height)
-            .offset(x = sink, y = sink)
+            .offset { IntOffset(sink.roundToPx(), sink.roundToPx()) }
             .hardShadow(shadow, colors.shadow, shape)
             .alpha(if (enabled) 1f else 0.4f)
             .clip(shape)
@@ -420,7 +421,7 @@ fun IssueBadge(
         PasswordIssue.WEAK -> "Weak" to AtomicTagTone.Strong
         PasswordIssue.EMPTY -> "No password" to AtomicTagTone.Quiet
     }
-    AtomicTag(label, tone, modifier)
+    AtomicTag(label = label, modifier = modifier, tone = tone)
 }
 
 /**

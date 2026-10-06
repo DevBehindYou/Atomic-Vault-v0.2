@@ -200,8 +200,8 @@ enum class AtomicTagTone { Accent, Danger, Strong, Quiet }
 @Composable
 fun AtomicTag(
     label: String,
-    tone: AtomicTagTone = AtomicTagTone.Accent,
     modifier: Modifier = Modifier,
+    tone: AtomicTagTone = AtomicTagTone.Accent,
     /** False for user-named tags, which keep their case. */
     caps: Boolean = true
 ) {
