@@ -5,6 +5,19 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Accessibility: switches say what they switch, secrets are read as hidden (TASKS T7)
+
+- `AtomicSwitch` takes a `label`. TalkBack now says "Fingerprint unlock,
+  switch, on" instead of "Switch, on"; the generator character sets, the
+  fingerprint switch in onboarding and Settings, and a custom field's mask
+  switch ("Mask Recovery code") are labelled.
+- Masked values in the read view are read as "Hidden" (cards: "Hidden, ends
+  in 4 0 2 1") instead of a run of bullet characters. Revealing restores the
+  real value for TalkBack too.
+- A custom field's remove button names the field ("Remove Recovery code").
+- Tests: labelled switch found by name and toggles; hidden password and card
+  fields expose the spoken text and drop it when revealed.
+
 ### CI: the minified build goes through the emulator check too (TASKS T5)
 
 - The verify job also builds `assembleInternal`: the release build type with

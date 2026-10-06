@@ -237,6 +237,15 @@ class RegressionUiTest {
     }
 
     @Test
+    fun `a labelled switch is announced by its name`() {
+        show {
+            var on by remember { mutableStateOf(false) }
+            AtomicSwitch(checked = on, onCheckedChange = { on = it }, label = "Fingerprint unlock")
+        }
+        rule.onNodeWithContentDescription("Fingerprint unlock").assertIsOff().performClick().assertIsOn()
+    }
+
+    @Test
     fun `a chip reports its selected state`() {
         show { FilterChipPill(label = "Work", selected = true, onClick = {}, testTag = "chip") }
         rule.onNodeWithTag("chip").assertIsSelected()

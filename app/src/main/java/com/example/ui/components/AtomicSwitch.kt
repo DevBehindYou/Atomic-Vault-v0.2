@@ -18,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
@@ -41,7 +43,9 @@ fun AtomicSwitch(
     checked: Boolean,
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    /** What the switch turns on, read by TalkBack with its state ("Fingerprint unlock, switch, on"). */
+    label: String? = null
 ) {
     val progress = remember { Animatable(if (checked) 1f else 0f) }
 
@@ -71,7 +75,8 @@ fun AtomicSwitch(
     Box(
         modifier = modifier
             .minimumInteractiveComponentSize()
-            .then(toggle),
+            .then(toggle)
+            .then(if (label != null) Modifier.semantics { contentDescription = label } else Modifier),
         contentAlignment = Alignment.Center
     ) {
         Box(
