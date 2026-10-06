@@ -46,7 +46,7 @@ object VaultDatabase {
             }
             migrateAddItemTypeColumn(db)
 
-            val count = db.rawQuery("SELECT COUNT(*) FROM vault_settings;", null).use { cursor ->
+            val count = db.rawQuery("SELECT COUNT(*) FROM vault_settings;", NO_ARGS).use { cursor ->
                 if (cursor.moveToFirst()) cursor.getInt(0) else 0
             }
 
@@ -64,7 +64,7 @@ object VaultDatabase {
     }
 
     private fun migrateAddItemTypeColumn(db: SQLiteDatabase) {
-        val hasColumn = db.rawQuery("PRAGMA table_info(credential_item);", null).use { cursor ->
+        val hasColumn = db.rawQuery("PRAGMA table_info(credential_item);", NO_ARGS).use { cursor ->
             val nameIndex = cursor.getColumnIndex("name")
             generateSequence {
                 if (cursor.moveToNext()) cursor.getString(nameIndex) else null

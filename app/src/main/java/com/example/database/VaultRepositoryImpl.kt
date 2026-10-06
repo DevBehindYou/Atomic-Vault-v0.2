@@ -14,7 +14,7 @@ class VaultRepositoryImpl(
 
     override fun listFolders(): List<FolderPlain> {
         val folders = mutableListOf<FolderPlain>()
-        db.rawQuery("SELECT id, name, parent_id FROM folder ORDER BY name COLLATE NOCASE ASC;", null).use { cursor ->
+        db.rawQuery("SELECT id, name, parent_id FROM folder ORDER BY name COLLATE NOCASE ASC;", NO_ARGS).use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getString(0)
                 val name = cursor.getString(1)
@@ -60,7 +60,7 @@ class VaultRepositoryImpl(
 
     override fun listTags(): List<TagPlain> {
         val tags = mutableListOf<TagPlain>()
-        db.rawQuery("SELECT id, name, color FROM tag ORDER BY name COLLATE NOCASE ASC;", null).use { cursor ->
+        db.rawQuery("SELECT id, name, color FROM tag ORDER BY name COLLATE NOCASE ASC;", NO_ARGS).use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getString(0)
                 val name = cursor.getString(1)
@@ -483,7 +483,7 @@ class VaultRepositoryImpl(
 
     override fun getSettings(): VaultSettingsPlain {
         var settings = VaultSettingsPlain()
-        db.rawQuery("SELECT auto_lock_seconds, biometric_enabled FROM vault_settings WHERE id = 1;", null).use { cursor ->
+        db.rawQuery("SELECT auto_lock_seconds, biometric_enabled FROM vault_settings WHERE id = 1;", NO_ARGS).use { cursor ->
             if (cursor.moveToFirst()) {
                 val autoLock = cursor.getInt(0)
                 val bio = cursor.getInt(1) == 1
@@ -513,7 +513,7 @@ class VaultRepositoryImpl(
         val tagsByItem = tagsByItem()
         val fieldsByItem = HashMap<String, MutableList<CustomFieldPlain>>()
         val damagedItems = HashSet<String>()
-        db.rawQuery("SELECT item_id, id, label, encrypted_value, is_sensitive FROM custom_field;", null).use { c ->
+        db.rawQuery("SELECT item_id, id, label, encrypted_value, is_sensitive FROM custom_field;", NO_ARGS).use { c ->
             while (c.moveToNext()) {
                 val itemId = c.getString(0)
                 val itemOpener = FieldOpener(dek)
