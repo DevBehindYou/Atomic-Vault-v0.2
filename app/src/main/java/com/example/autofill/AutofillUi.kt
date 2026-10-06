@@ -1,24 +1,17 @@
 package com.example.autofill
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
-import android.graphics.drawable.Icon
 import android.os.Build
+import android.os.Parcelable
 import android.service.autofill.Dataset
 import android.service.autofill.FillResponse
-import android.service.autofill.InlinePresentation
 import android.service.autofill.SaveInfo
 import android.view.autofill.AutofillId
 import android.view.autofill.AutofillValue
-import android.view.inputmethod.InlineSuggestionsRequest
 import android.widget.RemoteViews
-import android.widget.inline.InlinePresentationSpec
-import androidx.annotation.RequiresApi
-import androidx.autofill.inline.UiVersions
-import androidx.autofill.inline.v1.InlineSuggestionUi
 import com.atomicvault.android.R
 import com.example.MainActivity
 import java.util.concurrent.atomic.AtomicInteger
@@ -56,41 +49,15 @@ object AutofillUi {
      * a chip shows its attribution, which opens AtomicVault -- never the fill
      * itself (it used to be the fill's own auth intent).
      */
-    @SuppressLint("RestrictedApi")
     fun inline(
         context: Context,
-        request: InlineSuggestionsRequest?,
+        request: Parcelable?,
         index: Int,
         title: String,
         subtitle: String?
-    ): InlinePresentation? {
+    ): Parcelable? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || request == null) return null
-        return inlineApi30(context, request, index, title, subtitle)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.R)
-    @SuppressLint("RestrictedApi")
-    private fun inlineApi30(
-        context: Context,
-        request: InlineSuggestionsRequest,
-        index: Int,
-        title: String,
-        subtitle: String?
-    ): InlinePresentation? {
-        if (index >= request.maxSuggestionCount) return null
-        val specs = request.inlinePresentationSpecs
-        val spec: InlinePresentationSpec = specs.getOrNull(index) ?: specs.lastOrNull() ?: return null
-        return try {
-            if (!UiVersions.getVersions(spec.style).contains(UiVersions.INLINE_UI_VERSION_1)) return null
-            val content = InlineSuggestionUi.newContentBuilder(attribution(context))
-                .setTitle(title)
-                .setContentDescription(if (subtitle.isNullOrBlank()) "AtomicVault: $title" else "AtomicVault: $title, $subtitle")
-                .setStartIcon(Icon.createWithResource(context, R.mipmap.ic_launcher))
-            if (!subtitle.isNullOrBlank()) content.setSubtitle(subtitle)
-            InlinePresentation(content.build().slice, spec, false)
-        } catch (e: Exception) {
-            null
-        }
+        return InlineApi30.presentation(context, request, attribution(context), index, title, subtitle)
     }
 
     private fun attribution(context: Context): PendingIntent = PendingIntent.getActivity(
@@ -131,7 +98,7 @@ object AutofillUi {
         values: List<AutofillValue?>?,
         title: String,
         subtitle: String?,
-        inlineRequest: InlineSuggestionsRequest?,
+        inlineRequest: Parcelable?,
         index: Int,
         auth: IntentSender?,
         /** Reported back in the fill event history when the user picks this suggestion. */
@@ -144,8 +111,7 @@ object AutofillUi {
         fields.forEachIndexed { i, id ->
             val value = values?.getOrNull(i)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
-                @Suppress("DEPRECATION")
-                builder.setValue(id, value, null, presentation, inlinePresentation)
+                InlineApi30.setValue(builder, id, value, presentation, inlinePresentation)
             } else {
                 @Suppress("DEPRECATION")
                 builder.setValue(id, value, presentation)
@@ -185,7 +151,7 @@ object AutofillUi {
     fun lockedResponse(
         context: Context,
         parsed: ParsedForm,
-        inlineRequest: InlineSuggestionsRequest?,
+        inlineRequest: Parcelable?,
         auth: IntentSender
     ): FillResponse {
         val ids = parsed.fillableIds.toTypedArray()
@@ -194,8 +160,7 @@ object AutofillUi {
         val inlinePresentation = inline(context, inlineRequest, 0, "AtomicVault", "Unlock to fill")
         val builder = FillResponse.Builder()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && inlinePresentation != null) {
-            @Suppress("DEPRECATION")
-            builder.setAuthentication(ids, auth, presentation, inlinePresentation)
+            InlineApi30.setAuthentication(builder, ids, auth, presentation, inlinePresentation)
         } else {
             @Suppress("DEPRECATION")
             builder.setAuthentication(ids, auth, presentation)

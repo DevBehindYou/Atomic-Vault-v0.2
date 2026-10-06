@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.atomicvault.android"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.atomicvault.android"
         minSdk = 28 // Required minimum Android SDK 9.0 (Pie)
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 2
         versionName = "0.2.1"
 

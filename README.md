@@ -13,7 +13,7 @@ internet permission.
 - Android Keystore and BiometricPrompt for fingerprint unlock
 - Android Autofill framework (no custom keyboard: it was removed in 0.3.0)
 - Coroutines, Moshi (generated adapters)
-- `minSdk` 28, `compileSdk` / `targetSdk` 35
+- `minSdk` 28, `compileSdk` / `targetSdk` 36
 
 ## Modules
 

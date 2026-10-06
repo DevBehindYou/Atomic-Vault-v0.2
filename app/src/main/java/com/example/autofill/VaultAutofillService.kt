@@ -3,6 +3,7 @@ package com.example.autofill
 import android.content.Intent
 import android.os.Build
 import android.os.CancellationSignal
+import android.os.Parcelable
 import android.service.autofill.AutofillService
 import android.service.autofill.FillCallback
 import android.service.autofill.FillRequest
@@ -10,7 +11,6 @@ import android.service.autofill.FillResponse
 import android.service.autofill.SaveCallback
 import android.service.autofill.SaveRequest
 import android.view.autofill.AutofillValue
-import android.view.inputmethod.InlineSuggestionsRequest
 import com.example.database.VaultSession
 import com.example.password.GeneratorOptions
 import com.example.password.PasswordGenerator
@@ -56,7 +56,7 @@ class VaultAutofillService : AutofillService() {
             callback.onSuccess(null)
             return
         }
-        val inlineRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) request.inlineSuggestionsRequest else null
+        val inlineRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) InlineApi30.request(request) else null
         val history = fillEventHistory
 
         val job = scope.launch {
@@ -77,7 +77,7 @@ class VaultAutofillService : AutofillService() {
         cancellationSignal.setOnCancelListener { job.cancel() }
     }
 
-    private fun buildResponse(parsed: ParsedForm, inlineRequest: InlineSuggestionsRequest?): FillResponse? {
+    private fun buildResponse(parsed: ParsedForm, inlineRequest: Parcelable?): FillResponse? {
         // Never fill AtomicVault's own screens (the app also opts out of Autofill).
         if (parsed.packageName == packageName) return null
         val form = parsed.form
@@ -131,7 +131,7 @@ class VaultAutofillService : AutofillService() {
         return builder.build()
     }
 
-    private fun lookalikeWarning(parsed: ParsedForm, inlineRequest: InlineSuggestionsRequest?): android.service.autofill.Dataset? {
+    private fun lookalikeWarning(parsed: ParsedForm, inlineRequest: Parcelable?): android.service.autofill.Dataset? {
         val domain = parsed.webDomain ?: return null
         val saved = VaultSession.useIfUnlocked { CredentialMatcher.savedDomains(it.db) } ?: return null
         val lookalike = PhishingGuard.findLookalike(domain, saved) ?: return null
@@ -151,7 +151,7 @@ class VaultAutofillService : AutofillService() {
      * not a stored secret, so it needs no unlock; the save prompt that follows
      * the sign-up stores it with the username.
      */
-    private fun newPasswordResponse(parsed: ParsedForm, inlineRequest: InlineSuggestionsRequest?): FillResponse {
+    private fun newPasswordResponse(parsed: ParsedForm, inlineRequest: Parcelable?): FillResponse {
         val generated = PasswordGenerator.generatePassword(GeneratorOptions(length = 20))
         val value = AutofillValue.forText(generated)
         val fields = parsed.form.passwords
