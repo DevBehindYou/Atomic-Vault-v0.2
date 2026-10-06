@@ -5,6 +5,15 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Unused imports removed, and kept out (TASKS T10)
+
+- 65 unused imports removed across 18 files (most left behind by the UI
+  rebuild and the size-token change), by ktlint's `no-unused-imports` rule.
+- New CI step `Unused imports check (ktlint)`
+  (`.github/scripts/unused_imports_check.sh`): ktlint 1.8.0 from Maven
+  Central, pinned by SHA-256, with only that one rule enabled. Run the same
+  script locally; add `--format` to the ktlint line to fix.
+
 ### CI: the minified build goes through the emulator check too (TASKS T5)
 
 - The verify job also builds `assembleInternal`: the release build type with

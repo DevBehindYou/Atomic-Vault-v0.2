@@ -52,7 +52,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
 import com.example.database.CredentialPreview
 import com.example.database.VaultItemType
 import com.example.ui.VaultUiState
