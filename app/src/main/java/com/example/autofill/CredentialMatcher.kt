@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.pm.verify.domain.DomainVerificationManager
 import android.content.pm.verify.domain.DomainVerificationUserState
 import android.os.Build
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 
 /**
  * Trust-level credential matcher, shared by VaultAutofillService's fill

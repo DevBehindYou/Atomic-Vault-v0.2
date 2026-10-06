@@ -2,7 +2,7 @@ package com.example.database
 
 import android.content.ContentValues
 import com.example.crypto.VaultCrypto
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import java.util.UUID
 
 class VaultRepositoryImpl(

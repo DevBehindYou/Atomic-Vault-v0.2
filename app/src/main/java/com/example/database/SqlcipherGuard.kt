@@ -1,6 +1,6 @@
 package com.example.database
 
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 
 object SqlcipherGuard {
     fun assertSqlcipherActive(db: SQLiteDatabase) {
