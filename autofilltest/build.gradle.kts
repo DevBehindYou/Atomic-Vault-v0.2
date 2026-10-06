@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.atomicvault.autofilltest"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.atomicvault.autofilltest"
         minSdk = 28
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1"
     }
