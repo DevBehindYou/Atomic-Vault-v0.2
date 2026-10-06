@@ -5,6 +5,17 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Dead code: two unused database tables removed (Phase 5, H4)
+
+- `vault` (an early copy of the key envelope, never read or written) and
+  `audit_log_entry` (item ids and actions written on every change but never
+  read, exported or shown, so it only grew) are no longer created, and are
+  dropped from existing vaults when they open (`DROP ... IF EXISTS`, run on
+  every open like the rest of the schema). Nothing the user sees changes;
+  the event log shown in the app is the separate, hash-chained Trust Ledger.
+- Test: the retired tables are never created, are dropped idempotently, and
+  every table in use is still created.
+
 ### CI: the minified build goes through the emulator check too (TASKS T5)
 
 - The verify job also builds `assembleInternal`: the release build type with
