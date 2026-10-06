@@ -75,6 +75,9 @@ fail() {
     grep -oE '(text|content-desc|resource-id)="[^"]+"' "$OUT/ui.xml" | sort -u | head -60 || true
   fi
   adb logcat -d > "$OUT/logcat.txt" || true
+  # Errors and exceptions, also in the job log.
+  echo "--- logcat errors (last 60) ---"
+  grep -E ' E |FATAL|Exception|Caused by|^\s+at ' "$OUT/logcat.txt" | grep -vE 'chatty|GnssHAL|ConnectivityService' | tail -60 || true
   exit 1
 }
 

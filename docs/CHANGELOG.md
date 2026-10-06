@@ -13,6 +13,22 @@ results are recorded in the plan's progress table.
   (`.github/scripts/unused_imports_check.sh`): ktlint 1.8.0 from Maven
   Central, pinned by SHA-256, with only that one rule enabled. Run the same
   script locally; add `--format` to the ktlint line to fix.
+### Database: the maintained SQLCipher library (Phase 5, H1)
+
+- `net.zetetic:android-database-sqlcipher` 4.5.4 (end of life) is replaced
+  by its successor `net.zetetic:sqlcipher-android` 4.13.0. The vault's data
+  key goes to `sqlite3_key` as the same raw bytes as before, and both are
+  SQLCipher 4, so existing vaults open unchanged. 4.13.0 is the newest
+  release that does not need the `compileSdk` 36 toolchain (4.18+ needs
+  Kotlin 2.2 and `androidx.sqlite` 2.7); moving further rides with that
+  upgrade.
+- The native library is loaded with `System.loadLibrary("sqlcipher")`; R8
+  keeps `net.zetetic.database.**`.
+- **New CI job: Upgrade check** (pull requests). The base branch's build
+  creates a vault holding a login, this branch's build is installed over it
+  (`adb install -r`, data kept), and must unlock it with the master password,
+  still show the login, and open again after a restart. It protects every
+  future storage change, not just this one.
 ### Accessibility: switches say what they switch, secrets are read as hidden (TASKS T7)
 
 - `AtomicSwitch` takes a `label`. TalkBack now says "Fingerprint unlock,

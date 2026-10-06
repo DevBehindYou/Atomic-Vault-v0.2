@@ -1,7 +1,7 @@
 package com.example.database
 
 import android.content.Context
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import java.io.File
 
 object VaultDatabase {
@@ -18,14 +18,18 @@ object VaultDatabase {
 
         synchronized(this) {
             if (!isInitialized) {
-                SQLiteDatabase.loadLibs(context.applicationContext)
+                // sqlcipher-android ships the native library; it is loaded by
+                // name instead of through the old SQLiteDatabase.loadLibs().
+                System.loadLibrary("sqlcipher")
                 isInitialized = true
             }
         }
 
         val dbFile = getDatabaseFile(context)
         return try {
-            val db = SQLiteDatabase.openOrCreateDatabase(dbFile.absolutePath, dek, null)
+            // The data key is passed as raw bytes to sqlite3_key, exactly as
+            // android-database-sqlcipher did, so existing vaults open unchanged.
+            val db = SQLiteDatabase.openOrCreateDatabase(dbFile.absolutePath, dek, null, null)
             SqlcipherGuard.assertSqlcipherActive(db)
             initTables(db)
             db
@@ -45,7 +49,7 @@ object VaultDatabase {
             }
             migrateAddItemTypeColumn(db)
 
-            val count = db.rawQuery("SELECT COUNT(*) FROM vault_settings;", null).use { cursor ->
+            val count = db.rawQuery("SELECT COUNT(*) FROM vault_settings;", NO_ARGS).use { cursor ->
                 if (cursor.moveToFirst()) cursor.getInt(0) else 0
             }
 
@@ -63,7 +67,7 @@ object VaultDatabase {
     }
 
     private fun migrateAddItemTypeColumn(db: SQLiteDatabase) {
-        val hasColumn = db.rawQuery("PRAGMA table_info(credential_item);", null).use { cursor ->
+        val hasColumn = db.rawQuery("PRAGMA table_info(credential_item);", NO_ARGS).use { cursor ->
             val nameIndex = cursor.getColumnIndex("name")
             generateSequence {
                 if (cursor.moveToNext()) cursor.getString(nameIndex) else null

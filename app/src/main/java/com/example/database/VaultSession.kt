@@ -1,7 +1,7 @@
 package com.example.database
 
 import android.content.Context
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import java.util.Arrays
 
 /** Thrown by [VaultSession.use] when no vault is open. */
