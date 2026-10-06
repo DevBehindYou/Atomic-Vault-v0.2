@@ -17,6 +17,17 @@ results are recorded in the plan's progress table.
 - A custom field's remove button names the field ("Remove Recovery code").
 - Tests: labelled switch found by name and toggles; hidden password and card
   fields expose the spoken text and drop it when revealed.
+### CI: fingerprint unlock is checked on an emulator (TASKS T2)
+
+- New job `Emulator fingerprint check` (`emulator_biometric_check.sh`): sets
+  a screen-lock PIN, enrols fingerprint 1 through Settings with the
+  emulator's virtual sensor, creates a vault with fingerprint unlock on and
+  confirms it with the finger, then after a restart checks that an unknown
+  finger is rejected, the enrolled finger opens Home, and a cancelled prompt
+  leaves the password field working.
+- The emulator scripts share their helpers (`emulator_lib.sh`), and a failed
+  step prints what was on screen into the job log, so it can be diagnosed
+  without downloading artifacts.
 
 ### CI: the minified build goes through the emulator check too (TASKS T5)
 
