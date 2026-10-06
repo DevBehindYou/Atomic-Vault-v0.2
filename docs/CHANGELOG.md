@@ -5,6 +5,32 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Vault key envelope: off the deprecated security-crypto (Phase 5, H3)
+
+- The envelope (salt, Argon2id parameters, password-wrapped data key) is now
+  stored as one value in private preferences, **sealed with the app's own
+  Android Keystore AES-256-GCM key** (`EnvelopeSealer`). It stays bound to
+  the device, as it was under EncryptedSharedPreferences: a copy of the
+  app's files alone cannot be used to guess the master password offline.
+  Plain storage (the other option in the plan) would have lost that, so it
+  was not used.
+- **Existing vaults migrate once, on open.** The envelope is copied, read
+  back and compared byte for byte, the store marker switches, and only then
+  is the old copy cleared. If any step fails, the old store stays in use and
+  the move is tried again on the next launch. Vaults that had fallen back to
+  plain storage move to the sealed layout too.
+- If the sealing key is ever gone while an envelope exists, the app reports
+  the key store as unavailable (as before) and never starts a new, empty
+  vault over the old one.
+- `security-crypto` is still a dependency, only to read the old store during
+  the migration; it can be removed in a later release.
+- Tests: `VaultMetaStoreMigrationTest` (11 cases: fresh install, each legacy
+  store, failed write, read-back mismatch, no Keystore, lost key, store that
+  will not open, database without envelope, re-wrap after migration) and
+  `VaultMetaStoreDeviceTest`, which runs the migration against the real
+  EncryptedSharedPreferences and Keystore in the new **Instrumented tests**
+  CI job.
+
 ### CI: the minified build goes through the emulator check too (TASKS T5)
 
 - The verify job also builds `assembleInternal`: the release build type with
