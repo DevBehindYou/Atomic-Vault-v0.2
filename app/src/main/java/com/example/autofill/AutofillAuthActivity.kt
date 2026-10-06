@@ -3,11 +3,11 @@ package com.example.autofill
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Parcelable
 import android.service.autofill.FillResponse
 import android.view.autofill.AutofillId
 import android.view.autofill.AutofillManager
 import android.view.autofill.AutofillValue
-import android.view.inputmethod.InlineSuggestionsRequest
 import com.example.database.TemporaryVault
 import com.example.trust.TrustEventType
 import com.example.trust.TrustLedger
@@ -189,7 +189,7 @@ class AutofillAuthActivity : VaultAuthActivity() {
             mode: String,
             parsed: ParsedForm,
             itemId: String? = null,
-            inlineRequest: InlineSuggestionsRequest? = null
+            inlineRequest: Parcelable? = null
         ): Intent = Intent(context, AutofillAuthActivity::class.java).apply {
             putExtra(EXTRA_MODE, mode)
             putExtra(EXTRA_PACKAGE, parsed.packageName)
@@ -212,5 +212,5 @@ private fun Intent.autofillId(key: String): AutofillId? = getParcelableExtra(key
 private fun Intent.autofillIds(key: String): List<AutofillId> = getParcelableArrayListExtra<AutofillId>(key).orEmpty()
 
 @Suppress("DEPRECATION")
-private fun Intent.inlineRequest(): InlineSuggestionsRequest? =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) getParcelableExtra(AutofillAuthActivity.EXTRA_INLINE_REQUEST) else null
+private fun Intent.inlineRequest(): Parcelable? =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) getParcelableExtra<Parcelable>(AutofillAuthActivity.EXTRA_INLINE_REQUEST) else null
