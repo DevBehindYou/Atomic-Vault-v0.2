@@ -40,6 +40,24 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # TEMPORARY (toolchain upgrade PR): lists the versions available on
+      # Google's Maven and Maven Central, which the cloud agent cannot reach.
+      # Removed before this PR is merged.
+      - name: Toolchain versions (temporary)
+        run: |
+          meta() { curl -sSfL --retry 3 "$1" | grep -oE '<version>[^<]+' | sed 's/<version>//' | grep -vE 'alpha|beta|rc|Beta|RC|dev|-M[0-9]' | tail -${2:-12} | tr '\n' ' '; echo; }
+          echo "AGP:          $(meta https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle/maven-metadata.xml 30)"
+          echo "Compose BOM:  $(meta https://dl.google.com/dl/android/maven2/androidx/compose/compose-bom/maven-metadata.xml 6)"
+          echo "core-ktx:     $(meta https://dl.google.com/dl/android/maven2/androidx/core/core-ktx/maven-metadata.xml 4)"
+          echo "lifecycle:    $(meta https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime-ktx/maven-metadata.xml 4)"
+          echo "activity:     $(meta https://dl.google.com/dl/android/maven2/androidx/activity/activity-compose/maven-metadata.xml 4)"
+          echo "navigation:   $(meta https://dl.google.com/dl/android/maven2/androidx/navigation/navigation-compose/maven-metadata.xml 4)"
+          echo "biometric:    $(meta https://dl.google.com/dl/android/maven2/androidx/biometric/biometric/maven-metadata.xml 4)"
+          echo "Kotlin:       $(meta https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-gradle-plugin/maven-metadata.xml 12)"
+          echo "KSP:          $(meta https://repo1.maven.org/maven2/com/google/devtools/ksp/symbol-processing-gradle-plugin/maven-metadata.xml 6)"
+          echo "Roborazzi:    $(meta https://repo1.maven.org/maven2/io/github/takahirom/roborazzi/roborazzi/maven-metadata.xml 4)"
+          echo "Gradle:       $(curl -sSfL https://services.gradle.org/versions/all | python3 -c 'import json,sys;print(" ".join(v["version"] for v in json.load(sys.stdin) if not v["snapshot"] and not v["nightly"] and not v["rcFor"] and not v["milestoneFor"] and not v["broken"])' | cut -d' ' -f1-12)"
+
       - name: Design system check
         run: bash .github/scripts/design_check.sh
 
