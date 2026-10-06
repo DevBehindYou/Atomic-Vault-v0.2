@@ -128,6 +128,8 @@ object PrivacyChecks {
     }
 
     /** True if this installed app registers any input method (keyboard) service. */
+    // Queries only this app's own package, which package visibility never hides.
+    @android.annotation.SuppressLint("QueryPermissionsNeeded")
     private fun declaresInputMethod(context: Context): Boolean {
         return try {
             val intent = android.content.Intent("android.view.InputMethod").setPackage(context.packageName)

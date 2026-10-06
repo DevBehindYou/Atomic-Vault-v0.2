@@ -30,6 +30,59 @@ results are recorded in the plan's progress table.
   `VaultMetaStoreDeviceTest`, which runs the migration against the real
   EncryptedSharedPreferences and Keystore in the new **Instrumented tests**
   CI job.
+### Accessibility: switches say what they switch, secrets are read as hidden (TASKS T7)
+
+- `AtomicSwitch` takes a `label`. TalkBack now says "Fingerprint unlock,
+  switch, on" instead of "Switch, on"; the generator character sets, the
+  fingerprint switch in onboarding and Settings, and a custom field's mask
+  switch ("Mask Recovery code") are labelled.
+- Masked values in the read view are read as "Hidden" (cards: "Hidden, ends
+  in 4 0 2 1") instead of a run of bullet characters. Revealing restores the
+  real value for TalkBack too.
+- A custom field's remove button names the field ("Remove Recovery code").
+- Tests: labelled switch found by name and toggles; hidden password and card
+  fields expose the spoken text and drop it when revealed.
+### CI: fingerprint unlock is checked on an emulator (TASKS T2)
+
+- New job `Emulator fingerprint check` (`emulator_biometric_check.sh`): sets
+  a screen-lock PIN, enrols fingerprint 1 through Settings with the
+  emulator's virtual sensor, creates a vault with fingerprint unlock on and
+  confirms it with the finger, then after a restart checks that an unknown
+  finger is rejected, the enrolled finger opens Home, and a cancelled prompt
+  leaves the password field working.
+- The emulator scripts share their helpers (`emulator_lib.sh`), and a failed
+  step prints what was on screen into the job log, so it can be diagnosed
+  without downloading artifacts.
+### Lint clean-up (TASKS T9)
+
+- **Corrupt launcher bitmaps removed.** The xxhdpi and xxxhdpi
+  `ic_launcher*.webp` files were damaged (lint read them as 36803 x 9421313
+  px). They were never shown, since every supported phone (API 28+) uses the
+  adaptive icon, so all density bitmaps are deleted and the adaptive icon
+  moves from `mipmap-anydpi-v26` to `mipmap-anydpi`.
+- Removed the seven unused template colours, the redundant activity label
+  and a dead API check; `AtomicTag` takes `modifier` first among its
+  optional parameters; the button press offset uses the lambda overload so
+  it no longer recomposes per animation frame.
+- Kept on purpose, with the reason next to the suppression: `commit()` in
+  the key-envelope store (must be on disk before the database), the
+  own-package service query, the inline-suggestions flag (API 30+), and the
+  Autofill dropdown background (drawn inside other apps).
+- Lint goes from 62 to 43 warnings; all 43 left are dependency, Gradle
+  plugin and target-SDK version notices (Phase 5 upgrade work).
+- CI prints the lint text report into the job log.
+### Dependencies: safe updates (Phase 5, part 1)
+
+- BouncyCastle 1.79 → 1.81 (provider fixes; the Argon2id known-answer tests
+  still pin the key derivation), `androidx.security:security-crypto`
+  1.1.0-alpha06 → 1.1.0 (first stable; same API, now marked deprecated
+  upstream), Android Gradle plugin 8.8.1 → 8.8.2 (patch), and the test
+  libraries (`androidx.test` core/runner 1.7.0, ext-junit 1.3.0, espresso
+  3.7.0).
+- **Not done here, on purpose:** Android Gradle plugin 9, Compose BOM
+  2026.09, core-ktx 1.19, lifecycle 2.11, activity 1.13, navigation 2.10 and
+  target SDK 36. They need `compileSdk` 36 and move together as one planned
+  upgrade. Replacing `security-crypto` (deprecated) is part of that work.
 
 ### CI: the minified build goes through the emulator check too (TASKS T5)
 

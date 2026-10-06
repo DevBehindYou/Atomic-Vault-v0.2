@@ -2,7 +2,11 @@
 <!-- Autofill dropdown row (Android 9-10, and keyboards without an inline
      strip): paper, ink title, mono subtitle (design system). Drawn by the
      system, so it uses system fonts. -->
+<!-- tools:ignore Overdraw: these RemoteViews are drawn inside the other app's
+     dropdown, not over this app's themed window, so the background is needed. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="Overdraw"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="56dp"

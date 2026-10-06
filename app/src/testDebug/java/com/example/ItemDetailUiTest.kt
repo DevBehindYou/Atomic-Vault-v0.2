@@ -95,6 +95,38 @@ class ItemDetailUiTest {
     }
 
     @Test
+    fun screenReadersHearHiddenNotBullets() {
+        val card = CredentialPlain(
+            id = "3", title = "Visa",
+            itemType = com.example.database.VaultItemType.PAYMENT_CARD,
+            customFields = listOf(
+                com.example.database.CustomFieldPlain("", "Card number", "4111 1111 1111 4021", true),
+                com.example.database.CustomFieldPlain("", "CVV", "123", true)
+            )
+        )
+        rule.setContent {
+            AtomicVaultTheme { ItemDetailScreen(itemId = "3", onLoadItem = { card }, onEdit = {}, onBack = {}) }
+        }
+        rule.waitUntil(5_000) {
+            rule.onAllNodes(androidx.compose.ui.test.hasContentDescription("Hidden, ends in 4 0 2 1")).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNode(androidx.compose.ui.test.hasContentDescription("Hidden")).assertExists()
+        rule.onNode(androidx.compose.ui.test.hasContentDescription("Show Card number")).performClick()
+        assertTrue(
+            rule.onAllNodes(androidx.compose.ui.test.hasContentDescription("Hidden, ends in 4 0 2 1")).fetchSemanticsNodes().isEmpty()
+        )
+    }
+
+    @Test
+    fun hiddenPasswordIsReadAsHidden() {
+        rule.setContent {
+            AtomicVaultTheme { ItemDetailScreen(itemId = "1", onLoadItem = { item }, onEdit = {}, onBack = {}) }
+        }
+        rule.waitUntil(5_000) { rule.onAllNodesWithTagExists("detail_copy_password") }
+        rule.onNode(androidx.compose.ui.test.hasContentDescription("Hidden")).assertExists()
+    }
+
+    @Test
     fun snapshot() {
         rule.setContent {
             AtomicVaultTheme { ItemDetailScreen(itemId = "1", onLoadItem = { item }, onEdit = {}, onBack = {}) }

@@ -116,7 +116,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 showKeyboardRemovedNotice = hasVault && !appPrefs.getBoolean(PREF_KEYBOARD_NOTICE_SEEN, false),
                 biometricArmed = bioArmed,
                 autofillArmed = autofillArmed,
-                autofillSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O,
+                autofillSupported = true, // Autofill exists from API 26; minSdk is 28
                 integrityWarnings = warnings,
                 error = if (metaStore.isUnavailable) KEY_STORE_UNAVAILABLE else null
             )
