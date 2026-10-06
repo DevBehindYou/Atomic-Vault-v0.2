@@ -2,7 +2,7 @@ package com.example.database
 
 import android.content.ContentValues
 import com.example.crypto.VaultCrypto
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import java.util.UUID
 
 class VaultRepositoryImpl(
@@ -14,7 +14,7 @@ class VaultRepositoryImpl(
 
     override fun listFolders(): List<FolderPlain> {
         val folders = mutableListOf<FolderPlain>()
-        db.rawQuery("SELECT id, name, parent_id FROM folder ORDER BY name COLLATE NOCASE ASC;", null).use { cursor ->
+        db.rawQuery("SELECT id, name, parent_id FROM folder ORDER BY name COLLATE NOCASE ASC;", NO_ARGS).use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getString(0)
                 val name = cursor.getString(1)
@@ -60,7 +60,7 @@ class VaultRepositoryImpl(
 
     override fun listTags(): List<TagPlain> {
         val tags = mutableListOf<TagPlain>()
-        db.rawQuery("SELECT id, name, color FROM tag ORDER BY name COLLATE NOCASE ASC;", null).use { cursor ->
+        db.rawQuery("SELECT id, name, color FROM tag ORDER BY name COLLATE NOCASE ASC;", NO_ARGS).use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getString(0)
                 val name = cursor.getString(1)
@@ -373,7 +373,6 @@ class VaultRepositoryImpl(
             setTagsForItem(id, input.tagIds)
             val assignedTags = getTagsForItem(id)
 
-            logAudit(id, "create", now)
             db.setTransactionSuccessful()
 
             return CredentialPlain(
@@ -434,7 +433,6 @@ class VaultRepositoryImpl(
             setTagsForItem(id, input.tagIds)
             val assignedTags = getTagsForItem(id)
 
-            logAudit(id, "update", now)
             db.setTransactionSuccessful()
 
             return CredentialPlain(
@@ -458,32 +456,20 @@ class VaultRepositoryImpl(
     }
 
     override fun deleteItem(id: String) {
-        val now = System.currentTimeMillis()
         db.beginTransaction()
         try {
             db.delete("custom_field", "item_id = ?", arrayOf(id))
             db.delete("credential_tag", "item_id = ?", arrayOf(id))
             db.delete("credential_item", "id = ?", arrayOf(id))
-            logAudit(id, "delete", now)
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
     }
 
-    private fun logAudit(itemId: String?, action: String, timestamp: Long) {
-        val cv = ContentValues().apply {
-            put("id", genId())
-            put("item_id", itemId)
-            put("action", action)
-            put("timestamp", timestamp)
-        }
-        db.insert("audit_log_entry", null, cv)
-    }
-
     override fun getSettings(): VaultSettingsPlain {
         var settings = VaultSettingsPlain()
-        db.rawQuery("SELECT auto_lock_seconds, biometric_enabled FROM vault_settings WHERE id = 1;", null).use { cursor ->
+        db.rawQuery("SELECT auto_lock_seconds, biometric_enabled FROM vault_settings WHERE id = 1;", NO_ARGS).use { cursor ->
             if (cursor.moveToFirst()) {
                 val autoLock = cursor.getInt(0)
                 val bio = cursor.getInt(1) == 1
@@ -513,7 +499,7 @@ class VaultRepositoryImpl(
         val tagsByItem = tagsByItem()
         val fieldsByItem = HashMap<String, MutableList<CustomFieldPlain>>()
         val damagedItems = HashSet<String>()
-        db.rawQuery("SELECT item_id, id, label, encrypted_value, is_sensitive FROM custom_field;", null).use { c ->
+        db.rawQuery("SELECT item_id, id, label, encrypted_value, is_sensitive FROM custom_field;", NO_ARGS).use { c ->
             while (c.moveToNext()) {
                 val itemId = c.getString(0)
                 val itemOpener = FieldOpener(dek)
@@ -655,7 +641,6 @@ class VaultRepositoryImpl(
             }
             db.update("vault_settings", sCv, "id = 1", null)
 
-            logAudit(null, "import", now)
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()

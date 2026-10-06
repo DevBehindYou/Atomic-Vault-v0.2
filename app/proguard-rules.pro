@@ -19,10 +19,9 @@
 }
 
 # SQLCipher Native and Database
--keep class net.sqlcipher.** { *; }
--keep class net.sqlcipher.database.** { *; }
+-keep class net.zetetic.database.** { *; }
 -keepclasseswithmembernames class * { native <methods>; }
--dontwarn net.sqlcipher.**
+-dontwarn net.zetetic.database.**
 
 # Moshi Serialization Models & Generated Adapters
 -keep class com.squareup.moshi.** { *; }

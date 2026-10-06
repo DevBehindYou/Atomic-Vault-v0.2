@@ -43,6 +43,9 @@ jobs:
       - name: Design system check
         run: bash .github/scripts/design_check.sh
 
+      - name: Unused imports check (ktlint)
+        run: bash .github/scripts/unused_imports_check.sh
+
       - name: Unit tests and debug APK
         run: |
           chmod +x ./gradlew
@@ -218,6 +221,69 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AtomicVault-Emulator-biometric-${{ github.run_number }}
+          path: emulator-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Upgrade check (pull requests): the base branch's build creates a vault
+  # with one login, this branch's build is installed over it, and must unlock
+  # it and still show the login. Both APKs are built here so they share one
+  # debug signing key (adb install -r refuses a different signer).
+  upgrade:
+    name: Upgrade check (base build -> this build)
+    if: github.event_name == 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout this pull request
+        uses: actions/checkout@v4
+
+      - name: Checkout the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build both APKs
+        run: |
+          chmod +x ./gradlew base/gradlew
+          ./gradlew assembleDebug --stacktrace
+          (cd base && ./gradlew assembleDebug --stacktrace)
+          mkdir -p upgrade-apks
+          cp base/app/build/outputs/apk/debug/app-debug.apk upgrade-apks/old.apk
+          cp app/build/outputs/apk/debug/app-debug.apk upgrade-apks/new.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Create a vault on the base build, upgrade, unlock
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: bash .github/scripts/emulator_upgrade_check.sh upgrade-apks/old.apk upgrade-apks/new.apk
+
+      - name: Upload upgrade check logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Emulator-upgrade-${{ github.run_number }}
           path: emulator-artifacts/
           if-no-files-found: warn
           retention-days: 14
