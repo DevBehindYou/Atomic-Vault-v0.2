@@ -31,6 +31,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.database.FolderPlain
 import com.example.database.TagPlain
+import com.example.security.IdleLockStore
 import com.example.ui.components.AtomicHairline
 import com.example.ui.components.AtomicIconButton
 import com.example.ui.components.AtomicPanel
@@ -72,6 +73,7 @@ internal fun SecuritySection(
             )
         }
     }
+    IdleLockChips()
     AtomicPanel(modifier = Modifier.fillMaxWidth(), on = biometricEnabled) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
@@ -90,6 +92,29 @@ internal fun SecuritySection(
                 onCheckedChange = onUpdateBiometric,
                 modifier = Modifier.testTag("settings_biometric_switch"),
                 label = "Fingerprint unlock"
+            )
+        }
+    }
+}
+
+/** Lock after so long on screen with no taps (TASKS T3); stored outside the vault. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun IdleLockChips() {
+    val colors = AtomicTheme.colors
+    val context = LocalContext.current
+    var idleSeconds by remember { mutableStateOf(IdleLockStore.load(context)) }
+    Text(AtomicType.caps("Lock after no taps"), style = AtomicType.monoCaption, color = colors.textSecondary)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+        for ((label, seconds) in IdleLockStore.CHOICES) {
+            FilterChipPill(
+                label = label,
+                selected = idleSeconds == seconds,
+                onClick = {
+                    idleSeconds = seconds
+                    IdleLockStore.save(context, seconds)
+                },
+                testTag = "idlelock_chip_$label"
             )
         }
     }
