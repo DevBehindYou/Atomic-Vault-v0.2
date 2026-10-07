@@ -250,6 +250,20 @@ fun CredentialEditorScreen(
                         strength = strength,
                         modifier = Modifier.fillMaxWidth().testTag("editor_password_strength_meter")
                     )
+                    val editorContext = LocalContext.current
+                    val leaked by androidx.compose.runtime.produceState(false, password) {
+                        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                            com.example.security.BreachedPasswords.get(editorContext)?.contains(password) == true
+                        }
+                    }
+                    if (leaked) {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.xs))
+                        com.example.ui.components.AtomicWarningBox(
+                            title = "This password appears in public leaks",
+                            message = "Attackers try leaked passwords first. Generate a new one for this login.",
+                            modifier = Modifier.testTag("editor_password_leaked")
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(AtomicSpacing.xs))
