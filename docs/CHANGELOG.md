@@ -5,6 +5,20 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Vault creation no longer crashes when memory is short
+
+- Root cause of the intermittent "app gone after Create vault" seen in CI
+  (runs #71, #75, #121, #130), found with the new failure diagnostics:
+  `java.lang.OutOfMemoryError` on a background thread during Argon2id
+  (64 MiB, allocated on the Java heap by BouncyCastle). OutOfMemoryError is
+  an Error, not an Exception, so it escaped every catch and killed the app.
+- `android:largeHeap="true"`: the app may use the device's large heap limit,
+  as password managers that run Argon2 on the Java heap do.
+- `Argon2Kdf` collects garbage and retries once on OutOfMemoryError; if memory
+  is still short it throws `KdfOutOfMemoryException`, so create, unlock and
+  backup show "Not enough free memory. Close other apps and try again."
+  instead of crashing. Unlock never reports it as a wrong password.
+
 ### Offline breach check
 
 - Passwords are checked against the **1,000,000 most common passwords from
