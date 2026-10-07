@@ -67,6 +67,7 @@ PY
 
 fail() {
   echo "::error::$1"
+  local pkg="${PKG:-com.atomicvault.android}"
   adb exec-out screencap -p > "$OUT/failure.png" || true
   cp "$OUT/ui.xml" "$OUT/failure_ui.xml" 2>/dev/null || true
   # What was on screen, in the job log (artifacts are not always reachable).
@@ -75,9 +76,23 @@ fail() {
     grep -oE '(text|content-desc|resource-id)="[^"]+"' "$OUT/ui.xml" | sort -u | head -60 || true
   fi
   adb logcat -d > "$OUT/logcat.txt" || true
-  # Errors and exceptions, also in the job log.
-  echo "--- logcat errors (last 60) ---"
-  grep -E ' E |FATAL|Exception|Caused by|^\s+at ' "$OUT/logcat.txt" | grep -vE 'chatty|GnssHAL|ConnectivityService' | tail -60 || true
+  # How the app's process ended, if it did: a crash with its stack, a
+  # low-memory kill, an ANR, or the system killing it. Earlier this was
+  # buried under unrelated errors and the cause of a vanished app was lost.
+  echo "--- app process: is it running? ---"
+  adb shell pidof "$pkg" || echo "(not running)"
+  echo "--- app process: crash, kill, ANR (logcat) ---"
+  grep -n -A25 "FATAL EXCEPTION" "$OUT/logcat.txt" | head -80 || true
+  grep -E "lowmemorykiller|lmkd|Low on memory|ANR in|$pkg" "$OUT/logcat.txt" \
+    | grep -E "lowmemorykiller|lmkd|Low on memory|ANR in|died|[Kk]ill|Force stop|crash|Exception|Error" | tail -30 || true
+  echo "--- app process: exit reasons (Android 11+) ---"
+  adb shell dumpsys activity exit-info "$pkg" 2>/dev/null | grep -E "ApplicationExitInfo|reason=|description=|timestamp=" | head -20 || true
+  echo "--- memory ---"
+  adb shell cat /proc/meminfo 2>/dev/null | grep -E "MemTotal|MemFree|MemAvailable" || true
+  # Remaining errors and exceptions, without the emulator's property noise.
+  echo "--- logcat errors (last 40) ---"
+  grep -E ' E |FATAL|Exception|Caused by|^\s+at ' "$OUT/logcat.txt" \
+    | grep -vE 'chatty|GnssHAL|ConnectivityService|Access denied finding property|memtrack|wifi_forwarder|netmgr' | tail -40 || true
   exit 1
 }
 
