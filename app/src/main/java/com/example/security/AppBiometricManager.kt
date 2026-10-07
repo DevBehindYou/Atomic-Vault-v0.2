@@ -1,6 +1,8 @@
 package com.example.security
 
+import android.app.KeyguardManager
 import android.content.Context
+import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -13,6 +15,15 @@ enum class BiometricAuthStatus {
     NO_HARDWARE,
     UNAVAILABLE
 }
+
+/**
+ * How this phone can do quick unlock. FINGERPRINT: a strong biometric is
+ * enrolled. SCREEN_LOCK: no strong biometric, but the phone has a PIN,
+ * pattern or password and runs Android 11+ (the first version where a
+ * Keystore key can require the screen lock on every use). NONE: neither;
+ * only the master password.
+ */
+enum class QuickUnlockKind { FINGERPRINT, SCREEN_LOCK, NONE }
 
 /**
  * Single shared biometric-prompt entry point for the whole app -- the
@@ -44,6 +55,18 @@ object AppBiometricManager {
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> BiometricAuthStatus.NOT_ENROLLED
             BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> BiometricAuthStatus.NO_HARDWARE
             else -> BiometricAuthStatus.UNAVAILABLE
+        }
+    }
+
+    fun quickUnlockKind(context: Context): QuickUnlockKind {
+        if (BiometricManager.from(context).canAuthenticate(AUTHENTICATORS_CRYPTO) == BiometricManager.BIOMETRIC_SUCCESS) {
+            return QuickUnlockKind.FINGERPRINT
+        }
+        val keyguard = context.getSystemService(KeyguardManager::class.java)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && keyguard?.isDeviceSecure == true) {
+            QuickUnlockKind.SCREEN_LOCK
+        } else {
+            QuickUnlockKind.NONE
         }
     }
 
@@ -117,6 +140,8 @@ object AppBiometricManager {
         title: String = "Unlock AtomicVault",
         subtitle: String = "Authenticate using fingerprint or face",
         negativeButtonText: String = "Use Master Password",
+        /** The key needs the phone's screen lock instead of a fingerprint (see QuickUnlockKind). */
+        screenLock: Boolean = false,
         onSuccess: (Cipher) -> Unit,
         onError: (String) -> Unit = {},
         onCancel: () -> Unit = {},
@@ -164,9 +189,17 @@ object AppBiometricManager {
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
-            .setSubtitle(subtitle)
-            .setNegativeButtonText(negativeButtonText)
-            .setAllowedAuthenticators(AUTHENTICATORS_CRYPTO)
+            .apply {
+                if (screenLock) {
+                    // The system shows its own Cancel; a negative button is not allowed here.
+                    setSubtitle("Use your phone's PIN, pattern or password")
+                    setAllowedAuthenticators(BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+                } else {
+                    setSubtitle(subtitle)
+                    setNegativeButtonText(negativeButtonText)
+                    setAllowedAuthenticators(AUTHENTICATORS_CRYPTO)
+                }
+            }
             .build()
 
         prompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))

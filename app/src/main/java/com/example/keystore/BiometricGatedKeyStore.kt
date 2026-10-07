@@ -59,9 +59,19 @@ class BiometricGatedKeyStore(context: Context) {
     }
 
     fun isArmed(): Boolean =
-        androidKeyStore.containsAlias(UNLOCK_KEY_ALIAS) &&
+        androidKeyStore.containsAlias(activeAlias()) &&
             prefs.contains(PREF_UNLOCK_WRAPPED_DEK) &&
             prefs.contains(PREF_UNLOCK_IV)
+
+    /**
+     * True when quick unlock is armed with the phone's screen lock (PIN,
+     * pattern or password) instead of a fingerprint; prompts must then ask
+     * for the screen lock (AppBiometricManager.promptBiometricAuthForCrypto
+     * with screenLock = true).
+     */
+    fun usesScreenLock(): Boolean = prefs.getString(PREF_MODE, MODE_BIOMETRIC) == MODE_SCREEN_LOCK
+
+    private fun activeAlias(): String = if (usesScreenLock()) SCREEN_LOCK_KEY_ALIAS else UNLOCK_KEY_ALIAS
 
     /**
      * Step 1 of arming (enabling biometric unlock/autofill). Returns a
@@ -70,13 +80,20 @@ class BiometricGatedKeyStore(context: Context) {
      * from inside onAuthenticationSucceeded with the cipher the prompt
      * result hands back.
      */
-    fun beginArming(): Cipher {
+    fun beginArming(screenLock: Boolean = false): Cipher {
+        if (screenLock != usesScreenLock()) {
+            // Switching between fingerprint and screen lock: never keep a
+            // wrapped copy under the other key.
+            clear()
+        }
+        prefs.edit().putString(PREF_MODE, if (screenLock) MODE_SCREEN_LOCK else MODE_BIOMETRIC).commit()
         return try {
             newEncryptCipher(getOrCreateUnlockKey())
         } catch (e: KeyPermanentlyInvalidatedException) {
-            // Biometric enrollment changed since the key was created. The old
-            // key can never be used again -- start over with a fresh one.
+            // Biometric enrollment (or the screen lock) changed since the key
+            // was created. The old key can never be used again -- start over.
             clear()
+            prefs.edit().putString(PREF_MODE, if (screenLock) MODE_SCREEN_LOCK else MODE_BIOMETRIC).commit()
             newEncryptCipher(getOrCreateUnlockKey())
         }
     }
@@ -104,7 +121,7 @@ class BiometricGatedKeyStore(context: Context) {
         if (!isArmed()) return null
         val ivB64 = prefs.getString(PREF_UNLOCK_IV, null) ?: return null
         val iv = Base64.decode(ivB64, Base64.NO_WRAP)
-        val key = androidKeyStore.getKey(UNLOCK_KEY_ALIAS, null) ?: return null
+        val key = androidKeyStore.getKey(activeAlias(), null) ?: return null
         return try {
             Cipher.getInstance(TRANSFORMATION).apply {
                 init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
@@ -128,6 +145,7 @@ class BiometricGatedKeyStore(context: Context) {
     fun clear() {
         prefs.edit().clear().apply()
         deleteKey(UNLOCK_KEY_ALIAS)
+        deleteKey(SCREEN_LOCK_KEY_ALIAS)
         deleteKey(GRACE_KEY_ALIAS)
         deleteKey(LEGACY_KEY_ALIAS)
     }
@@ -136,6 +154,7 @@ class BiometricGatedKeyStore(context: Context) {
         Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.ENCRYPT_MODE, key) }
 
     private fun getOrCreateUnlockKey(): Key {
+        if (usesScreenLock()) return getOrCreateScreenLockKey()
         androidKeyStore.getKey(UNLOCK_KEY_ALIAS, null)?.let { return it }
 
         val specBuilder = baseSpec(UNLOCK_KEY_ALIAS)
@@ -146,6 +165,26 @@ class BiometricGatedKeyStore(context: Context) {
             specBuilder.setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)
         }
         return generateKey(specBuilder)
+    }
+
+    /**
+     * For phones without a fingerprint: the key needs the screen lock (PIN,
+     * pattern or password) on every use, enforced by the Keystore exactly
+     * like the fingerprint key. Android 11+ only (setUserAuthenticationParameters);
+     * removing the screen lock invalidates the key.
+     */
+    private fun getOrCreateScreenLockKey(): Key {
+        androidKeyStore.getKey(SCREEN_LOCK_KEY_ALIAS, null)?.let { return it }
+        val spec = KeyGenParameterSpec.Builder(SCREEN_LOCK_KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setUserAuthenticationRequired(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            spec.setUserAuthenticationParameters(0, KeyProperties.AUTH_DEVICE_CREDENTIAL)
+        } else {
+            error("Screen-lock unlock needs Android 11")
+        }
+        return generateKey(spec)
     }
 
     private fun baseSpec(alias: String): KeyGenParameterSpec.Builder =
@@ -196,6 +235,10 @@ class BiometricGatedKeyStore(context: Context) {
         private const val LEGACY_PREF_IV = "iv_b64"
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val UNLOCK_KEY_ALIAS = "atomicvault_dek_unlock_key_v2"
+        private const val SCREEN_LOCK_KEY_ALIAS = "atomicvault_dek_unlock_screenlock_v1"
+        private const val PREF_MODE = "unlock_mode"
+        private const val MODE_BIOMETRIC = "biometric"
+        private const val MODE_SCREEN_LOCK = "screen_lock"
         private const val GRACE_KEY_ALIAS = "atomicvault_dek_grace_key_v2"
         private const val LEGACY_KEY_ALIAS = "atomicvault_dek_biometric_key"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"

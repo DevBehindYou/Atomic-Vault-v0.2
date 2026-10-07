@@ -1,5 +1,8 @@
 package com.example.ui.onboarding
 
+import com.example.security.AppBiometricManager
+import com.example.security.QuickUnlockKind
+import com.example.ui.settings.quickUnlockTitle
 import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -68,7 +71,9 @@ fun OnboardingScreen(
     val colors = AtomicTheme.colors
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
-    var biometricEnabled by remember { mutableStateOf(true) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val quickUnlock = remember { AppBiometricManager.quickUnlockKind(context) }
+    var biometricEnabled by remember { mutableStateOf(quickUnlock != QuickUnlockKind.NONE) }
 
     val isLengthValid = password.length >= 8
     val isMatch = password.isNotEmpty() && password == confirm
@@ -167,19 +172,25 @@ fun OnboardingScreen(
             AtomicPanel(modifier = Modifier.fillMaxWidth(), on = biometricEnabled) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Fingerprint unlock", style = AtomicType.displayS, color = colors.textPrimary)
+                        Text(text = quickUnlockTitle(quickUnlock), style = AtomicType.displayS, color = colors.textPrimary)
                         Text(
-                            text = "Fingerprint or face, asked on every fill too. Change it any time in Settings.",
+                            text = when (quickUnlock) {
+                                QuickUnlockKind.FINGERPRINT -> "Fingerprint or face, asked on every fill too. Change it any time in Settings."
+                                QuickUnlockKind.SCREEN_LOCK -> "Your phone's PIN, pattern or password, asked on every fill too. Change it any time in Settings."
+                                QuickUnlockKind.NONE -> "Needs a fingerprint or a screen lock on this phone. Set one in Android settings, then turn it on in Settings."
+                            },
                             style = AtomicType.bodySmall,
                             color = colors.textSecondary
                         )
                     }
-                    AtomicSwitch(
-                        checked = biometricEnabled,
-                        onCheckedChange = { biometricEnabled = it },
-                        modifier = Modifier.testTag("onboarding_biometric_toggle"),
-                        label = "Fingerprint unlock"
-                    )
+                    if (quickUnlock != QuickUnlockKind.NONE) {
+                        AtomicSwitch(
+                            checked = biometricEnabled,
+                            onCheckedChange = { biometricEnabled = it },
+                            modifier = Modifier.testTag("onboarding_biometric_toggle"),
+                            label = quickUnlockTitle(quickUnlock)
+                        )
+                    }
                 }
             }
 

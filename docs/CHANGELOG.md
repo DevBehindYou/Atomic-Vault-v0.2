@@ -5,6 +5,23 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Screen-lock unlock for phones without a fingerprint
+
+- On a phone with no fingerprint (or face) enrolled but with a PIN, pattern
+  or password, running Android 11 or later, quick unlock now uses the
+  **screen lock**. The vault key is wrapped under a separate Android
+  Keystore key that needs the screen lock on every use
+  (`AUTH_DEVICE_CREDENTIAL`, timeout 0): the same hardware-enforced model as
+  the fingerprint key, not a UI gate. The master password always works too.
+- Onboarding and Settings call it **Screen-lock unlock** on such phones. A
+  phone with neither shows why quick unlock is unavailable instead of a
+  switch that could never work. Autofill's unlock screen uses it too.
+- Switching between fingerprint and screen lock re-arms from scratch, so no
+  wrapped copy is ever left under the other key. Removing the screen lock
+  invalidates the key; the app then falls back to the master password.
+- CI: new **Emulator screen-lock check** job (Android 11 emulator, PIN only):
+  arm with the PIN, unlock after a restart, cancel and use the password.
+
 ### Lock after no taps (TASKS T3, user decision U4)
 
 - New Settings row **Lock after no taps**: Off, 1, 5 or 15 min, **5 min by
