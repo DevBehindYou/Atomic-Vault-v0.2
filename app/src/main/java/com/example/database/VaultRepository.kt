@@ -16,9 +16,16 @@ interface VaultRepository {
     fun updateItem(id: String, input: CredentialInput): CredentialPlain
     fun deleteItem(id: String)
 
+    /** Earlier passwords of a login, newest first (at most [PASSWORD_HISTORY_LIMIT]). */
+    fun passwordHistory(itemId: String): List<PasswordHistoryEntry>
+    fun clearPasswordHistory(itemId: String)
+
     fun getSettings(): VaultSettingsPlain
     fun updateSettings(patch: VaultSettingsPatch): VaultSettingsPlain
 
     fun exportData(): VaultExport
     fun importReplace(data: VaultExport)
 }
+
+/** How many earlier passwords are kept per login. */
+const val PASSWORD_HISTORY_LIMIT = 10

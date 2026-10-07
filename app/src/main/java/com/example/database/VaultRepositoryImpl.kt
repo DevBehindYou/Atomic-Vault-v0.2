@@ -400,6 +400,7 @@ class VaultRepositoryImpl(
 
         db.beginTransaction()
         try {
+            rememberOldPassword(id, input.password, now)
             val cv = ContentValues().apply {
                 put("folder_id", input.folderId)
                 put("title", input.title)
@@ -460,11 +461,58 @@ class VaultRepositoryImpl(
         try {
             db.delete("custom_field", "item_id = ?", arrayOf(id))
             db.delete("credential_tag", "item_id = ?", arrayOf(id))
+            db.delete("password_history", "item_id = ?", arrayOf(id))
             db.delete("credential_item", "id = ?", arrayOf(id))
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
+    }
+
+    /**
+     * Before a login's password changes, keeps the old one (sealed) in
+     * password_history. Runs inside updateItem's transaction. An old value
+     * that does not decrypt is not kept: there is nothing usable to restore.
+     */
+    private fun rememberOldPassword(itemId: String, newPassword: String, now: Long) {
+        val oldBlob = db.rawQuery("SELECT encrypted_password FROM credential_item WHERE id = ?;", arrayOf(itemId)).use { c ->
+            if (c.moveToFirst() && !c.isNull(0)) c.getBlob(0) else null
+        } ?: return
+        val old = try {
+            VaultCrypto.openField(dek, oldBlob)
+        } catch (e: Exception) {
+            return
+        }
+        if (old.isEmpty() || old == newPassword) return
+        db.insertOrThrow("password_history", null, ContentValues().apply {
+            put("id", genId())
+            put("item_id", itemId)
+            put("encrypted_password", oldBlob)
+            put("changed_at", now)
+        })
+        db.execSQL(
+            "DELETE FROM password_history WHERE item_id = ? AND id NOT IN " +
+                "(SELECT id FROM password_history WHERE item_id = ? ORDER BY changed_at DESC, rowid DESC LIMIT $PASSWORD_HISTORY_LIMIT);",
+            arrayOf(itemId, itemId)
+        )
+    }
+
+    override fun passwordHistory(itemId: String): List<PasswordHistoryEntry> {
+        val entries = mutableListOf<PasswordHistoryEntry>()
+        db.rawQuery(
+            "SELECT encrypted_password, changed_at FROM password_history WHERE item_id = ? ORDER BY changed_at DESC, rowid DESC;",
+            arrayOf(itemId)
+        ).use { c ->
+            while (c.moveToNext()) {
+                val password = runCatching { VaultCrypto.openField(dek, c.getBlob(0)) }.getOrNull()
+                if (password != null) entries.add(PasswordHistoryEntry(password, c.getLong(1)))
+            }
+        }
+        return entries
+    }
+
+    override fun clearPasswordHistory(itemId: String) {
+        db.delete("password_history", "item_id = ?", arrayOf(itemId))
     }
 
     override fun getSettings(): VaultSettingsPlain {
@@ -558,6 +606,7 @@ class VaultRepositoryImpl(
         try {
             // Delete all custom fields, tags, then credential items, then folders
             db.delete("custom_field", null, null)
+            db.delete("password_history", null, null)
             db.delete("credential_tag", null, null)
             db.delete("tag", null, null)
             db.delete("credential_item", null, null)
