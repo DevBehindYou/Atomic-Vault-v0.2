@@ -38,13 +38,10 @@ object Argon2Kdf {
             .withVersion(Argon2Parameters.ARGON2_VERSION_13)
             .build()
 
-        val generator = Argon2BytesGenerator()
-        generator.init(params)
-
         val result = ByteArray(outputLength)
         val passwordBytes = String(passwordChars).toByteArray(Charsets.UTF_8)
         try {
-            generator.generateBytes(passwordBytes, result, 0, result.size)
+            generateWithMemoryRetry(params, passwordBytes, result)
         } finally {
             // passwordBytes is a throwaway UTF-8 copy of passwordChars purely
             // for the generator's byte-array API -- clear it rather than
@@ -54,6 +51,31 @@ object Argon2Kdf {
         }
         return result
     }
+
+    /**
+     * Argon2id with 64 MiB runs on the Java heap (BouncyCastle allocates the
+     * whole memory matrix as objects). On a phone or emulator whose app heap
+     * is already busy this threw OutOfMemoryError, which is an Error, not an
+     * Exception, so it escaped every caller's catch and killed the app while
+     * creating a vault (ISS-001). The matrix is garbage as soon as the
+     * generator is gone, so collect and try once more; if memory is still
+     * short, report it as an ordinary exception the screens can show.
+     */
+    private fun generateWithMemoryRetry(params: Argon2Parameters, password: ByteArray, out: ByteArray) {
+        repeat(2) { attempt ->
+            try {
+                Argon2BytesGenerator().apply { init(params) }.generateBytes(password, out, 0, out.size)
+                return
+            } catch (e: OutOfMemoryError) {
+                if (attempt == 1) throw KdfOutOfMemoryException()
+                System.gc()
+            }
+        }
+    }
+
+    /** Thrown instead of OutOfMemoryError when the key derivation cannot get its memory. */
+    class KdfOutOfMemoryException :
+        IllegalStateException("Not enough free memory. Close other apps and try again.")
 
     /**
      * String-based convenience overload. Prefer the CharArray overload
