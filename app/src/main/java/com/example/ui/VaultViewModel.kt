@@ -23,6 +23,8 @@ import com.example.database.VaultSession
 import com.example.database.VaultSettingsPatch
 import com.example.database.VaultSettingsPlain
 import com.example.keystore.BiometricGatedKeyStore
+import com.example.security.AppBiometricManager
+import com.example.security.QuickUnlockKind
 import com.example.keystore.VaultMetaStore
 import com.example.keystore.VaultUnlocker
 import com.example.security.DeviceIntegrity
@@ -500,8 +502,15 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun beginBiometricArm(): Cipher? {
         if (!VaultSession.isUnlocked) return null
-        return keyStore.beginArming()
+        return when (AppBiometricManager.quickUnlockKind(getApplication())) {
+            QuickUnlockKind.FINGERPRINT -> keyStore.beginArming(screenLock = false)
+            QuickUnlockKind.SCREEN_LOCK -> keyStore.beginArming(screenLock = true)
+            QuickUnlockKind.NONE -> null
+        }
     }
+
+    /** True when quick unlock asks for the phone's screen lock instead of a fingerprint. */
+    fun quickUnlockUsesScreenLock(): Boolean = keyStore.usesScreenLock()
 
     /**
      * Step 2 of enabling biometric unlock/autofill. [authenticatedCipher]

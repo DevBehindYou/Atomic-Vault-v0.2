@@ -125,8 +125,9 @@ fun AtomicVaultNavGraph(
         AppBiometricManager.promptBiometricAuthForCrypto(
             activity = act,
             cipher = cipher,
-            title = "Enable biometric unlock",
+            title = if (viewModel.quickUnlockUsesScreenLock()) "Enable screen-lock unlock" else "Enable biometric unlock",
             subtitle = "Confirm your fingerprint or face to protect quick unlock",
+            screenLock = viewModel.quickUnlockUsesScreenLock(),
             onSuccess = { authedCipher ->
                 biometricPromptActive.set(false)
                 val armed = try {
@@ -238,6 +239,7 @@ fun AtomicVaultNavGraph(
                                 cipher = cipher,
                                 title = "Unlock AtomicVault",
                                 subtitle = "Authenticate using fingerprint or face to access your vault",
+                                screenLock = viewModel.quickUnlockUsesScreenLock(),
                                 onSuccess = { authedCipher ->
                                     biometricPromptActive.set(false)
                                     viewModel.unlockWithBiometric(authedCipher) { success ->

@@ -59,10 +59,11 @@ Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVau
 - [ ] Audit tab with a payment card and an identity in the vault: they are not counted as "empty password".
 - [ ] Settings > Privacy proof: "Screen capture protection" is a pass and "No keyboard service" is a pass. The security timeline shows no "chain broken".
 
-## 4d. Offline breach check
+## 4a. Screen-lock unlock (phone without a fingerprint)
 
-- [ ] Save a login with the password `password123`: the editor warns that it appears in public leaks; the Audit tab shows it under Leaked, first, as Critical.
-- [ ] A generated password shows no warning.
+- [ ] On a phone (Android 11+) with a PIN but no fingerprint: onboarding shows **Screen-lock unlock**; create the vault, confirm with the PIN.
+- [ ] Lock and reopen: the PIN prompt unlocks; Autofill's unlock screen asks for the PIN too.
+- [ ] Remove the phone's screen lock: the app falls back to the master password and Settings shows quick unlock as unavailable.
 
 ## 4b. Import from another password manager
 
@@ -73,6 +74,11 @@ Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVau
 
 - [ ] Change a login's password twice: its detail screen lists the two earlier ones under Previous passwords, newest first; reveal and copy work.
 - [ ] Clear removes them; deleting the login and adding it again shows no history.
+
+## 4d. Offline breach check
+
+- [ ] Save a login with the password `password123`: the editor warns that it appears in public leaks; the Audit tab shows it under Leaked, first, as Critical.
+- [ ] A generated password shows no warning.
 
 ## 5. Auto-lock
 

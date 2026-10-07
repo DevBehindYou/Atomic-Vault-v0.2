@@ -122,6 +122,7 @@ abstract class VaultAuthActivity : FragmentActivity() {
             title = promptTitle,
             subtitle = promptSubtitle,
             negativeButtonText = "Use master password",
+            screenLock = keyStore.usesScreenLock(),
             onSuccess = { authed -> completeWithBiometric(keyStore, authed) },
             onError = { message ->
                 TrustLedger.record(

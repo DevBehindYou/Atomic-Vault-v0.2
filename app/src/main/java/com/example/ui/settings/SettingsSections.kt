@@ -31,7 +31,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.database.FolderPlain
 import com.example.database.TagPlain
+import com.example.security.AppBiometricManager
 import com.example.security.IdleLockStore
+import com.example.security.QuickUnlockKind
 import com.example.ui.components.AtomicHairline
 import com.example.ui.components.AtomicIconButton
 import com.example.ui.components.AtomicPanel
@@ -74,27 +76,42 @@ internal fun SecuritySection(
         }
     }
     IdleLockChips()
+    val context = LocalContext.current
+    val kind = remember { AppBiometricManager.quickUnlockKind(context) }
+    val title = quickUnlockTitle(kind)
     AtomicPanel(modifier = Modifier.fillMaxWidth(), on = biometricEnabled) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
-                    Text("Fingerprint unlock", style = AtomicType.displayS, color = colors.textPrimary)
-                    AtomicStatusPill(on = biometricEnabled, onLabel = "Armed", subject = "Fingerprint unlock")
+                    Text(title, style = AtomicType.displayS, color = colors.textPrimary)
+                    AtomicStatusPill(on = biometricEnabled, onLabel = "Armed", subject = title)
                 }
                 Text(
-                    "Fingerprint or face, for unlocking and for every fill.",
+                    quickUnlockDescription(kind),
                     style = AtomicType.bodySmall,
                     color = colors.textSecondary
                 )
             }
-            AtomicSwitch(
-                checked = biometricEnabled,
-                onCheckedChange = onUpdateBiometric,
-                modifier = Modifier.testTag("settings_biometric_switch"),
-                label = "Fingerprint unlock"
-            )
+            if (kind != QuickUnlockKind.NONE || biometricEnabled) {
+                AtomicSwitch(
+                    checked = biometricEnabled,
+                    onCheckedChange = onUpdateBiometric,
+                    modifier = Modifier.testTag("settings_biometric_switch"),
+                    label = title
+                )
+            }
         }
     }
+}
+
+/** The quick-unlock card's name for what this phone can do. */
+internal fun quickUnlockTitle(kind: QuickUnlockKind): String =
+    if (kind == QuickUnlockKind.SCREEN_LOCK) "Screen-lock unlock" else "Fingerprint unlock"
+
+internal fun quickUnlockDescription(kind: QuickUnlockKind): String = when (kind) {
+    QuickUnlockKind.FINGERPRINT -> "Fingerprint or face, for unlocking and for every fill."
+    QuickUnlockKind.SCREEN_LOCK -> "Your phone's PIN, pattern or password, for unlocking and for every fill. The master password always works too."
+    QuickUnlockKind.NONE -> "Needs a fingerprint, or a screen lock on Android 11 or later. Set one in Android settings to use it."
 }
 
 /** Lock after so long on screen with no taps (TASKS T3); stored outside the vault. */
