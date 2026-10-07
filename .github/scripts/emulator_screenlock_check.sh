@@ -76,8 +76,14 @@ echo "Restart and cancel the prompt: the password field must stay usable"
 adb shell am force-stop "$PKG"; sleep 2
 adb shell am start -n "$PKG/com.example.MainActivity"
 wait_for_text 'Unlock AtomicVault' 30
-adb shell input keyevent 4
-sleep 2
+# The PIN panel opens with its keyboard up: the first BACK only hides the
+# keyboard, the next one cancels the prompt. Press until the panel is gone.
+for attempt in 1 2 3 4; do
+  adb shell input keyevent 4
+  sleep 2
+  dump || continue
+  grep -q 'com.android.systemui:id/panel' "$OUT/ui.xml" || break
+done
 wait_for_text 'resource-id="screen_unlock"' 15
 dump || fail "UI dump failed after cancelling"
 C=$(nth_edit_center 1); [ -n "$C" ] || fail "No password field after cancelling the prompt"
