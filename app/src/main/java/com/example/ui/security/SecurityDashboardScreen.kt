@@ -26,10 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.database.CredentialPlain
 import com.example.security.CredentialFinding
+import com.example.security.BreachedPasswords
 import com.example.security.PasswordAnalysis
 import com.example.security.PasswordIssue
 import com.example.security.VaultSecurityReport
@@ -72,12 +74,16 @@ fun SecurityDashboardScreen(
 ) {
     val colors = AtomicTheme.colors
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var report by remember { mutableStateOf<VaultSecurityReport?>(null) }
     var checkedAt by remember { mutableStateOf<Long?>(null) }
 
     suspend fun scan() {
         val items = onLoadAllCredentials()
-        report = withContext(Dispatchers.Default) { PasswordAnalysis.analyzeVault(items) }
+        report = withContext(Dispatchers.Default) {
+            val breached = BreachedPasswords.get(context)
+            PasswordAnalysis.analyzeVault(items) { breached?.contains(it) == true }
+        }
         checkedAt = System.currentTimeMillis()
     }
 
@@ -112,12 +118,15 @@ fun SecurityDashboardScreen(
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
                         AtomicStatTile(
+                            "${r.breachedCount}", "Leaked", Modifier.weight(1f),
+                            valueColor = if (r.breachedCount > 0) colors.error else colors.textPrimary
+                        )
+                        AtomicStatTile(
                             "${r.reusedCount}", "Reused", Modifier.weight(1f),
                             valueColor = if (r.reusedCount > 0) colors.error else colors.textPrimary
                         )
                         AtomicStatTile("${r.weakCount}", "Weak", Modifier.weight(1f))
                         AtomicStatTile("${r.emptyCount}", "Empty", Modifier.weight(1f))
-                        AtomicStatTile("${r.totalCount}", "Total", Modifier.weight(1f))
                     }
                 }
                 if (r.findings.isNotEmpty()) {
@@ -151,6 +160,7 @@ private fun HealthModule(report: VaultSecurityReport) {
     val colors = AtomicTheme.colors
     val reason = when {
         report.totalCount == 0 -> "Nothing to check yet. Add a login and it is checked here."
+        report.breachedCount > 0 -> "${report.breachedCount} password${if (report.breachedCount == 1) " appears" else "s appear"} in public leaks. Change ${if (report.breachedCount == 1) "it" else "them"} first."
         report.reusedCount > 0 -> "${report.reusedCount} login${if (report.reusedCount == 1) " shares" else "s share"} a password. Fix those first: one leak would open them all."
         report.weakCount > 0 -> "${report.weakCount} password${if (report.weakCount == 1) " is" else "s are"} easy to guess. Replace them with generated ones."
         report.emptyCount > 0 -> "${report.emptyCount} login${if (report.emptyCount == 1) " has" else "s have"} no password saved."
@@ -205,6 +215,7 @@ private fun IntegrityCard(warnings: List<String>) {
 private fun FindingCard(finding: CredentialFinding, onClick: () -> Unit) {
     val colors = AtomicTheme.colors
     val (priority, barColor) = when {
+        PasswordIssue.BREACHED in finding.issues -> "Critical" to colors.error
         PasswordIssue.REUSED in finding.issues -> "Critical" to colors.error
         PasswordIssue.WEAK in finding.issues -> "High" to colors.energyHigh
         else -> "Low" to colors.line
@@ -245,4 +256,5 @@ private fun issueHint(issue: PasswordIssue): String = when (issue) {
     PasswordIssue.REUSED -> "Same password as another login."
     PasswordIssue.WEAK -> "Easy to guess."
     PasswordIssue.EMPTY -> "No password saved."
+    PasswordIssue.BREACHED -> "Appears in public password leaks: attackers try it first."
 }

@@ -59,6 +59,11 @@ Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVau
 - [ ] Audit tab with a payment card and an identity in the vault: they are not counted as "empty password".
 - [ ] Settings > Privacy proof: "Screen capture protection" is a pass and "No keyboard service" is a pass. The security timeline shows no "chain broken".
 
+## 4d. Offline breach check
+
+- [ ] Save a login with the password `password123`: the editor warns that it appears in public leaks; the Audit tab shows it under Leaked, first, as Critical.
+- [ ] A generated password shows no warning.
+
 ## 4c. Password history
 
 - [ ] Change a login's password twice: its detail screen lists the two earlier ones under Previous passwords, newest first; reveal and copy work.

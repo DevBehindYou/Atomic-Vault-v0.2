@@ -420,6 +420,7 @@ fun IssueBadge(
         PasswordIssue.REUSED -> "Reused" to AtomicTagTone.Danger
         PasswordIssue.WEAK -> "Weak" to AtomicTagTone.Strong
         PasswordIssue.EMPTY -> "No password" to AtomicTagTone.Quiet
+        PasswordIssue.BREACHED -> "Leaked" to AtomicTagTone.Danger
     }
     AtomicTag(label = label, modifier = modifier, tone = tone)
 }

@@ -5,6 +5,24 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Offline breach check
+
+- Passwords are checked against the **1,000,000 most common passwords from
+  public breach compilations** (SecLists `Pwdb_top-1000000.txt`, MIT
+  licence, `assets/licenses/MIT-seclists.txt`), bundled as a 1.8 MB Bloom
+  filter (`assets/breached_passwords.bloom`). Fully offline: the app still
+  has no internet permission, and no password or hash leaves the phone.
+- Security dashboard: a **Leaked** tile and finding tag; leaked logins are
+  listed first, as Critical. The login editor warns while typing a leaked
+  password.
+- A Bloom filter never misses a listed password; about 1 in 1,000 other
+  passwords is wrongly flagged (measured 0.09%), so the wording says
+  "appears in public leaks".
+- Reproducible: `tools/breach_filter/build_breach_filter.py` rebuilds the
+  filter from the source list, pinned by SHA-256, and documents the format.
+- Tests: `BreachedPasswordsTest` reads the bundled file (known leaked and
+  strong passwords, false-positive rate, bad file refused, report ordering).
+
 ### Lock after no taps (TASKS T3, user decision U4)
 
 - New Settings row **Lock after no taps**: Off, 1, 5 or 15 min, **5 min by
