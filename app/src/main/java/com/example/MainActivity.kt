@@ -14,6 +14,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.compose.rememberNavController
+import com.example.security.IdleLockStore
 import com.example.security.VaultLifecycleObserver
 import com.example.ui.AtomicVaultNavGraph
 import com.example.ui.VaultStatus
@@ -47,9 +48,11 @@ class MainActivity : FragmentActivity() {
         // app doesn't flash one theme and then the other at launch.
         AtomicColors.applyTheme(ThemePreferenceStore.load(this))
 
-        // Attach LifecycleObserver that automatically re-locks the application if backgrounded > 60s
+        // Locks after the chosen time away from the app, and after the chosen
+        // time on screen with no taps.
         lifecycleObserver = VaultLifecycleObserver(
             getAutoLockSeconds = { viewModel.uiState.value.settings?.autoLockSeconds ?: 60 },
+            getIdleLockSeconds = { IdleLockStore.load(this) },
             isUnlocked = { viewModel.uiState.value.status == VaultStatus.UNLOCKED },
             onLock = { viewModel.lockVault() }
         )

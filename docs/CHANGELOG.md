@@ -18,6 +18,32 @@ results are recorded in the plan's progress table.
 - The screen warns that a CSV file is unencrypted and should be deleted.
 - Tests: `CsvImportTest` (quoting, line breaks in fields, byte-order mark,
   each format, duplicates, refused files).
+### Lock after no taps (TASKS T3, user decision U4)
+
+- New Settings row **Lock after no taps**: Off, 1, 5 or 15 min, **5 min by
+  default**, beside **Lock after leaving the app**. Before, a vault left open
+  on screen never locked (audit finding a).
+- Any tap in the app restarts the clock; it only runs while the app is on
+  screen, and starts again when the vault is unlocked, so time spent on the
+  unlock screen never counts (a fingerprint unlock is not a tap in the app).
+  Checked every 5 s, so a lock can come up to 5 s late.
+- The choice is stored outside the vault (like the theme): it is not secret
+  and the lock screen needs it.
+- Tests: five new cases in `VaultLifecycleObserverTest`.
+### Password history
+
+- When a login's password changes (in the editor or through an Autofill
+  save), the old one is kept, sealed like every other secret, in a new
+  `password_history` table: the last 10 per login, newest first.
+- The item's detail screen shows **Previous passwords** with the date each
+  was replaced, hidden until revealed one by one, with copy and **Clear**.
+- Deleting a login or restoring a backup removes its history. History is
+  not written to backup files.
+- The table is created on open (`CREATE TABLE IF NOT EXISTS`), so existing
+  vaults gain it without a migration step.
+- Tests: `PasswordHistoryDeviceTest` (real SQLCipher on the emulator: order,
+  no entry when unchanged, limit of 10, clear and delete, stored encrypted);
+  `DdlTest` checks the table is created.
 
 ### Toolchain and SDK 36 (Phase 5, H2)
 

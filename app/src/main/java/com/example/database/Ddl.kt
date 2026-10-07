@@ -65,6 +65,17 @@ object Ddl {
         );
         """.trimIndent(),
 
+        // Earlier passwords of a login, newest first, sealed like every
+        // other secret. Kept to PASSWORD_HISTORY_LIMIT per item.
+        """
+        CREATE TABLE IF NOT EXISTS password_history (
+          id TEXT PRIMARY KEY,
+          item_id TEXT NOT NULL,
+          encrypted_password BLOB NOT NULL,
+          changed_at INTEGER NOT NULL
+        );
+        """.trimIndent(),
+
         // Indices -- CREATE INDEX IF NOT EXISTS is idempotent and safe to
         // run on every open (unlike ALTER TABLE ADD COLUMN, this needs no
         // separate migration step). Every one of these backs a query
@@ -79,7 +90,8 @@ object Ddl {
         // lookup ("which items have tag X"), which the primary key alone
         // doesn't serve efficiently.
         "CREATE INDEX IF NOT EXISTS idx_credential_tag_tag_id ON credential_tag(tag_id);",
-        "CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_name ON tag(name COLLATE NOCASE);"
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_name ON tag(name COLLATE NOCASE);",
+        "CREATE INDEX IF NOT EXISTS idx_password_history_item_id ON password_history(item_id);"
     )
 
     /**

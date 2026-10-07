@@ -12,6 +12,7 @@ import com.example.database.CredentialInput
 import com.example.database.CredentialPlain
 import com.example.database.CredentialPreview
 import com.example.database.FolderPlain
+import com.example.database.PasswordHistoryEntry
 import com.example.database.SqlcipherGuard
 import com.example.database.TagPlain
 import com.example.database.VaultDatabase
@@ -434,6 +435,18 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      */
     suspend fun getItem(id: String): CredentialPlain? = withContext(Dispatchers.IO) {
         VaultSession.useIfUnlocked { it.repository.getItem(id) }
+    }
+
+    /** Earlier passwords of a login, newest first; empty if the vault is locked. */
+    suspend fun passwordHistory(id: String): List<PasswordHistoryEntry> = withContext(Dispatchers.IO) {
+        VaultSession.useIfUnlocked { it.repository.passwordHistory(id) }.orEmpty()
+    }
+
+    fun clearPasswordHistory(id: String, onDone: () -> Unit) {
+        launchVaultWork { repo ->
+            repo.clearPasswordHistory(id)
+            withContext(Dispatchers.Main) { onDone() }
+        }
     }
 
     fun createItem(input: CredentialInput, onDone: () -> Unit) {

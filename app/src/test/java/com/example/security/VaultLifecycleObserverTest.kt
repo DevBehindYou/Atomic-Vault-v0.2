@@ -69,4 +69,71 @@ class VaultLifecycleObserverTest {
         ShadowLooper.idleMainLooper(120, TimeUnit.SECONDS)
         assertEquals(0, locks)
     }
+
+    // Idle lock (TASKS T3): the vault stays on screen with no taps.
+
+    private var open = true
+
+    private fun idleObserver(idleSeconds: Int) = VaultLifecycleObserver(
+        getAutoLockSeconds = { 60 },
+        getIdleLockSeconds = { idleSeconds },
+        isUnlocked = { open },
+        onLock = { locks++; open = false }
+    )
+
+    @Test
+    fun `an open vault with no taps locks after the idle time`() {
+        idleObserver(60).onResume(Owner())
+        ShadowLooper.idleMainLooper(55, TimeUnit.SECONDS)
+        assertEquals(0, locks)
+        ShadowLooper.idleMainLooper(10, TimeUnit.SECONDS)
+        assertEquals(1, locks)
+    }
+
+    @Test
+    fun `each tap restarts the idle clock`() {
+        val observer = idleObserver(60)
+        observer.onResume(Owner())
+        repeat(4) {
+            ShadowLooper.idleMainLooper(40, TimeUnit.SECONDS)
+            observer.onUserActivity()
+        }
+        assertEquals(0, locks)
+        ShadowLooper.idleMainLooper(70, TimeUnit.SECONDS)
+        assertEquals(1, locks)
+    }
+
+    @Test
+    fun `idle lock off never locks on screen`() {
+        idleObserver(0).onResume(Owner())
+        ShadowLooper.idleMainLooper(3600, TimeUnit.SECONDS)
+        assertEquals(0, locks)
+    }
+
+    @Test
+    fun `time on the unlock screen does not count once unlocked`() {
+        open = false
+        idleObserver(60).onResume(Owner())
+        ShadowLooper.idleMainLooper(300, TimeUnit.SECONDS)
+        open = true // unlocked by fingerprint, no tap in the activity
+        ShadowLooper.idleMainLooper(30, TimeUnit.SECONDS)
+        assertEquals(0, locks)
+        ShadowLooper.idleMainLooper(45, TimeUnit.SECONDS)
+        assertEquals(1, locks)
+    }
+
+    @Test
+    fun `the idle clock stops while the app is off screen`() {
+        val owner = Owner()
+        val observer = VaultLifecycleObserver(
+            getAutoLockSeconds = { -1 },
+            getIdleLockSeconds = { 60 },
+            isUnlocked = { open },
+            onLock = { locks++; open = false }
+        )
+        observer.onResume(owner)
+        observer.onPause(owner)
+        ShadowLooper.idleMainLooper(600, TimeUnit.SECONDS)
+        assertEquals(0, locks)
+    }
 }

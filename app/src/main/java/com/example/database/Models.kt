@@ -84,6 +84,12 @@ data class CredentialPreview(
     val tags: List<TagPlain> = emptyList()
 )
 
+/** A password a login used before it was changed (TASKS: password history). */
+data class PasswordHistoryEntry(
+    val password: String,
+    val changedAt: Long
+)
+
 @JsonClass(generateAdapter = true)
 data class VaultSettingsPlain(
     val autoLockSeconds: Int = 60,

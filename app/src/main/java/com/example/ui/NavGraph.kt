@@ -285,7 +285,9 @@ fun AtomicVaultNavGraph(
                             onEdit = { navController.navigate(editRoute(selectedPreview.id)) },
                             onBack = { selectedId = null },
                             refreshKey = selectedPreview.updatedAt,
-                            showBack = false
+                            showBack = false,
+                            onLoadHistory = { id -> viewModel.passwordHistory(id) },
+                            onClearHistory = { id, done -> viewModel.clearPasswordHistory(id, done) }
                         )
                     } else {
                         com.example.ui.components.AtomicEmptyState(
@@ -365,7 +367,9 @@ fun AtomicVaultNavGraph(
                 onLoadItem = { id -> viewModel.getItem(id) },
                 onEdit = { navController.navigate(editRoute(itemId)) },
                 onBack = { navController.popBackStack() },
-                refreshKey = uiState.previews.firstOrNull { it.id == itemId }?.updatedAt
+                refreshKey = uiState.previews.firstOrNull { it.id == itemId }?.updatedAt,
+                onLoadHistory = { id -> viewModel.passwordHistory(id) },
+                onClearHistory = { id, done -> viewModel.clearPasswordHistory(id, done) }
             )
         }
 
