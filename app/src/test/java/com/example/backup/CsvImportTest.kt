@@ -28,7 +28,7 @@ class CsvImportTest {
 
     @Test
     fun `Bitwarden export skips cards and notes`() {
-        val csv = "﻿folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp\n" +
+        val csv = "\uFEFFfolder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp\n" +
             "Work,1,login,Mail,,,0,https://mail.example.com,me@example.com,hunter2,otpauth://totp/x?secret=JBSWY3DPEHPK3PXP\n" +
             ",,note,A note,text,,0,,,,\n" +
             ",,card,Visa,,,0,,,,\n"

@@ -28,7 +28,9 @@ object CsvImport {
     private val TYPE = listOf("type")
 
     fun parse(text: String): Result {
-        val rows = parseRows(text.removePrefix("﻿")).filter { row -> row.any { it.isNotBlank() } }
+        // Excel and some exporters start the file with a byte-order mark (U+FEFF).
+        val body = if (text.isNotEmpty() && text[0].code == 0xFEFF) text.substring(1) else text
+        val rows = parseRows(body).filter { row -> row.any { it.isNotBlank() } }
         if (rows.isEmpty()) throw NotRecognised("The file is empty.")
         val header = rows.first().map { it.trim().lowercase() }
         fun column(names: List<String>): Int = names.firstNotNullOfOrNull { n -> header.indexOf(n).takeIf { it >= 0 } } ?: -1
