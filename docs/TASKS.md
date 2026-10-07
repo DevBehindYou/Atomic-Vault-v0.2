@@ -48,7 +48,7 @@ it, **P2** soon after, **P3** when convenient.
 
 ### P2
 
-- **T3. Idle auto-lock (needs U4).** Today the vault only locks after the app
+- **T3. Idle auto-lock (needs U4).** (Done 2026-10-06: U4 answered; "Lock after no taps" Off/1/5/15 min, default 5 min.) Today the vault only locks after the app
   leaves the screen; a vault left open on screen never locks.
   `VaultLifecycleObserver.onUserActivity()` is wired to
   `MainActivity.onUserInteraction()` but only cancels a timer that is never
@@ -101,7 +101,7 @@ it, **P2** soon after, **P3** when convenient.
 
 | Finding | Status |
 |---|---|
-| (a) Auto-lock is background-only | Partly addressed: label and options now say so; idle timer open (T3) |
+| (a) Auto-lock is background-only | Fixed: "Lock after no taps" idle timer (T3) |
 | (b) `exportData()` N+1 | Fixed (T8, batched export) |
 | (c) `ClipboardHelper` dead `SDK_INT >= P` branch | Fixed; the helper was rewritten |
 | (d) Kotlin packages still `com.example.*` | Open, deliberate (T11) |

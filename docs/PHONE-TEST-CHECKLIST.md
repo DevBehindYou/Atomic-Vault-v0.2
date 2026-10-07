@@ -61,11 +61,15 @@ Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVau
 
 ## 5. Auto-lock
 
-Settings now reads **Lock after leaving the app**: Immediately, 1, 5 or 15 min.
+Settings has **Lock after leaving the app** (Immediately, 1, 5 or 15 min) and
+**Lock after no taps** (Off, 1, 5 or 15 min; 5 min by default).
 
 - [ ] Immediately: leave the app, return, it asks to unlock.
 - [ ] 1 min: return after 30 s (still open), return after 90 s (locked).
-- [ ] The vault does not lock while you sit on a screen (there is no idle timer yet).
+- [ ] Lock after no taps, 1 min: leave the vault open on screen without touching it; it locks within about 65 s.
+- [ ] Keep tapping or scrolling every 30 s for 3 min: it stays open.
+- [ ] Lock after no taps, Off: an open vault on screen never locks by itself.
+- [ ] Unlock with the fingerprint after waiting on the unlock screen for a few minutes: the vault does not lock straight away.
 
 ## 6. Layout
 

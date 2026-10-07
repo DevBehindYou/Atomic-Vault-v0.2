@@ -5,6 +5,19 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Lock after no taps (TASKS T3, user decision U4)
+
+- New Settings row **Lock after no taps**: Off, 1, 5 or 15 min, **5 min by
+  default**, beside **Lock after leaving the app**. Before, a vault left open
+  on screen never locked (audit finding a).
+- Any tap in the app restarts the clock; it only runs while the app is on
+  screen, and starts again when the vault is unlocked, so time spent on the
+  unlock screen never counts (a fingerprint unlock is not a tap in the app).
+  Checked every 5 s, so a lock can come up to 5 s late.
+- The choice is stored outside the vault (like the theme): it is not secret
+  and the lock screen needs it.
+- Tests: five new cases in `VaultLifecycleObserverTest`.
+
 ### Toolchain and SDK 36 (Phase 5, H2)
 
 - AGP 8.8.2 -> 8.13.2, Gradle 8.13, Kotlin 2.2.21, KSP 2.3.12;
