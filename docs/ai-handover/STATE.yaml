@@ -1,0 +1,55 @@
+protocol: AI-HANDOVER/V2
+updated: 2026-10-07
+project: atomic-vault (Android password vault, repo DevBehindYou/Atomic-Vault-v0.2)
+objective: finish 0.3.0/0.4.0 on the work branch, phone-test it, then release
+
+repo:
+  work_branch: claude/stoic-lamport-t601ql
+  work_branch_commit: bb60f28   # PR #18 merged; PR #19 (this handover + phone script) open
+  main_commit: 2217d9a          # untouched; a push to main = signed release (D10)
+  version_in_gradle: 0.2.1 / versionCode 2   # bump not done (user task)
+
+stack:
+  - kotlin, jetpack-compose (Atomic design system), material3
+  - sqlcipher-android 4.19.1, field-level AES-256-GCM, Argon2id 64 MiB (BouncyCastle)
+  - android-keystore + BiometricPrompt (fingerprint key; screen-lock key on API 30+)
+  - autofill framework (no custom keyboard), moshi/ksp
+  - agp 8.13.2, gradle 8.13, kotlin 2.2.21, compileSdk/targetSdk 36, minSdk 28
+
+status:
+  build: VERIFIED          # CI run #122 green on bb60f28's parent line; #18 PR run green
+  unit_tests: VERIFIED     # CI
+  emulator_checks: VERIFIED  # debug, minified, fingerprint (API 29), screen-lock (API 30), upgrade, instrumented
+  phone_test: NOT_RUN      # needs the user's device; tools/phone_check.sh added in PR #19
+  snapshot_review: NOT_RUN # CI artifact download blocked in cloud env; do it locally
+  release: NOT_IMPLEMENTED # user task
+
+done_this_session:  # all merged into the work branch with green CI
+  - "#2-#11 a11y, biometric CI, lint, deps, retired tables, unused imports, sealed envelope, sqlcipher swap, toolchain/SDK 36"
+  - "#12 lock after no taps (T3)"
+  - "#13 CSV import"
+  - "#14 password history"
+  - "#15 screen-lock unlock"
+  - "#16 offline breach check"
+  - "#17 docs status, #18 CI failure diagnostics"
+
+open_prs:
+  - "#19 tools/phone_check.sh + docs/ai-handover (CI pending at handover time)"
+
+pending:
+  - TASK-001 automated phone check on the user's phone (tools/phone_check.sh)
+  - TASK-002 manual phone test (docs/PHONE-TEST-CHECKLIST.md)
+  - TASK-003 review CI UI snapshots
+  - TASK-004 version bump + merge to main + release (user only)
+  - TASK-005 package rename com.example -> com.atomicvault.android (after release)
+
+constraints:
+  - never push or merge to main without the user (D10)
+  - work through PRs into the work branch; merge only on green CI, no code conflicts
+  - commit trailer: Co-Authored-By + Claude-Session lines (see NEXT_AGENT.md)
+  - no internet permission in the app; offline only
+  - report progress in % to the user regularly
+  - never store secrets; release keystore lives in GitHub secrets ANDROID_KEYSTORE_* / ANDROID_KEY_*
+
+progress: 20 of 24 tracked items merged (83%)
+confidence: HIGH
