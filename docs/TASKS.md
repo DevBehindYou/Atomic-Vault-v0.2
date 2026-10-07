@@ -17,6 +17,11 @@
 > `claude/stoic-lamport-t601ql`. Left: T3 (waits on U4) and T11 (after the
 > release). The phone test (U1) now also covers the SQLCipher swap (#9) and
 > the sealed vault envelope (#8).
+>
+> **Update 2026-10-07:** T3 done (#12, U4 answered). New features asked for
+> by the user, merged: password history (#14), offline breach check (#16),
+> CSV import (#13), screen-lock unlock (#15). Agent work left: T11 only
+> (after the release).
 
 Status as of 2026-09-21. Branch `fix/biometric-ime-autofill` at `9631167`, CI
 green, unmerged. Priorities: **P0** blocks a release, **P1** should ship with

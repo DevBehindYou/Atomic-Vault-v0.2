@@ -15,7 +15,19 @@ Other files in the repo root that matter: `AUDIT-REPORT.md` (an earlier
 static-only audit; parts of it were wrong, see the change log) and
 `atomicvault_design_system_reference/` (the earlier dark visual reference, superseded by `docs/design/ATOMIC-DESIGN-SYSTEM.md`, see D15).
 
-## Status (2026-10-06)
+## Status (2026-10-07)
+
+- Active branch: `claude/stoic-lamport-t601ql`. New since the last status,
+  each through a pull request with green CI: **Lock after no taps** (T3,
+  #12), **password history** (#14), the **offline breach check** (#16),
+  **CSV import** from other password managers (#13) and **screen-lock
+  unlock** for phones without a fingerprint (#15, with a new Android 11
+  emulator check). Not merged to `main`, not phone-tested.
+- Next user steps: the phone test (sections 4a-4d and 5 are new), a look at
+  the CI snapshots, then the version bumps and the merge to `main`. The
+  package rename (T11) follows the release.
+
+### Status (2026-10-06)
 
 - Active branch: `claude/stoic-lamport-t601ql`. Since the last status it
   gained, each through a pull request with green CI: TalkBack labels (T7, #2),
