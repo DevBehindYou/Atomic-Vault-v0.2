@@ -64,6 +64,11 @@ Setup: Settings > Autofill card > "Turn on AtomicVault Autofill", pick AtomicVau
 - [ ] Save a login with the password `password123`: the editor warns that it appears in public leaks; the Audit tab shows it under Leaked, first, as Critical.
 - [ ] A generated password shows no warning.
 
+## 4b. Import from another password manager
+
+- [ ] Export passwords from Google Password Manager (passwords.google.com > Settings > Export) and import the CSV under Backup and restore > Import CSV: the count matches, a login fills through Autofill.
+- [ ] Import the same file again: everything is skipped, nothing is duplicated.
+- [ ] Undo import: the vault is as before.
 ## 4c. Password history
 
 - [ ] Change a login's password twice: its detail screen lists the two earlier ones under Previous passwords, newest first; reveal and copy work.

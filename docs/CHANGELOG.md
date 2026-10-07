@@ -23,6 +23,19 @@ results are recorded in the plan's progress table.
 - Tests: `BreachedPasswordsTest` reads the bundled file (known leaked and
   strong passwords, false-positive rate, bad file refused, report ordering).
 
+### Import logins from other password managers (CSV)
+
+- Backup and restore gains an **Import CSV** tab: logins from a CSV export
+  of Google Password Manager / Chrome, Bitwarden, 1Password, KeePass,
+  KeePassXC, Firefox, or any file with recognisable column names (name or
+  title, url, username, password, notes, totp).
+- Adds to the vault, never replaces it. A login already in the vault (same
+  username, password and site) is skipped; Bitwarden cards and notes are
+  skipped and counted. Chrome's `android://...@package` app logins become
+  app logins. The import can be undone until the vault locks.
+- The screen warns that a CSV file is unencrypted and should be deleted.
+- Tests: `CsvImportTest` (quoting, line breaks in fields, byte-order mark,
+  each format, duplicates, refused files).
 ### Lock after no taps (TASKS T3, user decision U4)
 
 - New Settings row **Lock after no taps**: Off, 1, 5 or 15 min, **5 min by
