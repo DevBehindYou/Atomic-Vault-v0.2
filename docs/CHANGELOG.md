@@ -5,19 +5,35 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
-### Vault creation no longer crashes when memory is short
+### Vault creation no longer crashes when memory is short (native Argon2)
 
 - Root cause of the intermittent "app gone after Create vault" seen in CI
   (runs #71, #75, #121, #130), found with the new failure diagnostics:
-  `java.lang.OutOfMemoryError` on a background thread during Argon2id
-  (64 MiB, allocated on the Java heap by BouncyCastle). OutOfMemoryError is
-  an Error, not an Exception, so it escaped every catch and killed the app.
-- `android:largeHeap="true"`: the app may use the device's large heap limit,
-  as password managers that run Argon2 on the Java heap do.
-- `Argon2Kdf` collects garbage and retries once on OutOfMemoryError; if memory
-  is still short it throws `KdfOutOfMemoryException`, so create, unlock and
-  backup show "Not enough free memory. Close other apps and try again."
-  instead of crashing. Unlock never reports it as a wrong password.
+  `java.lang.OutOfMemoryError` during Argon2id. BouncyCastle builds the
+  64 MiB memory matrix on the Java heap; on a device or emulator with a small
+  app heap that does not fit, and OutOfMemoryError (an Error, not an
+  Exception) escaped every catch and killed the app. A first attempt
+  (`largeHeap` plus a garbage-collect-and-retry) was not enough: the minified
+  build still ran out of heap.
+- Argon2id now runs in native code (`com.lambdapioneer.argon2kt` 1.6.0, the
+  reference C implementation, Maven Central). The matrix is allocated outside
+  the Java heap. Same algorithm, version (1.3) and parameters, so the output
+  is byte-identical and every existing vault opens unchanged. BouncyCastle
+  stays as the fallback if the native library cannot load. `largeHeap` is not
+  used. An R8 keep rule protects the JNI classes.
+- If memory is still short, create, unlock and backup show "Not enough free
+  memory. Close other apps and try again." instead of crashing; unlock never
+  reports it as a wrong password.
+- Tests: `Argon2KdfVectorTest` (JVM, fallback) and `Argon2KdfDeviceTest`
+  (emulator, native, including the real 64 MiB setting) check known answers
+  computed with the reference implementation (argon2-cffi).
+
+### Version 0.4.0 (versionCode 3)
+
+- Version for the release of this branch to `main` (PR #20). It carries the
+  0.3.0 fixes and the Atomic redesign, which DECISIONS.md says ships as
+  0.4.0, so the release is 0.4.0. The versionCode rises so 0.2.1 installs update in
+  place.
 
 ### Offline breach check
 

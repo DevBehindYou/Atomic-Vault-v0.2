@@ -1,7 +1,7 @@
 # Project Handover
 
 Last updated: 2026-10-07
-Verified against commit: `bb60f28` (work branch `claude/stoic-lamport-t601ql`)
+Verified against commit: `b28797d` (work branch `claude/stoic-lamport-t601ql`)
 
 ## Compact Context
 
@@ -34,7 +34,7 @@ storage, SQLCipher swap, SDK 36, and five new features) after a real-phone test.
 
 ## Active Problems
 
-- `ISS-001`: intermittent "app gone after Create vault" on emulators (3 times)
+- None open. `ISS-001` (vault-creation OOM) fixed in PR #21 with native Argon2id.
 
 ## Highest-Priority Work
 

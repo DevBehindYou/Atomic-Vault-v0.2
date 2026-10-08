@@ -15,7 +15,7 @@ Do not restart from scratch.
 git fetch origin
 git status --short
 git branch --show-current
-git rev-parse --short origin/claude/stoic-lamport-t601ql   # expect bb60f28, or a merge of PR #19 on top
+git rev-parse --short origin/claude/stoic-lamport-t601ql   # expect b28797d, or a merge of PR #19 on top
 ```
 
 ## First Objective
@@ -47,7 +47,7 @@ git rev-parse --short origin/claude/stoic-lamport-t601ql   # expect bb60f28, or 
 
 ## Do Not Repeat
 
-- `FA-001` to `FA-004` in `ISSUES.md`.
+- `FA-001` to `FA-005` in `ISSUES.md` (FA-005: never move the KDF back onto the Java heap).
 
 ## Definition of Done (this phase)
 

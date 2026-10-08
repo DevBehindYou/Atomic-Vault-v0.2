@@ -39,9 +39,9 @@ Done when: issues are listed as tasks, or the snapshots are approved.
 ### TASK-004 — Release (user only)
 
 Status: OPEN
-Action: bump `versionName`/`versionCode` in `app/build.gradle.kts` (currently
-0.2.1/2; the plan names 0.3.0, and 0.4.0 for the design system), merge the
-work branch to `main`, tag. A push to `main` runs the signed release workflow.
+Action: the version is already 0.4.0 / `versionCode 3` (PRs #23, #24). Merge
+PR #20 (work branch → `main`), then tag `v0.4.0`. A push to `main` runs the
+signed release workflow.
 Dependencies: TASK-001, TASK-002.
 
 ## P2
@@ -54,5 +54,5 @@ mechanical PR after the release; keep the applicationId.
 
 ### TASK-006 — Root-cause ISS-001
 
-Status: OPEN
-Action: wait for the next occurrence; PR #18 now prints the app's exit reason.
+Status: DONE (PR #21: native Argon2id; see ISSUES.md)
+Action: on the real phone (TASK-001), confirm vault creation and unlock still work.

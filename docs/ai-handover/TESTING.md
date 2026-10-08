@@ -1,6 +1,6 @@
 # Testing
 
-Last verified commit: `bb60f28` (work branch), CI run #122 and PR #18's run.
+Last verified commit: `b28797d` (work branch), PR runs for #24 and #25 (all 7 jobs green).
 
 | Check | Status | Evidence |
 |---|---|---|

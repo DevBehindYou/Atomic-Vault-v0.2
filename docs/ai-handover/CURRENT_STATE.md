@@ -1,14 +1,14 @@
 # Current State
 
-Last updated: 2026-10-07
-Verified against commit: `bb60f28`
+Last updated: 2026-10-08
+Verified against commit: `b28797d`
 Confidence: HIGH
 
 ## Git
 
 | Branch | Commit | Role |
 |---|---|---|
-| `claude/stoic-lamport-t601ql` | `bb60f28` | Work branch; all PRs merge here |
+| `claude/stoic-lamport-t601ql` | `b28797d` | Work branch; all PRs merge here |
 | `main` | `2217d9a` | Release branch; untouched; push = signed release |
 | `claude/stoic-lamport-t601ql-phone` | PR #19 | Phone-check script + this handover |
 | other `claude/stoic-lamport-t601ql-*` | merged | Safe to delete (the bot could not delete them; 403) |
@@ -23,8 +23,10 @@ Confidence: HIGH
   fingerprint check (API 29), screen-lock check (API 30), upgrade check (PRs
   only: the base build creates a vault, then the new build must unlock it),
   instrumented tests.
-- Latest green run on the work branch: #122 (`AtomicVault-UI-Snapshots-122`,
-  `AtomicVault-Debug-APK-122`, and the other artifacts).
+- Latest green run with all of the work branch's code: #151 (PR #25;
+  `AtomicVault-UI-Snapshots-151`, `AtomicVault-Debug-APK-151`, and the other
+  artifacts). The upgrade check on release PR #20 runs from the real 0.2.1
+  build on `main`.
 
 ## Features (all VERIFIED by CI only, not on a real phone)
 
@@ -38,6 +40,8 @@ Confidence: HIGH
 | Sealed vault envelope (replaces security-crypto) | #8 | `keystore/EnvelopeSealer.kt`, `keystore/VaultMetaStore.kt` |
 | SQLCipher artifact swap | #9 | `database/VaultDatabase.kt` |
 | Toolchain / SDK 36, API-30 type isolation | #10 | `autofill/InlineApi30.kt` |
+| Native Argon2id (argon2kt; fixes vault-creation OOM, ISS-001) | #21 | `crypto/Argon2Kdf.kt`, `Argon2KdfVectorTest`, `Argon2KdfDeviceTest` |
+| Version 0.4.0 / versionCode 3 | #23, #24 | `app/build.gradle.kts` |
 
 Sources are under `app/src/main/java/com/example/` (package not renamed yet).
 

@@ -32,7 +32,7 @@ it, **P2** soon after, **P3** when convenient.
 | # | Task | Why it waits |
 |---|---|---|
 | U1 | **Phone test** with [PHONE-TEST-CHECKLIST.md](PHONE-TEST-CHECKLIST.md): biometric unlock (P0), the keyboard in real apps, the two Autofill fixes, backup round-trip, auto-lock, large fonts | Needs a physical device with a fingerprint sensor. CI cannot enrol a fingerprint. |
-| U2 | **Merge and release**: bump `0.2.1` / `versionCode 2` to `0.2.2` / `3`, merge, tag `v0.2.2` | A push to `main` runs the signed release workflow. |
+| U2 | **Merge and release**: version is already `0.4.0` / `versionCode 3` on the work branch (0.3.0 fixes plus the 0.4.0 redesign in one release); merge PR #20 and tag `v0.4.0` | A push to `main` runs the signed release workflow. |
 | U3 | **Approve the Inter font download** (~1 MB, github.com/rsms/inter, SIL OFL) | Downloads need explicit approval. |
 | U4 | **Decide on an on-screen idle auto-lock** (see T3) | Product decision. |
 | U5 | Optionally delete the Android SDK in `AppData\Local\Android\Sdk` (~490 MB) | It is not cache, so it was kept. CI does all builds. |

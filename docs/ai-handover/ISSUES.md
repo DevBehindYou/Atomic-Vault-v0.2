@@ -2,20 +2,7 @@
 
 ## Open
 
-### ISS-001 — App disappears right after "Create vault" on emulators
-
-Status: UNRESOLVED (intermittent; 3 occurrences: runs #71, #75, #121)
-Impact: One emulator job fails. The same code passed on every re-run and in
-other jobs. Real devices: UNKNOWN.
-Evidence: the UI dump shows the launcher after tapping "Create vault". No
-`FATAL EXCEPTION` appeared in the last 60 logcat error lines (they were full of
-`Access denied finding property` noise).
-Root cause: HYPOTHESIS. Argon2id allocates 64 MiB while the emulator is
-under memory pressure (low-memory kill), or a crash was cut off from the log.
-Attempts: re-ran once each time; it passed.
-Next diagnostic: PR #18 (merged) makes `fail()` print `pidof`, the FATAL
-block, lmkd/ANR lines, `dumpsys activity exit-info` and meminfo. Read those at
-the next occurrence.
+_None._
 
 ## Resolved (this session)
 
@@ -24,6 +11,7 @@ the next occurrence.
 | ISS-R1 | Minified build crashed Autofill on API 29: `NoClassDefFoundError InlineSuggestionsRequest` (newer R8 check-cast) | API-30 types confined to `autofill/InlineApi30.kt`; shared code passes `Parcelable` (PR #10) |
 | ISS-R2 | Lint `ByteOrderMark` failure in `CsvImport.kt` | A Python edit had written a real U+FEFF; now compares `text[0].code == 0xFEFF` (PR #13) |
 | ISS-R3 | Screen-lock emulator check: one BACK did not cancel the PIN panel on API 30 | Its keyboard takes the first BACK; the script presses BACK until the panel is gone (PR #15) |
+| ISS-001 | App vanished after "Create vault" on emulators (runs #71, #75, #121; then every upgrade check on a minified base) | Root cause (VERIFIED via the PR #18 diagnostics): `OutOfMemoryError` — BouncyCastle Argon2id puts its ~66 MB matrix on the Java heap. Argon2id now runs natively via argon2kt 1.6.0 (off-heap), BouncyCastle kept as fallback; known-answer tests prove byte-identical keys (PR #21) |
 | ISS-R4 | Duplicate OSGi MANIFEST from bcprov 1.81 | packaging exclude (PR #5) |
 
 ## Failed Approaches
@@ -45,3 +33,8 @@ Why failed: they are transient. One re-run per failure is the rule; a second fai
 ### FA-004
 Attempt: writing Kotlin through Python string literals that contain `\uXXXX` escapes.
 Why failed: Python turns the escape into the real character (see ISS-R2). Use Kotlin escapes inside a heredoc, or code comparisons.
+
+### FA-005
+Attempt: fixing ISS-001 with `android:largeHeap="true"` plus one `System.gc()` retry around the BouncyCastle Argon2 call.
+Why failed: the minified build still threw `OutOfMemoryError thrown while trying to throw an exception`; largeHeap is not guaranteed and the matrix stays on the Java heap.
+Do not repeat unless: never; keep the KDF off the Java heap (argon2kt). Any KDF change must keep the known-answer tests (`Argon2KdfVectorTest`, `Argon2KdfDeviceTest`) passing, or existing vaults stop unlocking.

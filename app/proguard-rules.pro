@@ -20,6 +20,8 @@
 
 # SQLCipher Native and Database
 -keep class net.zetetic.database.** { *; }
+# argon2kt: JNI binds these classes by name from native code.
+-keep class com.lambdapioneer.argon2kt.** { *; }
 -keepclasseswithmembernames class * { native <methods>; }
 -dontwarn net.zetetic.database.**
 

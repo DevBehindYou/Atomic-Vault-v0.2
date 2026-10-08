@@ -36,7 +36,40 @@ adb logcat -c
 
 echo "Creating a vault with the base build"
 adb shell am start -n "$PKG/com.example.MainActivity"
-wait_for_text 'resource-id="screen_onboarding"' 30
+# The base may be the 0.2.x release on main: same flow, but its screens do
+# not expose test tags as resource ids. Recognise it by its heading.
+LEGACY=0
+deadline=$((SECONDS + 30))
+while [ $SECONDS -lt $deadline ]; do
+  if dump; then
+    if grep -q 'resource-id="screen_onboarding"' "$OUT/ui.xml"; then break; fi
+    if grep -q 'text="Create your vault"' "$OUT/ui.xml"; then LEGACY=1; break; fi
+  fi
+  sleep 2
+done
+[ "$LEGACY" = 1 ] || wait_for_text 'resource-id="screen_onboarding"' 5
+
+if [ "$LEGACY" = 1 ]; then
+  echo "Base build has the 0.2.x screens: create the vault by label, skip the login"
+  dump || fail "UI dump failed on the old onboarding screen"
+  C=$(nth_edit_center 1); [ -n "$C" ] || fail "No password field (old onboarding)"
+  adb shell input tap $C; sleep 2
+  adb shell input text "$PASSWORD"; sleep 1
+  dump || fail "UI dump failed after typing (old onboarding)"
+  C=$(nth_edit_center 2); [ -n "$C" ] || fail "No confirm field (old onboarding)"
+  adb shell input tap $C; sleep 1
+  adb shell input text "$PASSWORD"; sleep 1
+  adb shell input keyevent 4
+  sleep 1
+  adb shell input swipe 540 1800 540 600 300
+  sleep 1
+  tap_node text "Create vault" exact 1
+  # Argon2id runs first; with no fingerprint enrolled the old build skips arming.
+  wait_for_text 'text="Lock"' 90
+  echo "Base build (0.2.x): vault created"
+fi
+
+if [ "$LEGACY" = 0 ]; then
 dump || fail "UI dump failed on the onboarding screen"
 C=$(nth_edit_center 1); [ -n "$C" ] || fail "No password field"
 adb shell input tap $C; sleep 2
@@ -65,10 +98,32 @@ wait_for_text 'resource-id="screen_home"' 20
 dump || fail "UI dump failed on Home"
 grep -q "$PROBE" "$OUT/ui.xml" || fail "The new login is not on Home before the upgrade"
 echo "Base build: vault created with one login"
+fi
 
 echo "Installing this pull request's build over it (data kept)"
 adb shell am force-stop "$PKG"
 adb install -r "$NEW_APK"
+
+# Home after unlock. Upgrading from 0.2.x shows a one-time notice ("The Atomic
+# keyboard is gone") over Home; its sheet hides Home from the UI dump, so it is
+# dismissed with "Later". Sets NOTICE_SEEN=1 when it appeared.
+wait_for_home_after_unlock() {
+  local deadline=$((SECONDS + 60))
+  NOTICE_SEEN=0
+  while [ $SECONDS -lt $deadline ]; do
+    if dump; then
+      if grep -q 'resource-id="screen_home"' "$OUT/ui.xml"; then return 0; fi
+      if grep -qi 'keyboard is gone' "$OUT/ui.xml"; then
+        NOTICE_SEEN=1
+        echo "One-time keyboard notice shown: dismissing it"
+        tap_node text "Later" exact 2
+        continue
+      fi
+    fi
+    sleep 2
+  done
+  fail "Timed out waiting for Home after unlocking"
+}
 
 echo "Unlocking with the new build"
 adb shell am start -n "$PKG/com.example.MainActivity"
@@ -79,10 +134,15 @@ adb shell input tap $C; sleep 2
 adb shell input text "$PASSWORD"; sleep 1
 hide_keyboard
 tap_node text "Unlock" exact 1
-wait_for_text 'resource-id="screen_home"' 60
+wait_for_home_after_unlock
 dump || fail "UI dump failed on Home after the upgrade"
-grep -q "$PROBE" "$OUT/ui.xml" || fail "The login made before the upgrade is missing"
-echo "New build: unlocked the old vault and the login is still there"
+if [ "$LEGACY" = 0 ]; then
+  grep -q "$PROBE" "$OUT/ui.xml" || fail "The login made before the upgrade is missing"
+else
+  # 0.2.x users had the custom keyboard; they must be told it is gone.
+  [ "$NOTICE_SEEN" = 1 ] || fail "Upgrade from 0.2.x did not show the keyboard notice"
+fi
+echo "New build: unlocked the old vault$([ "$LEGACY" = 0 ] && echo ' and the login is still there')"
 
 echo "Restart once more: the vault must still open"
 adb shell am force-stop "$PKG"; sleep 2
@@ -94,7 +154,8 @@ adb shell input tap $C; sleep 2
 adb shell input text "$PASSWORD"; sleep 1
 hide_keyboard
 tap_node text "Unlock" exact 1
-wait_for_text 'resource-id="screen_home"' 60
+wait_for_home_after_unlock
+[ "$NOTICE_SEEN" = 0 ] || fail "The keyboard notice came back after it was dismissed"
 
 adb logcat -d > "$OUT/logcat.txt"
 if grep -q "FATAL EXCEPTION" "$OUT/logcat.txt"; then
