@@ -3,16 +3,6 @@ package com.example.database
 object Ddl {
     val STATEMENTS = listOf(
         """
-        CREATE TABLE IF NOT EXISTS vault (
-          id TEXT PRIMARY KEY,
-          wrapped_dek BLOB NOT NULL,
-          kdf_params TEXT NOT NULL,
-          scheme_version INTEGER NOT NULL,
-          created_at INTEGER NOT NULL
-        );
-        """.trimIndent(),
-
-        """
         CREATE TABLE IF NOT EXISTS folder (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
@@ -47,15 +37,6 @@ object Ddl {
         """.trimIndent(),
 
         """
-        CREATE TABLE IF NOT EXISTS audit_log_entry (
-          id TEXT PRIMARY KEY,
-          item_id TEXT,
-          action TEXT NOT NULL,
-          timestamp INTEGER NOT NULL
-        );
-        """.trimIndent(),
-
-        """
         CREATE TABLE IF NOT EXISTS vault_settings (
           id INTEGER PRIMARY KEY DEFAULT 1,
           auto_lock_seconds INTEGER NOT NULL DEFAULT 60,
@@ -84,6 +65,17 @@ object Ddl {
         );
         """.trimIndent(),
 
+        // Earlier passwords of a login, newest first, sealed like every
+        // other secret. Kept to PASSWORD_HISTORY_LIMIT per item.
+        """
+        CREATE TABLE IF NOT EXISTS password_history (
+          id TEXT PRIMARY KEY,
+          item_id TEXT NOT NULL,
+          encrypted_password BLOB NOT NULL,
+          changed_at INTEGER NOT NULL
+        );
+        """.trimIndent(),
+
         // Indices -- CREATE INDEX IF NOT EXISTS is idempotent and safe to
         // run on every open (unlike ALTER TABLE ADD COLUMN, this needs no
         // separate migration step). Every one of these backs a query
@@ -93,12 +85,27 @@ object Ddl {
         "CREATE INDEX IF NOT EXISTS idx_credential_item_folder_id ON credential_item(folder_id);",
         "CREATE INDEX IF NOT EXISTS idx_credential_item_updated_at ON credential_item(updated_at);",
         "CREATE INDEX IF NOT EXISTS idx_custom_field_item_id ON custom_field(item_id);",
-        "CREATE INDEX IF NOT EXISTS idx_audit_log_entry_item_id ON audit_log_entry(item_id);",
         // credential_tag's PRIMARY KEY (item_id, tag_id) already indexes
         // item_id as its leading column -- this index backs the REVERSE
         // lookup ("which items have tag X"), which the primary key alone
         // doesn't serve efficiently.
         "CREATE INDEX IF NOT EXISTS idx_credential_tag_tag_id ON credential_tag(tag_id);",
-        "CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_name ON tag(name COLLATE NOCASE);"
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_name ON tag(name COLLATE NOCASE);",
+        "CREATE INDEX IF NOT EXISTS idx_password_history_item_id ON password_history(item_id);"
+    )
+
+    /**
+     * Tables earlier versions created and nothing uses any more, dropped on
+     * every open (idempotent, like the statements above):
+     *  - `vault`: an early copy of the key envelope; never read or written
+     *    (the envelope lives in VaultMetaStore).
+     *  - `audit_log_entry`: item ids and actions written on every change but
+     *    never read, exported or shown; it only grew. The event log the user
+     *    sees is the hash-chained TrustLedger.
+     */
+    val RETIRED = listOf(
+        "DROP INDEX IF EXISTS idx_audit_log_entry_item_id;",
+        "DROP TABLE IF EXISTS audit_log_entry;",
+        "DROP TABLE IF EXISTS vault;"
     )
 }

@@ -2,7 +2,7 @@ package com.example.database
 
 import android.content.ContentValues
 import com.example.crypto.VaultCrypto
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 import java.util.UUID
 
 class VaultRepositoryImpl(
@@ -14,7 +14,7 @@ class VaultRepositoryImpl(
 
     override fun listFolders(): List<FolderPlain> {
         val folders = mutableListOf<FolderPlain>()
-        db.rawQuery("SELECT id, name, parent_id FROM folder ORDER BY name COLLATE NOCASE ASC;", null).use { cursor ->
+        db.rawQuery("SELECT id, name, parent_id FROM folder ORDER BY name COLLATE NOCASE ASC;", NO_ARGS).use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getString(0)
                 val name = cursor.getString(1)
@@ -60,7 +60,7 @@ class VaultRepositoryImpl(
 
     override fun listTags(): List<TagPlain> {
         val tags = mutableListOf<TagPlain>()
-        db.rawQuery("SELECT id, name, color FROM tag ORDER BY name COLLATE NOCASE ASC;", null).use { cursor ->
+        db.rawQuery("SELECT id, name, color FROM tag ORDER BY name COLLATE NOCASE ASC;", NO_ARGS).use { cursor ->
             while (cursor.moveToNext()) {
                 val id = cursor.getString(0)
                 val name = cursor.getString(1)
@@ -157,6 +157,7 @@ class VaultRepositoryImpl(
 
         val previews = mutableListOf<CredentialPreview>()
         val trimmedQuery = query?.trim()?.lowercase() ?: ""
+        val tagsByItem = tagsByItem()
 
         db.rawQuery(sqlBuilder.toString(), args.toTypedArray()).use { cursor ->
             while (cursor.moveToNext()) {
@@ -168,15 +169,7 @@ class VaultRepositoryImpl(
                 val updatedAt = cursor.getLong(5)
                 val itemType = parseItemType(cursor.getString(6))
 
-                val username = if (encUsername != null && encUsername.isNotEmpty()) {
-                    try {
-                        VaultCrypto.openField(dek, encUsername)
-                    } catch (e: Exception) {
-                        ""
-                    }
-                } else {
-                    ""
-                }
+                val username = cachedUsername(id, updatedAt, encUsername)
 
                 if (trimmedQuery.isNotEmpty()) {
                     val matchTitle = title.lowercase().contains(trimmedQuery)
@@ -196,12 +189,46 @@ class VaultRepositoryImpl(
                         uriMatchPattern = uriPattern,
                         updatedAt = updatedAt,
                         itemType = itemType,
-                        tags = getTagsForItem(id)
+                        tags = tagsByItem[id].orEmpty()
                     )
                 )
             }
         }
         return previews
+    }
+
+    /**
+     * Decrypted usernames for the list, keyed by item id and invalidated by
+     * updated_at. The list reloads on every search keystroke; it used to
+     * AES-decrypt every username in the vault each time. Lives exactly as
+     * long as this repository, i.e. until the vault locks.
+     */
+    private val usernameCache = HashMap<String, Pair<Long, String>>()
+
+    private fun cachedUsername(id: String, updatedAt: Long, enc: ByteArray?): String = synchronized(usernameCache) {
+        usernameCache[id]?.takeIf { it.first == updatedAt }?.second
+            ?: (if (enc != null && enc.isNotEmpty()) FieldOpener(dek).open(enc) else "").also {
+                usernameCache[id] = updatedAt to it
+            }
+    }
+
+    /** Every item's tags in one query (the list used to run one query per row). */
+    private fun tagsByItem(): Map<String, List<TagPlain>> {
+        val result = HashMap<String, MutableList<TagPlain>>()
+        db.rawQuery(
+            """
+            SELECT ct.item_id, t.id, t.name, t.color FROM credential_tag ct
+            INNER JOIN tag t ON ct.tag_id = t.id
+            ORDER BY t.name COLLATE NOCASE ASC;
+            """.trimIndent(),
+            null
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                result.getOrPut(cursor.getString(0)) { mutableListOf() }
+                    .add(TagPlain(cursor.getString(1), cursor.getString(2), if (cursor.isNull(3)) null else cursor.getString(3)))
+            }
+        }
+        return result
     }
 
     /** Falls back to LOGIN for anything unrecognized -- a forward-compatible read (e.g. after a restore from a newer version) should never crash the list screen. */
@@ -234,12 +261,13 @@ class VaultRepositoryImpl(
                 val updatedAt = cursor.getLong(9)
                 val itemType = parseItemType(cursor.getString(10))
 
-                val username = VaultCrypto.openField(dek, encUser)
-                val password = VaultCrypto.openField(dek, encPass)
-                val notes = VaultCrypto.openField(dek, encNotes)
-                val totpSecret = VaultCrypto.openField(dek, encTotp)
+                val opener = FieldOpener(dek)
+                val username = opener.open(encUser)
+                val password = opener.open(encPass)
+                val notes = opener.open(encNotes)
+                val totpSecret = opener.open(encTotp)
 
-                val customFields = getCustomFieldsForItem(id)
+                val customFields = getCustomFieldsForItem(id, opener)
                 val tags = getTagsForItem(id)
 
                 credential = CredentialPlain(
@@ -255,14 +283,33 @@ class VaultRepositoryImpl(
                     customFields = customFields,
                     updatedAt = updatedAt,
                     itemType = itemType,
-                    tags = tags
+                    tags = tags,
+                    damaged = opener.damaged
                 )
             }
         }
         return credential
     }
 
-    private fun getCustomFieldsForItem(itemId: String): List<CustomFieldPlain> {
+    /**
+     * Decrypts fields of one item. A field that fails authentication (a
+     * corrupted blob) reads as empty and marks the item damaged, instead of
+     * throwing: one bad field used to make the whole security scan and every
+     * backup export fail.
+     */
+    private class FieldOpener(private val dek: ByteArray) {
+        var damaged = false
+            private set
+
+        fun open(blob: ByteArray?): String = try {
+            VaultCrypto.openField(dek, blob)
+        } catch (e: Exception) {
+            damaged = true
+            ""
+        }
+    }
+
+    private fun getCustomFieldsForItem(itemId: String, opener: FieldOpener): List<CustomFieldPlain> {
         val fields = mutableListOf<CustomFieldPlain>()
         db.rawQuery(
             "SELECT id, label, encrypted_value, is_sensitive FROM custom_field WHERE item_id = ?;",
@@ -273,7 +320,7 @@ class VaultRepositoryImpl(
                 val label = cursor.getString(1)
                 val encVal = if (cursor.isNull(2)) null else cursor.getBlob(2)
                 val isSensitive = cursor.getInt(3) == 1
-                val value = VaultCrypto.openField(dek, encVal)
+                val value = opener.open(encVal)
                 fields.add(CustomFieldPlain(fieldId, label, value, isSensitive))
             }
         }
@@ -326,7 +373,6 @@ class VaultRepositoryImpl(
             setTagsForItem(id, input.tagIds)
             val assignedTags = getTagsForItem(id)
 
-            logAudit(id, "create", now)
             db.setTransactionSuccessful()
 
             return CredentialPlain(
@@ -354,6 +400,7 @@ class VaultRepositoryImpl(
 
         db.beginTransaction()
         try {
+            rememberOldPassword(id, input.password, now)
             val cv = ContentValues().apply {
                 put("folder_id", input.folderId)
                 put("title", input.title)
@@ -387,7 +434,6 @@ class VaultRepositoryImpl(
             setTagsForItem(id, input.tagIds)
             val assignedTags = getTagsForItem(id)
 
-            logAudit(id, "update", now)
             db.setTransactionSuccessful()
 
             return CredentialPlain(
@@ -411,32 +457,67 @@ class VaultRepositoryImpl(
     }
 
     override fun deleteItem(id: String) {
-        val now = System.currentTimeMillis()
         db.beginTransaction()
         try {
             db.delete("custom_field", "item_id = ?", arrayOf(id))
             db.delete("credential_tag", "item_id = ?", arrayOf(id))
+            db.delete("password_history", "item_id = ?", arrayOf(id))
             db.delete("credential_item", "id = ?", arrayOf(id))
-            logAudit(id, "delete", now)
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
     }
 
-    private fun logAudit(itemId: String?, action: String, timestamp: Long) {
-        val cv = ContentValues().apply {
+    /**
+     * Before a login's password changes, keeps the old one (sealed) in
+     * password_history. Runs inside updateItem's transaction. An old value
+     * that does not decrypt is not kept: there is nothing usable to restore.
+     */
+    private fun rememberOldPassword(itemId: String, newPassword: String, now: Long) {
+        val oldBlob = db.rawQuery("SELECT encrypted_password FROM credential_item WHERE id = ?;", arrayOf(itemId)).use { c ->
+            if (c.moveToFirst() && !c.isNull(0)) c.getBlob(0) else null
+        } ?: return
+        val old = try {
+            VaultCrypto.openField(dek, oldBlob)
+        } catch (e: Exception) {
+            return
+        }
+        if (old.isEmpty() || old == newPassword) return
+        db.insertOrThrow("password_history", null, ContentValues().apply {
             put("id", genId())
             put("item_id", itemId)
-            put("action", action)
-            put("timestamp", timestamp)
+            put("encrypted_password", oldBlob)
+            put("changed_at", now)
+        })
+        db.execSQL(
+            "DELETE FROM password_history WHERE item_id = ? AND id NOT IN " +
+                "(SELECT id FROM password_history WHERE item_id = ? ORDER BY changed_at DESC, rowid DESC LIMIT $PASSWORD_HISTORY_LIMIT);",
+            arrayOf(itemId, itemId)
+        )
+    }
+
+    override fun passwordHistory(itemId: String): List<PasswordHistoryEntry> {
+        val entries = mutableListOf<PasswordHistoryEntry>()
+        db.rawQuery(
+            "SELECT encrypted_password, changed_at FROM password_history WHERE item_id = ? ORDER BY changed_at DESC, rowid DESC;",
+            arrayOf(itemId)
+        ).use { c ->
+            while (c.moveToNext()) {
+                val password = runCatching { VaultCrypto.openField(dek, c.getBlob(0)) }.getOrNull()
+                if (password != null) entries.add(PasswordHistoryEntry(password, c.getLong(1)))
+            }
         }
-        db.insert("audit_log_entry", null, cv)
+        return entries
+    }
+
+    override fun clearPasswordHistory(itemId: String) {
+        db.delete("password_history", "item_id = ?", arrayOf(itemId))
     }
 
     override fun getSettings(): VaultSettingsPlain {
         var settings = VaultSettingsPlain()
-        db.rawQuery("SELECT auto_lock_seconds, biometric_enabled FROM vault_settings WHERE id = 1;", null).use { cursor ->
+        db.rawQuery("SELECT auto_lock_seconds, biometric_enabled FROM vault_settings WHERE id = 1;", NO_ARGS).use { cursor ->
             if (cursor.moveToFirst()) {
                 val autoLock = cursor.getInt(0)
                 val bio = cursor.getInt(1) == 1
@@ -461,25 +542,58 @@ class VaultRepositoryImpl(
     }
 
     override fun exportData(): VaultExport {
-        val folders = listFolders()
-        val allItems = mutableListOf<CredentialPlain>()
-
-        val itemIds = mutableListOf<String>()
-        db.rawQuery("SELECT id FROM credential_item ORDER BY title COLLATE NOCASE ASC;", null).use { cursor ->
-            while (cursor.moveToNext()) {
-                itemIds.add(cursor.getString(0))
+        // Three queries for the whole vault instead of four per item: the
+        // security scan and every backup read everything.
+        val tagsByItem = tagsByItem()
+        val fieldsByItem = HashMap<String, MutableList<CustomFieldPlain>>()
+        val damagedItems = HashSet<String>()
+        db.rawQuery("SELECT item_id, id, label, encrypted_value, is_sensitive FROM custom_field;", NO_ARGS).use { c ->
+            while (c.moveToNext()) {
+                val itemId = c.getString(0)
+                val itemOpener = FieldOpener(dek)
+                val value = itemOpener.open(if (c.isNull(3)) null else c.getBlob(3))
+                if (itemOpener.damaged) damagedItems.add(itemId)
+                fieldsByItem.getOrPut(itemId) { mutableListOf() }
+                    .add(CustomFieldPlain(c.getString(1), c.getString(2), value, c.getInt(4) == 1))
             }
         }
 
-        for (id in itemIds) {
-            getItem(id)?.let { allItems.add(it) }
+        val items = mutableListOf<CredentialPlain>()
+        db.rawQuery(
+            """
+            SELECT id, folder_id, title, encrypted_username, encrypted_password, encrypted_notes,
+                   encrypted_totp_secret, uri_match_pattern, android_package_name, updated_at, item_type
+            FROM credential_item ORDER BY title COLLATE NOCASE ASC;
+            """.trimIndent(),
+            null
+        ).use { c ->
+            while (c.moveToNext()) {
+                val id = c.getString(0)
+                val itemOpener = FieldOpener(dek)
+                val item = CredentialPlain(
+                    id = id,
+                    folderId = if (c.isNull(1)) null else c.getString(1),
+                    title = c.getString(2),
+                    username = itemOpener.open(if (c.isNull(3)) null else c.getBlob(3)),
+                    password = itemOpener.open(if (c.isNull(4)) null else c.getBlob(4)),
+                    notes = itemOpener.open(if (c.isNull(5)) null else c.getBlob(5)),
+                    totpSecret = itemOpener.open(if (c.isNull(6)) null else c.getBlob(6)),
+                    uriMatchPattern = if (c.isNull(7)) null else c.getString(7),
+                    androidPackageName = if (c.isNull(8)) null else c.getString(8),
+                    customFields = fieldsByItem[id].orEmpty(),
+                    updatedAt = c.getLong(9),
+                    itemType = parseItemType(c.getString(10)),
+                    tags = tagsByItem[id].orEmpty(),
+                    damaged = itemOpener.damaged || id in damagedItems
+                )
+                items.add(item)
+            }
         }
 
-        val settings = getSettings()
         return VaultExport(
-            folders = folders,
-            items = allItems,
-            settings = settings,
+            folders = listFolders(),
+            items = items,
+            settings = getSettings(),
             tags = listTags(),
             exportedAt = System.currentTimeMillis(),
             version = 1
@@ -492,6 +606,7 @@ class VaultRepositoryImpl(
         try {
             // Delete all custom fields, tags, then credential items, then folders
             db.delete("custom_field", null, null)
+            db.delete("password_history", null, null)
             db.delete("credential_tag", null, null)
             db.delete("tag", null, null)
             db.delete("credential_item", null, null)
@@ -504,7 +619,7 @@ class VaultRepositoryImpl(
                     put("name", f.name)
                     put("parent_id", f.parentId)
                 }
-                db.insert("folder", null, fCv)
+                db.insertOrThrow("folder", null, fCv)
             }
 
             // Re-insert tags (using each backup's original id -- items
@@ -518,7 +633,7 @@ class VaultRepositoryImpl(
                     put("color", t.color)
                     put("created_at", now)
                 }
-                db.insert("tag", null, tCv)
+                db.insertOrThrow("tag", null, tCv)
             }
 
             // Re-insert items with current session DEK encryption
@@ -544,7 +659,7 @@ class VaultRepositoryImpl(
                     put("updated_at", item.updatedAt)
                     put("item_type", item.itemType.name)
                 }
-                db.insert("credential_item", null, iCv)
+                db.insertOrThrow("credential_item", null, iCv)
 
                 for (cf in item.customFields) {
                     val cfCv = ContentValues().apply {
@@ -554,27 +669,27 @@ class VaultRepositoryImpl(
                         put("encrypted_value", VaultCrypto.sealField(dek, cf.value))
                         put("is_sensitive", if (cf.isSensitive) 1 else 0)
                     }
-                    db.insert("custom_field", null, cfCv)
+                    db.insertOrThrow("custom_field", null, cfCv)
                 }
 
-                for (tag in item.tags) {
+                for (tag in item.tags.distinctBy { it.id }) {
                     val ctCv = ContentValues().apply {
                         put("item_id", item.id)
                         put("tag_id", tag.id)
                     }
-                    db.insert("credential_tag", null, ctCv)
+                    db.insertOrThrow("credential_tag", null, ctCv)
                 }
             }
 
-            // Apply settings
+            // Apply settings. Biometric unlock is a property of THIS phone's
+            // Keystore, not of the backup: importing "enabled" from another
+            // device showed biometrics as on with no key behind it.
             val sCv = ContentValues().apply {
                 put("auto_lock_seconds", data.settings.autoLockSeconds)
-                put("biometric_enabled", if (data.settings.biometricEnabled) 1 else 0)
                 put("updated_at", now)
             }
             db.update("vault_settings", sCv, "id = 1", null)
 
-            logAudit(null, "import", now)
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()

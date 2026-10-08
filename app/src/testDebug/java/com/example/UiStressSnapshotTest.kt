@@ -1,0 +1,205 @@
+package com.example
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.unit.Density
+import com.example.database.CredentialPreview
+import com.example.database.FolderPlain
+import com.example.database.TagPlain
+import com.example.database.VaultItemType
+import com.example.database.VaultSettingsPlain
+import com.example.ui.VaultStatus
+import com.example.ui.VaultUiState
+import com.example.ui.editor.CredentialEditorScreen
+import com.example.ui.generator.PasswordGeneratorScreen
+import com.example.ui.onboarding.OnboardingScreen
+import com.example.ui.security.SecurityDashboardScreen
+import com.example.ui.settings.SettingsScreen
+import com.example.ui.theme.AtomicColors
+import com.example.ui.theme.AtomicVaultTheme
+import com.example.ui.unlock.UnlockScreen
+import com.example.ui.vaulthome.VaultHomeScreen
+import com.github.takahirom.roborazzi.captureRoboImage
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+
+/**
+ * The harshest layout case the handover asks about: a 360dp-wide phone with
+ * 1.5x system font size. Also opens the dialogs, which the plain root
+ * capture cannot see (they live in their own window). Output goes to
+ * app/build/ui-snapshots/stress_*.png via `recordRoborazziDebug`.
+ */
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w360dp-h740dp-normal-long-port-xhdpi", sdk = [36])
+class UiStressSnapshotTest {
+
+    @get:Rule val composeTestRule = createComposeRule()
+
+    private val unlocked = VaultUiState(
+        status = VaultStatus.UNLOCKED,
+        biometricArmed = true,
+        autofillArmed = true,
+        settings = VaultSettingsPlain(autoLockSeconds = 300, biometricEnabled = true),
+        folders = listOf(FolderPlain("f1", "Work"), FolderPlain("f2", "Personal")),
+        tags = listOf(TagPlain("t1", "2FA"), TagPlain("t2", "Finance")),
+        previews = listOf(
+            CredentialPreview("1", "f1", "GitHub Enterprise Organization", "alex.very.long.address@example.com", "github.com", 0L, VaultItemType.LOGIN),
+            CredentialPreview("3", null, "Visa ending 4242", "", null, 0L, VaultItemType.PAYMENT_CARD)
+        )
+    )
+
+    private fun show(fontScale: Float = 1.5f, content: @Composable () -> Unit) {
+        composeTestRule.setContent {
+            val base = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
+                AtomicVaultTheme {
+                    Box(Modifier.fillMaxSize().background(AtomicColors.palette.background)) { content() }
+                }
+            }
+        }
+    }
+
+    private fun snap(name: String, content: @Composable () -> Unit) {
+        show(content = content)
+        composeTestRule.onRoot().captureRoboImage(filePath = "build/ui-snapshots/stress_$name.png")
+    }
+
+    @Test fun unlock() = snap("unlock") {
+        UnlockScreen(VaultUiState(status = VaultStatus.LOCKED, biometricArmed = true), {}, {})
+    }
+
+    @Test fun onboarding() = snap("onboarding") {
+        OnboardingScreen(VaultUiState(status = VaultStatus.ONBOARDING), { _, _ -> })
+    }
+
+    @Test fun home() = snap("home") {
+        VaultHomeScreen(unlocked, {}, {}, {}, {}, {}, {}, {}, {}, {}, bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Vault, {}) })
+    }
+
+    @Test fun security() = snap("security") {
+        SecurityDashboardScreen(emptyList(), { emptyList() }, {}, bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Audit, {}) })
+    }
+
+    @Test fun generator() = snap("generator") {
+        PasswordGeneratorScreen(bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Generate, {}) })
+    }
+
+    @Test fun editor() = snap("editor") {
+        CredentialEditorScreen(null, unlocked.folders, unlocked.tags, { null }, {}, {}, {})
+    }
+
+    private fun settingsContent(): @Composable () -> Unit = {
+        SettingsScreen(
+            uiState = unlocked,
+            onUpdateAutoLock = {}, onUpdateBiometric = {}, onSetAutofillArmed = {},
+            onCreateFolder = {}, onDeleteFolder = {}, onCreateTag = {}, onDeleteTag = {},
+            onNavigateBackup = {},
+            onNavigatePrivacyProof = {},
+            bottomBar = { com.example.ui.components.AtomicBottomNav(com.example.ui.components.AtomicTab.Settings, {}) }
+        )
+    }
+
+    @Test fun settings() = snap("settings", settingsContent())
+
+    @Test fun backup() = snap("backup") {
+        com.example.ui.backup.BackupScreen(onExportBackup = { _, _ -> }, onImportBackup = { _, _, _ -> }, onBack = {})
+    }
+
+    @Test fun privacy_proof() = snap("privacy_proof") {
+        com.example.ui.trust.PrivacyProofScreen(
+            checks = listOf(
+                com.example.trust.PrivacyCheck("Storage", "Vault database is encrypted", true, "SQLCipher, AES-256", true),
+                com.example.trust.PrivacyCheck("Network", "No internet permission requested", true, "Manifest declares none", false),
+                com.example.trust.PrivacyCheck("Biometric", "Biometric unlock armed", false, "Not enabled", true)
+            ),
+            chainBroken = false, onBack = {}, onNavigateTimeline = {}
+        )
+    }
+
+    @Test fun timeline() = snap("timeline") {
+        com.example.ui.trust.SecurityTimelineScreen(
+            entries = listOf(
+                com.example.trust.TrustLedgerEntry(
+                    "1", 1_760_000_000_000L, com.example.trust.TrustEventType.VAULT_UNLOCKED,
+                    null, null, "biometric", "app", "success", "0", "a1"
+                ),
+                com.example.trust.TrustLedgerEntry(
+                    "2", 1_760_000_100_000L, com.example.trust.TrustEventType.CREDENTIAL_CREATED,
+                    null, null, null, "app", "success", "a1", "a2"
+                )
+            ),
+            previews = unlocked.previews, chainBrokenAtId = null, onBack = {}
+        )
+    }
+
+    @Test fun payment_card() = snap("payment_card") {
+        com.example.ui.paymentcard.PaymentCardEditorScreen(existing = null, onSave = {}, onBack = {})
+    }
+
+    @Test fun payment_card_edit() = snap("payment_card_edit") {
+        com.example.ui.paymentcard.PaymentCardEditorScreen(
+            existing = com.example.database.CredentialPlain(
+                id = "9", title = "Visa ending 4242", itemType = VaultItemType.PAYMENT_CARD,
+                customFields = listOf(
+                    com.example.database.CustomFieldPlain("a", "Cardholder Name", "Alex Vale", false),
+                    com.example.database.CustomFieldPlain("b", "Card Number", "4242424242424242", true)
+                )
+            ),
+            onSave = {}, onBack = {}, onDelete = {}
+        )
+    }
+
+    @Test fun identity() = snap("identity") {
+        com.example.ui.identity.IdentityEditorScreen(existing = null, onSave = {}, onBack = {})
+    }
+
+    // Dialog windows are not part of the root capture, so the sheet is laid
+    // out directly at the bottom of a scrim (AtomicSheetPanel is the sheet
+    // minus its window).
+    private fun dialogOnScrim(content: @Composable () -> Unit): @Composable () -> Unit = {
+        Box(
+            Modifier.fillMaxSize().background(com.example.ui.theme.AtomicTheme.colors.scrim),
+            contentAlignment = androidx.compose.ui.Alignment.BottomCenter
+        ) { content() }
+    }
+
+    @Test fun sheet_input() = snap("sheet_input", dialogOnScrim {
+        com.example.ui.components.AtomicSheetPanel(
+            label = "Organise", title = "New folder", confirmLabel = "Create", onConfirm = {}, onDismiss = {}
+        ) {
+            com.example.ui.components.AtomicTextField(value = "", onValueChange = {}, placeholder = "Folder name")
+        }
+    })
+
+    @Test fun sheet_disclosure() = snap("sheet_disclosure", dialogOnScrim {
+        com.example.ui.components.AtomicSheetPanel(
+            label = "Restore",
+            title = "Restore this backup?",
+            message = "Restoring replaces every item in this vault with the items in the backup. A copy of the " +
+                "current vault is kept so the restore can be undone. Nothing is uploaded; the app has no internet " +
+                "permission at all.",
+            confirmLabel = "Restore", dismissLabel = "Keep current vault", onConfirm = {}, onDismiss = {}
+        )
+    })
+
+    @Test fun sheet_destructive() = snap("sheet_destructive", dialogOnScrim {
+        com.example.ui.components.AtomicSheetPanel(
+            label = "Delete",
+            title = "Delete folder",
+            message = "Delete \"Work\"? Credentials inside will be moved to unassigned.",
+            confirmLabel = "Delete", isDestructive = true, onConfirm = {}, onDismiss = {}
+        )
+    })
+}

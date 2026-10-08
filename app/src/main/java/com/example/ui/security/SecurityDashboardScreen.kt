@@ -1,36 +1,19 @@
 package com.example.ui.security
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Verified
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,346 +21,240 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.database.CredentialPlain
 import com.example.security.CredentialFinding
+import com.example.security.BreachedPasswords
 import com.example.security.PasswordAnalysis
+import com.example.security.PasswordIssue
 import com.example.security.VaultSecurityReport
+import com.example.ui.components.AtomicBar
+import com.example.ui.components.AtomicButton
+import com.example.ui.components.AtomicButtonVariant
+import com.example.ui.components.AtomicCard
+import com.example.ui.components.AtomicLoadingState
+import com.example.ui.components.AtomicModule
+import com.example.ui.components.AtomicPanel
+import com.example.ui.components.AtomicSectionHeader
+import com.example.ui.components.AtomicStatTile
+import com.example.ui.components.AtomicStatusPill
+import com.example.ui.components.AtomicTextAction
+import com.example.ui.components.AtomicTitleRow
+import com.example.ui.components.AtomicWarningBox
 import com.example.ui.components.IssueBadge
-import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
-import com.example.ui.theme.AtomicRadius
+import com.example.ui.theme.AtomicBorder
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.theme.AtomicType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Health (plan 8.7, was "Audit"). Purpose: know what to fix first. The ink
+ * health module states the score and the single most important reason;
+ * stat tiles give the counts; each finding is a card with a left priority
+ * bar and its fix as the action. The phone's own integrity sits at the end.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SecurityDashboardScreen(
     integrityWarnings: List<String>,
     onLoadAllCredentials: suspend () -> List<CredentialPlain>,
     onItemClick: (String) -> Unit,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomBar: @Composable () -> Unit = {}
 ) {
+    val colors = AtomicTheme.colors
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var report by remember { mutableStateOf<VaultSecurityReport?>(null) }
+    var checkedAt by remember { mutableStateOf<Long?>(null) }
 
-    var report by remember {
-        mutableStateOf(
-            VaultSecurityReport(
-                score = 100,
-                reusedCount = 0,
-                weakCount = 0,
-                emptyCount = 0,
-                totalCount = 0,
-                findings = emptyList()
-            )
-        )
-    }
-
-    LaunchedEffect(Unit) {
+    suspend fun scan() {
         val items = onLoadAllCredentials()
-        report = PasswordAnalysis.analyzeVault(items)
+        report = withContext(Dispatchers.Default) {
+            val breached = BreachedPasswords.get(context)
+            PasswordAnalysis.analyzeVault(items) { breached?.contains(it) == true }
+        }
+        checkedAt = System.currentTimeMillis()
     }
 
-    val scoreColor = when {
-        report.score >= 80 -> AtomicColors.Success
-        report.score >= 50 -> AtomicColors.Warning
-        else -> AtomicColors.Danger
-    }
+    LaunchedEffect(Unit) { scan() }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Security Dashboard",
-                        fontWeight = AtomicFontWeight.bold,
-                        fontSize = AtomicFontSize.heading
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("security_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        }
+        modifier = modifier.fillMaxSize().testTag("screen_health"),
+        containerColor = colors.background,
+        bottomBar = bottomBar
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(AtomicSpacing.lg)
+        // One scrolling list for the whole page, so at large font sizes the
+        // findings never sit below a fixed block with nothing to scroll.
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(AtomicSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
         ) {
-            // Advisory Root / Tamper Warning Banner (if detected)
-            if (integrityWarnings.isNotEmpty()) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = AtomicSpacing.md)
-                        .testTag("device_integrity_warning_banner"),
-                    shape = RoundedCornerShape(AtomicRadius.lg),
-                    colors = CardDefaults.cardColors(containerColor = AtomicColors.DangerLight),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(AtomicColors.Danger)
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(AtomicSpacing.md)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = AtomicColors.Danger,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text(
-                                text = "Device warning",
-                                fontWeight = AtomicFontWeight.bold,
-                                color = AtomicColors.Danger,
-                                fontSize = AtomicFontSize.body
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(AtomicSpacing.xs))
-
-                        for (warning in integrityWarnings) {
-                            Text(
-                                text = "• $warning",
-                                fontSize = AtomicFontSize.caption,
-                                color = AtomicColors.Text
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(AtomicSpacing.xs))
-
-                        Text(
-                            text = "Consider avoiding sensitive use on this device.",
-                            fontSize = AtomicFontSize.caption,
-                            fontWeight = AtomicFontWeight.medium,
-                            color = AtomicColors.Danger
-                        )
+            item {
+                AtomicTitleRow(
+                    title = "Health",
+                    counter = checkedAt?.let {
+                        "Checked " + java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.ROOT).format(java.util.Date(it))
                     }
-                }
-            } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = AtomicSpacing.md)
-                        .testTag("device_integrity_ok_banner"),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Verified,
-                        contentDescription = null,
-                        tint = AtomicColors.Success,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = "No root, debugger, or custom ROM signature detected on this device.",
-                        fontSize = AtomicFontSize.caption,
-                        color = AtomicColors.TextMuted
-                    )
-                }
-            }
-
-            // Health Score Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("health_score_card"),
-                shape = RoundedCornerShape(AtomicRadius.lg),
-                colors = CardDefaults.cardColors(containerColor = AtomicColors.BgElevated),
-                border = CardDefaults.outlinedCardBorder().copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(AtomicColors.Border)
                 )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(AtomicSpacing.xl),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "${report.score}",
-                        fontSize = 56.sp,
-                        fontWeight = FontWeight.W800,
-                        color = scoreColor
-                    )
-
-                    Text(
-                        text = "Health score",
-                        fontSize = AtomicFontSize.body,
-                        fontWeight = AtomicFontWeight.medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-                }
             }
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
-            ) {
-                StatChip(label = "REUSED", value = "${report.reusedCount}", modifier = Modifier.weight(1f))
-                StatChip(label = "WEAK", value = "${report.weakCount}", modifier = Modifier.weight(1f))
-                StatChip(label = "EMPTY", value = "${report.emptyCount}", modifier = Modifier.weight(1f))
-                StatChip(label = "TOTAL", value = "${report.totalCount}", modifier = Modifier.weight(1f))
-            }
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-
-            androidx.compose.material3.OutlinedButton(
-                onClick = {
-                    scope.launch {
-                        val items = onLoadAllCredentials()
-                        report = PasswordAnalysis.analyzeVault(items)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 48.dp)
-                    .testTag("rescan_vault_button"),
-                shape = RoundedCornerShape(AtomicRadius.md)
-            ) {
-                Text(text = "Re-scan vault", fontSize = AtomicFontSize.label, fontWeight = AtomicFontWeight.medium)
-            }
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.lg))
-
-            Text(
-                text = "FINDINGS",
-                fontSize = AtomicFontSize.micro,
-                fontWeight = AtomicFontWeight.bold,
-                color = AtomicColors.TextMuted,
-                letterSpacing = 1.sp
-            )
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-
-            // Findings list or empty state
-            if (report.findings.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No issues found. Every password is unique and strong.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AtomicColors.TextMuted
-                    )
-                }
+            val r = report
+            if (r == null) {
+                item { AtomicLoadingState("Checking your passwords…", Modifier.padding(top = AtomicSpacing.sm)) }
             } else {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    shape = RoundedCornerShape(AtomicRadius.lg),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
-                    )
-                ) {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(items = report.findings, key = { it.credential.id }) { finding ->
-                            FindingRowItem(
-                                finding = finding,
-                                onClick = { onItemClick(finding.credential.id) }
-                            )
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                                thickness = 1.dp
-                            )
-                        }
+                item { HealthModule(r) }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+                        AtomicStatTile(
+                            "${r.breachedCount}", "Leaked", Modifier.weight(1f),
+                            valueColor = if (r.breachedCount > 0) colors.error else colors.textPrimary
+                        )
+                        AtomicStatTile(
+                            "${r.reusedCount}", "Reused", Modifier.weight(1f),
+                            valueColor = if (r.reusedCount > 0) colors.error else colors.textPrimary
+                        )
+                        AtomicStatTile("${r.weakCount}", "Weak", Modifier.weight(1f))
+                        AtomicStatTile("${r.emptyCount}", "Empty", Modifier.weight(1f))
                     }
+                }
+                if (r.findings.isNotEmpty()) {
+                    item { AtomicSectionHeader("Needs attention · ${r.findings.size}", Modifier.padding(top = AtomicSpacing.sm)) }
+                }
+                items(items = r.findings, key = { it.credential.id }) { finding ->
+                    FindingCard(finding = finding, onClick = { onItemClick(finding.credential.id) })
+                }
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(AtomicSpacing.md), modifier = Modifier.padding(top = AtomicSpacing.sm)) {
+                    AtomicSectionHeader("This phone")
+                    IntegrityCard(integrityWarnings)
+                    AtomicButton(
+                        text = "Check again",
+                        onClick = { scope.launch { scan() } },
+                        modifier = Modifier.fillMaxWidth(),
+                        variant = AtomicButtonVariant.Ghost,
+                        testTag = "rescan_vault_button"
+                    )
                 }
             }
         }
     }
 }
 
+/** The ink module: score, bar, and the one sentence that says what matters most. */
 @Composable
-private fun FindingRowItem(
-    finding: CredentialFinding,
-    onClick: () -> Unit
-) {
-    Row(
+private fun HealthModule(report: VaultSecurityReport) {
+    val colors = AtomicTheme.colors
+    val reason = when {
+        report.totalCount == 0 -> "Nothing to check yet. Add a login and it is checked here."
+        report.breachedCount > 0 -> "${report.breachedCount} password${if (report.breachedCount == 1) " appears" else "s appear"} in public leaks. Change ${if (report.breachedCount == 1) "it" else "them"} first."
+        report.reusedCount > 0 -> "${report.reusedCount} login${if (report.reusedCount == 1) " shares" else "s share"} a password. Fix those first: one leak would open them all."
+        report.weakCount > 0 -> "${report.weakCount} password${if (report.weakCount == 1) " is" else "s are"} easy to guess. Replace them with generated ones."
+        report.emptyCount > 0 -> "${report.emptyCount} login${if (report.emptyCount == 1) " has" else "s have"} no password saved."
+        else -> "Every password is unique and strong."
+    }
+    AtomicModule(modifier = Modifier.fillMaxWidth().testTag("health_score_card")) {
+        Text(AtomicType.caps("Vault health"), style = AtomicType.monoCaption, color = colors.accentOnModule)
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+            Text("${report.score}", style = AtomicType.displayXL.copy(fontSize = AtomicType.displayXL.fontSize * 1.3f), color = colors.onModule)
+            Text(AtomicType.caps("of 100"), style = AtomicType.monoCaption, color = colors.onModuleMuted, modifier = Modifier.padding(bottom = AtomicSpacing.md))
+        }
+        AtomicBar(
+            fraction = report.score / 100f,
+            color = colors.accentOnModule,
+            trackColor = colors.onModule.copy(alpha = 0.16f)
+        )
+        Text(reason, style = AtomicType.bodySmall, color = colors.onModule.copy(alpha = 0.78f))
+    }
+}
+
+@Composable
+private fun IntegrityCard(warnings: List<String>) {
+    if (warnings.isNotEmpty()) {
+        AtomicWarningBox(
+            title = "Device warning",
+            message = warnings.joinToString("\n") { "→ $it" } + "\nAvoid opening the vault on this phone until this is resolved.",
+            modifier = Modifier.testTag("device_integrity_warning_banner")
+        )
+    } else {
+        AtomicPanel(modifier = Modifier.fillMaxWidth().testTag("device_integrity_ok_banner")) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Device integrity", style = AtomicType.displayS, color = AtomicTheme.colors.textPrimary)
+                    Text(
+                        "No root, debugger or custom ROM signature detected.",
+                        style = AtomicType.bodySmall,
+                        color = AtomicTheme.colors.textSecondary
+                    )
+                }
+                AtomicStatusPill(on = true, onLabel = "OK", subject = "Device integrity")
+            }
+        }
+    }
+}
+
+/**
+ * One finding: a white card with a 4 dp left priority bar (reused =
+ * critical, weak = high, empty = low), its tags, what it means, and the fix.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FindingCard(finding: CredentialFinding, onClick: () -> Unit) {
+    val colors = AtomicTheme.colors
+    val (priority, barColor) = when {
+        PasswordIssue.BREACHED in finding.issues -> "Critical" to colors.error
+        PasswordIssue.REUSED in finding.issues -> "Critical" to colors.error
+        PasswordIssue.WEAK in finding.issues -> "High" to colors.energyHigh
+        else -> "Low" to colors.line
+    }
+    AtomicCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.md)
+            .priorityBar(barColor)
             .testTag("finding_row_${finding.credential.id}"),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        contentPadding = AtomicSpacing.lg,
+        onClick = onClick
     ) {
-        Text(
-            text = finding.credential.title,
-            fontSize = AtomicFontSize.body,
-            fontWeight = AtomicFontWeight.medium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            for (issue in finding.issues) {
-                IssueBadge(issue = issue)
+        Column(modifier = Modifier.padding(start = AtomicSpacing.sm), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+            Text(AtomicType.caps(priority), style = AtomicType.monoCaption, color = if (barColor == colors.error) colors.error else colors.textSecondary)
+            Text(
+                text = finding.credential.title,
+                style = AtomicType.itemTitle,
+                color = colors.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.xs), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)) {
+                for (issue in finding.issues) IssueBadge(issue = issue)
             }
+            Text(text = finding.issues.joinToString(" ") { issueHint(it) }, style = AtomicType.bodySmall, color = colors.textSecondary)
+            AtomicTextAction(text = "Open and fix →", onClick = onClick)
         }
     }
 }
 
-@Composable
-private fun StatChip(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(AtomicRadius.md))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(AtomicSpacing.sm),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = value,
-            fontSize = AtomicFontSize.heading,
-            fontWeight = AtomicFontWeight.bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = label,
-            fontSize = AtomicFontSize.micro,
-            color = AtomicColors.TextMuted,
-            letterSpacing = 0.5.sp
-        )
-    }
+/** Left priority bar drawn over the card's edge (§6.2 border-priority). */
+private fun Modifier.priorityBar(color: Color): Modifier = drawWithContent {
+    drawContent()
+    drawRect(color = color, size = Size(AtomicBorder.priority.toPx(), size.height))
+}
+
+private fun issueHint(issue: PasswordIssue): String = when (issue) {
+    PasswordIssue.REUSED -> "Same password as another login."
+    PasswordIssue.WEAK -> "Easy to guess."
+    PasswordIssue.EMPTY -> "No password saved."
+    PasswordIssue.BREACHED -> "Appears in public password leaks: attackers try it first."
 }

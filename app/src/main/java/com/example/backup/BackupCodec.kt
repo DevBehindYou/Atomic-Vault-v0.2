@@ -2,10 +2,10 @@ package com.example.backup
 
 import android.util.Base64
 import com.example.crypto.Argon2Kdf
+import com.example.crypto.MasterPassword
 import com.example.crypto.VaultCrypto
 import com.example.database.VaultExport
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.security.SecureRandom
 import java.util.Arrays
 
@@ -14,9 +14,11 @@ object BackupCodec {
     private const val SALT_SIZE = 16
     private const val MIN_ENCRYPTED_SIZE = 29
 
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
+    // Generated adapters only (@JsonClass(generateAdapter = true) on every
+    // export model). The reflection factory used to be registered first and
+    // shadowed them, pulling kotlin-reflect into the app and depending on R8
+    // keeping Kotlin metadata.
+    private val moshi = Moshi.Builder().build()
     private val adapter = moshi.adapter(VaultExport::class.java)
 
     fun exportBackup(data: VaultExport, passphraseChars: CharArray): ByteArray {
@@ -26,7 +28,7 @@ object BackupCodec {
         val rawSalt = ByteArray(SALT_SIZE).also { SecureRandom().nextBytes(it) }
         val saltBase64 = Base64.encodeToString(rawSalt, Base64.NO_WRAP)
 
-        val backupKey = Argon2Kdf.deriveKek(passphraseChars, saltBase64)
+        val backupKey = Argon2Kdf.deriveKek(MasterPassword.normalize(String(passphraseChars)), saltBase64)
         val encryptedBlob = try {
             VaultCrypto.seal(backupKey, jsonBytes)
         } finally {
@@ -62,14 +64,13 @@ object BackupCodec {
         val saltBase64 = Base64.encodeToString(rawSalt, Base64.NO_WRAP)
         val encryptedBlob = backupBytes.copyOfRange(blobStart, backupBytes.size)
 
-        val backupKey = Argon2Kdf.deriveKek(passphraseChars, saltBase64)
-        val decryptedBytes = try {
-            VaultCrypto.open(backupKey, encryptedBlob)
-        } catch (e: Exception) {
-            throw IllegalArgumentException("Incorrect backup passphrase or corrupted file", e)
-        } finally {
-            Arrays.fill(backupKey, 0.toByte())
-        }
+        // Backups made before passphrases were normalized used the raw input;
+        // MasterPassword tries the canonical form first, then the raw one.
+        val decryptedBytes = MasterPassword.unlock(
+            password = String(passphraseChars),
+            derive = { candidate -> Argon2Kdf.deriveKek(candidate, saltBase64) },
+            unwrap = { key -> VaultCrypto.open(key, encryptedBlob) }
+        )?.dek ?: throw IllegalArgumentException("Incorrect backup passphrase or corrupted file")
 
         return try {
             adapter.fromJson(String(decryptedBytes, Charsets.UTF_8))

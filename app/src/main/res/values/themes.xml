@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.MyApplication" parent="android:Theme.DeviceDefault.NoActionBar" />
+    <!-- Light window under the paper theme, so there is no dark flash at
+         start-up. The Compose theme sets the system bar icon colours. -->
+    <style name="Theme.MyApplication" parent="android:Theme.DeviceDefault.Light.NoActionBar">
+        <item name="android:windowBackground">@color/atomic_paper</item>
+        <item name="android:colorAccent">@color/atomic_signal</item>
+    </style>
 </resources>

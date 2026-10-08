@@ -1,0 +1,760 @@
+# Change log
+
+## Branch `claude/atomic-vault-analysis-1fj2ok` (continues `fix/biometric-ime-autofill`)
+
+Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
+results are recorded in the plan's progress table.
+
+### Vault creation no longer crashes when memory is short (native Argon2)
+
+- Root cause of the intermittent "app gone after Create vault" seen in CI
+  (runs #71, #75, #121, #130), found with the new failure diagnostics:
+  `java.lang.OutOfMemoryError` during Argon2id. BouncyCastle builds the
+  64 MiB memory matrix on the Java heap; on a device or emulator with a small
+  app heap that does not fit, and OutOfMemoryError (an Error, not an
+  Exception) escaped every catch and killed the app. A first attempt
+  (`largeHeap` plus a garbage-collect-and-retry) was not enough: the minified
+  build still ran out of heap.
+- Argon2id now runs in native code (`com.lambdapioneer.argon2kt` 1.6.0, the
+  reference C implementation, Maven Central). The matrix is allocated outside
+  the Java heap. Same algorithm, version (1.3) and parameters, so the output
+  is byte-identical and every existing vault opens unchanged. BouncyCastle
+  stays as the fallback if the native library cannot load. `largeHeap` is not
+  used. An R8 keep rule protects the JNI classes.
+- If memory is still short, create, unlock and backup show "Not enough free
+  memory. Close other apps and try again." instead of crashing; unlock never
+  reports it as a wrong password.
+- Tests: `Argon2KdfVectorTest` (JVM, fallback) and `Argon2KdfDeviceTest`
+  (emulator, native, including the real 64 MiB setting) check known answers
+  computed with the reference implementation (argon2-cffi).
+
+### Version 0.4.0 (versionCode 3)
+
+- Version for the release of this branch to `main` (PR #20). It carries the
+  0.3.0 fixes and the Atomic redesign, which DECISIONS.md says ships as
+  0.4.0, so the release is 0.4.0. The versionCode rises so 0.2.1 installs update in
+  place.
+
+### Offline breach check
+
+- Passwords are checked against the **1,000,000 most common passwords from
+  public breach compilations** (SecLists `Pwdb_top-1000000.txt`, MIT
+  licence, `assets/licenses/MIT-seclists.txt`), bundled as a 1.8 MB Bloom
+  filter (`assets/breached_passwords.bloom`). Fully offline: the app still
+  has no internet permission, and no password or hash leaves the phone.
+- Security dashboard: a **Leaked** tile and finding tag; leaked logins are
+  listed first, as Critical. The login editor warns while typing a leaked
+  password.
+- A Bloom filter never misses a listed password; about 1 in 1,000 other
+  passwords is wrongly flagged (measured 0.09%), so the wording says
+  "appears in public leaks".
+- Reproducible: `tools/breach_filter/build_breach_filter.py` rebuilds the
+  filter from the source list, pinned by SHA-256, and documents the format.
+- Tests: `BreachedPasswordsTest` reads the bundled file (known leaked and
+  strong passwords, false-positive rate, bad file refused, report ordering).
+
+### Import logins from other password managers (CSV)
+
+- Backup and restore gains an **Import CSV** tab: logins from a CSV export
+  of Google Password Manager / Chrome, Bitwarden, 1Password, KeePass,
+  KeePassXC, Firefox, or any file with recognisable column names (name or
+  title, url, username, password, notes, totp).
+- Adds to the vault, never replaces it. A login already in the vault (same
+  username, password and site) is skipped; Bitwarden cards and notes are
+  skipped and counted. Chrome's `android://...@package` app logins become
+  app logins. The import can be undone until the vault locks.
+- The screen warns that a CSV file is unencrypted and should be deleted.
+- Tests: `CsvImportTest` (quoting, line breaks in fields, byte-order mark,
+  each format, duplicates, refused files).
+### Screen-lock unlock for phones without a fingerprint
+
+- On a phone with no fingerprint (or face) enrolled but with a PIN, pattern
+  or password, running Android 11 or later, quick unlock now uses the
+  **screen lock**. The vault key is wrapped under a separate Android
+  Keystore key that needs the screen lock on every use
+  (`AUTH_DEVICE_CREDENTIAL`, timeout 0): the same hardware-enforced model as
+  the fingerprint key, not a UI gate. The master password always works too.
+- Onboarding and Settings call it **Screen-lock unlock** on such phones. A
+  phone with neither shows why quick unlock is unavailable instead of a
+  switch that could never work. Autofill's unlock screen uses it too.
+- Switching between fingerprint and screen lock re-arms from scratch, so no
+  wrapped copy is ever left under the other key. Removing the screen lock
+  invalidates the key; the app then falls back to the master password.
+- CI: new **Emulator screen-lock check** job (Android 11 emulator, PIN only):
+  arm with the PIN, unlock after a restart, cancel and use the password.
+
+### Lock after no taps (TASKS T3, user decision U4)
+
+- New Settings row **Lock after no taps**: Off, 1, 5 or 15 min, **5 min by
+  default**, beside **Lock after leaving the app**. Before, a vault left open
+  on screen never locked (audit finding a).
+- Any tap in the app restarts the clock; it only runs while the app is on
+  screen, and starts again when the vault is unlocked, so time spent on the
+  unlock screen never counts (a fingerprint unlock is not a tap in the app).
+  Checked every 5 s, so a lock can come up to 5 s late.
+- The choice is stored outside the vault (like the theme): it is not secret
+  and the lock screen needs it.
+- Tests: five new cases in `VaultLifecycleObserverTest`.
+### Password history
+
+- When a login's password changes (in the editor or through an Autofill
+  save), the old one is kept, sealed like every other secret, in a new
+  `password_history` table: the last 10 per login, newest first.
+- The item's detail screen shows **Previous passwords** with the date each
+  was replaced, hidden until revealed one by one, with copy and **Clear**.
+- Deleting a login or restoring a backup removes its history. History is
+  not written to backup files.
+- The table is created on open (`CREATE TABLE IF NOT EXISTS`), so existing
+  vaults gain it without a migration step.
+- Tests: `PasswordHistoryDeviceTest` (real SQLCipher on the emulator: order,
+  no entry when unchanged, limit of 10, clear and delete, stored encrypted);
+  `DdlTest` checks the table is created.
+
+### Toolchain and SDK 36 (Phase 5, H2)
+
+- AGP 8.8.2 -> 8.13.2, Gradle 8.13, Kotlin 2.2.21, KSP 2.3.12;
+  `compileSdk` and `targetSdk` 35 -> 36 (app and `autofilltest`).
+- Libraries: Compose BOM 2025.10.00, core-ktx 1.17.0, lifecycle 2.9.4,
+  activity-compose 1.11.0, navigation-compose 2.9.5, SQLCipher 4.19.1,
+  Roborazzi 1.76.0. `material-icons-extended` is pinned at 1.7.8 (its last
+  release) so it resolves whatever the BOM lists.
+- Fix found by the minified emulator check: the newer R8 put a cast to
+  `InlineSuggestionsRequest` (an Android 11 class) on the shared
+  `onFillRequest` path, crashing the Autofill service on Android 9/10 with
+  `NoClassDefFoundError`. Shared code now carries the inline request and
+  presentation as `Parcelable`; every Android 11 inline type lives in
+  `@RequiresApi(R)` `InlineApi30` and is reached only behind an SDK check.
+- Not taken: AGP 9 and Kotlin 2.4 (bigger migrations, separate change);
+  biometric stays on 1.2.0-alpha05 (the fingerprint check covers it).
+
+### Vault key envelope: off the deprecated security-crypto (Phase 5, H3)
+
+- The envelope (salt, Argon2id parameters, password-wrapped data key) is now
+  stored as one value in private preferences, **sealed with the app's own
+  Android Keystore AES-256-GCM key** (`EnvelopeSealer`). It stays bound to
+  the device, as it was under EncryptedSharedPreferences: a copy of the
+  app's files alone cannot be used to guess the master password offline.
+  Plain storage (the other option in the plan) would have lost that, so it
+  was not used.
+- **Existing vaults migrate once, on open.** The envelope is copied, read
+  back and compared byte for byte, the store marker switches, and only then
+  is the old copy cleared. If any step fails, the old store stays in use and
+  the move is tried again on the next launch. Vaults that had fallen back to
+  plain storage move to the sealed layout too.
+- If the sealing key is ever gone while an envelope exists, the app reports
+  the key store as unavailable (as before) and never starts a new, empty
+  vault over the old one.
+- `security-crypto` is still a dependency, only to read the old store during
+  the migration; it can be removed in a later release.
+- Tests: `VaultMetaStoreMigrationTest` (11 cases: fresh install, each legacy
+  store, failed write, read-back mismatch, no Keystore, lost key, store that
+  will not open, database without envelope, re-wrap after migration) and
+  `VaultMetaStoreDeviceTest`, which runs the migration against the real
+  EncryptedSharedPreferences and Keystore in the new **Instrumented tests**
+  CI job.
+### Unused imports removed, and kept out (TASKS T10)
+
+- 65 unused imports removed across 18 files (most left behind by the UI
+  rebuild and the size-token change), by ktlint's `no-unused-imports` rule.
+- New CI step `Unused imports check (ktlint)`
+  (`.github/scripts/unused_imports_check.sh`): ktlint 1.8.0 from Maven
+  Central, pinned by SHA-256, with only that one rule enabled. Run the same
+  script locally; add `--format` to the ktlint line to fix.
+### Database: the maintained SQLCipher library (Phase 5, H1)
+
+- `net.zetetic:android-database-sqlcipher` 4.5.4 (end of life) is replaced
+  by its successor `net.zetetic:sqlcipher-android` 4.13.0. The vault's data
+  key goes to `sqlite3_key` as the same raw bytes as before, and both are
+  SQLCipher 4, so existing vaults open unchanged. 4.13.0 is the newest
+  release that does not need the `compileSdk` 36 toolchain (4.18+ needs
+  Kotlin 2.2 and `androidx.sqlite` 2.7); moving further rides with that
+  upgrade.
+- The native library is loaded with `System.loadLibrary("sqlcipher")`; R8
+  keeps `net.zetetic.database.**`.
+- **New CI job: Upgrade check** (pull requests). The base branch's build
+  creates a vault holding a login, this branch's build is installed over it
+  (`adb install -r`, data kept), and must unlock it with the master password,
+  still show the login, and open again after a restart. It protects every
+  future storage change, not just this one.
+### Accessibility: switches say what they switch, secrets are read as hidden (TASKS T7)
+
+- `AtomicSwitch` takes a `label`. TalkBack now says "Fingerprint unlock,
+  switch, on" instead of "Switch, on"; the generator character sets, the
+  fingerprint switch in onboarding and Settings, and a custom field's mask
+  switch ("Mask Recovery code") are labelled.
+- Masked values in the read view are read as "Hidden" (cards: "Hidden, ends
+  in 4 0 2 1") instead of a run of bullet characters. Revealing restores the
+  real value for TalkBack too.
+- A custom field's remove button names the field ("Remove Recovery code").
+- Tests: labelled switch found by name and toggles; hidden password and card
+  fields expose the spoken text and drop it when revealed.
+### CI: fingerprint unlock is checked on an emulator (TASKS T2)
+
+- New job `Emulator fingerprint check` (`emulator_biometric_check.sh`): sets
+  a screen-lock PIN, enrols fingerprint 1 through Settings with the
+  emulator's virtual sensor, creates a vault with fingerprint unlock on and
+  confirms it with the finger, then after a restart checks that an unknown
+  finger is rejected, the enrolled finger opens Home, and a cancelled prompt
+  leaves the password field working.
+- The emulator scripts share their helpers (`emulator_lib.sh`), and a failed
+  step prints what was on screen into the job log, so it can be diagnosed
+  without downloading artifacts.
+### Lint clean-up (TASKS T9)
+
+- **Corrupt launcher bitmaps removed.** The xxhdpi and xxxhdpi
+  `ic_launcher*.webp` files were damaged (lint read them as 36803 x 9421313
+  px). They were never shown, since every supported phone (API 28+) uses the
+  adaptive icon, so all density bitmaps are deleted and the adaptive icon
+  moves from `mipmap-anydpi-v26` to `mipmap-anydpi`.
+- Removed the seven unused template colours, the redundant activity label
+  and a dead API check; `AtomicTag` takes `modifier` first among its
+  optional parameters; the button press offset uses the lambda overload so
+  it no longer recomposes per animation frame.
+- Kept on purpose, with the reason next to the suppression: `commit()` in
+  the key-envelope store (must be on disk before the database), the
+  own-package service query, the inline-suggestions flag (API 30+), and the
+  Autofill dropdown background (drawn inside other apps).
+- Lint goes from 62 to 43 warnings; all 43 left are dependency, Gradle
+  plugin and target-SDK version notices (Phase 5 upgrade work).
+- CI prints the lint text report into the job log.
+### Dependencies: safe updates (Phase 5, part 1)
+
+- BouncyCastle 1.79 → 1.81 (provider fixes; the Argon2id known-answer tests
+  still pin the key derivation), `androidx.security:security-crypto`
+  1.1.0-alpha06 → 1.1.0 (first stable; same API, now marked deprecated
+  upstream), Android Gradle plugin 8.8.1 → 8.8.2 (patch), and the test
+  libraries (`androidx.test` core/runner 1.7.0, ext-junit 1.3.0, espresso
+  3.7.0).
+- **Not done here, on purpose:** Android Gradle plugin 9, Compose BOM
+  2026.09, core-ktx 1.19, lifecycle 2.11, activity 1.13, navigation 2.10 and
+  target SDK 36. They need `compileSdk` 36 and move together as one planned
+  upgrade. Replacing `security-crypto` (deprecated) is part of that work.
+### Dead code: two unused database tables removed (Phase 5, H4)
+
+- `vault` (an early copy of the key envelope, never read or written) and
+  `audit_log_entry` (item ids and actions written on every change but never
+  read, exported or shown, so it only grew) are no longer created, and are
+  dropped from existing vaults when they open (`DROP ... IF EXISTS`, run on
+  every open like the rest of the schema). Nothing the user sees changes;
+  the event log shown in the app is the separate, hash-chained Trust Ledger.
+- Test: the retired tables are never created, are dropped idempotently, and
+  every table in use is still created.
+
+### CI: the minified build goes through the emulator check too (TASKS T5)
+
+- The verify job also builds `assembleInternal`: the release build type with
+  R8 shrinking, signed with the debug key, installed as
+  `com.atomicvault.android.internal`. It is its own step, so an R8 failure
+  is named as one.
+- The emulator job runs twice, as `Emulator check (debug)` and
+  `Emulator check (minified)`: create a vault, walk the app, restart, unlock
+  and the Autofill tap, on both APKs. Logs upload per variant.
+- `emulator_check.sh` takes the package from `PKG` (default: the debug
+  build).
+
+### Phase 7.9b: no raw sizes in screen code (0.4.0)
+
+- New `AtomicSize` tokens (icons, marks, tiles, row, header and button
+  heights, bar height, list pane and content widths, FAB clearance) and
+  `AtomicSpacing.hairline` / `xxxl` / `hero`. Every raw `dp` in screen code
+  (about 75 values in 15 files, Autofill activities included) now uses a
+  token.
+- Gaps that were off the 4 dp grid are rounded onto it, as the spec says
+  (§0): 6→8, 10→12, 14→16, 18→16, 22→24. Expect slightly roomier spacing
+  in a few places (unlock and create-vault headers, tag rows, timeline, the
+  look-alike warning); the warning icon is 24 dp instead of 22.
+- The design check now fails on any raw `dp` outside `ui/theme` and
+  `ui/components` (`0.dp` allowed).
+
+### Plan 8.9: list and item side by side on tablets (0.4.0)
+
+- At 840 dp and wider (tablets, unfolded foldables in landscape) Vault shows
+  the list in a 360 dp column and the selected item's read view beside it.
+  Tapping an item selects it instead of opening a new screen; the open
+  item's row has the accent border and reads as selected to TalkBack. `EDIT`
+  still opens the full editor. With nothing picked, the right side says to
+  pick an item; after a delete it goes back to that.
+- 600-839 dp keeps the side rail with one pane. The plan asked for the split
+  here too, but beside the rail and the 360 dp list the read view would be
+  about 160 dp wide.
+- Tests: split panes present, open item selected and no back arrow in the
+  pane; snapshot `tablet_list_detail.png`.
+
+### Phase 7.3: confirmations and inputs open as bottom sheets (0.4.0)
+
+- **`AtomicSheet` replaces `AtomicDialog`** (still the app's one overlay,
+  D8). Paper with 28 dp top corners over the spec's 54% black scrim, a drag
+  handle, a Signal mono label over an ink rule (`DELETE`, `ORGANISE`,
+  `RESTORE`, `UNSAVED CHANGES`, `NOTICE`), the title, then full-width
+  buttons. It sits above the keyboard and the navigation bar, and is at most
+  560 dp wide on tablets.
+- Slides up 16 dp and fades in over 350 ms (`ease`, no spring); with system
+  animations off it only fades. Closes on the scrim, back, the dismiss
+  button, or by pulling the handle down; a short pull settles back.
+- The sheet window keeps `FLAG_SECURE` from the activity, as the dialog did.
+- New `scrim` colour token. The design check now also rejects the old
+  `AtomicDialog` names.
+- Tests: stress snapshots render the sheet at the bottom of the scrim
+  (`sheet_*.png`); "Keep editing" closes the sheet without leaving.
+
+### Phase 7.5c: one editor layout for logins, cards and identities (0.4.0)
+
+- **`ItemEditorScaffold`** (`ui/editor/ItemEditorScaffold.kt`): the pushed
+  header, sections with mono headers, the save button pinned at the bottom
+  (it stays above the keyboard and the navigation bar), and delete in a
+  danger zone with a confirm that names the item. All three editors use it.
+- **Unsaved changes are no longer lost silently.** Back (the arrow or the
+  system gesture) on a form that differs from what was loaded asks
+  "Discard changes?" with `KEEP EDITING`. An untouched or empty form leaves
+  at once, so the emulator's back-from-new-card step is unchanged. Picking
+  the same tags in another order does not count as a change.
+- **Fixed: editing a card dropped fields the screen does not show** (for
+  example one that came in through a backup). The identity editor already
+  kept them; the card editor now does too.
+- Cards and identities get the folder and tag pickers logins have
+  (`ORGANISE`, shown only when the vault has folders or tags).
+- Sections: login `LOGIN · WEBSITE OR APP · 2FA · NOTES · ORGANISE · CUSTOM
+  FIELDS`; card `CARD · NOTES`; identity `DETAILS · ID NUMBERS · NOTES`.
+  Titles `NEW CARD` / `EDIT CARD`, save `ADD CARD` / `SAVE CARD` (same pattern
+  for identities). Card number, expiry, CVV, email, phone and PAN in mono;
+  the CVV uses the number-password keyboard.
+- Tests: card keeps unknown fields; untouched editor leaves without asking;
+  edited editor asks and leaves only on confirm; `editorHasChanges` unit
+  tests. All test tags are unchanged.
+
+### Phase 7.5b: cards and identities open in the read view (0.4.0)
+
+- Every item opens in the read view; `EDIT` opens the editor for its type.
+- Cards show a `CARD` section, identities `DETAILS`. Sensitive fields (card
+  number, CVV, Aadhaar, PAN) are masked with their own reveal and copy; a card
+  number shows its last four digits while masked (`•••• 4021`). Fill receipts
+  and the login fact sheet only appear for logins.
+- Deleting from the card or identity editor returns to the vault, not to the
+  deleted item's read view.
+
+### Phase 7.8: wide layouts and "verify it yourself" (0.4.0)
+
+- **Side navigation on wide screens.** At 600 dp and wider (large phones in
+  landscape, foldables, tablets) the four destinations move to a side rail
+  with the atom mark; phones keep the bottom bar. Same tags and names, so
+  tests and screen readers see the same tabs.
+- **Privacy proof › Verify it yourself:** the SHA-256 of the certificate the
+  app is signed with (formatted like `apksigner` prints it) and the event
+  log's newest hash, in code wells. A changed or repackaged app shows a
+  different certificate hash than the one published for the release.
+
+### Phase 7.9: the old design layer is gone (0.4.0)
+
+- Deleted `LiquidGlassSurface`, `AmbientVaultBackground`, the 30 legacy colour
+  aliases, `AtomicFontSize`/`AtomicFontWeight`, the spring and glass easing,
+  and the legacy radius. Editors use Atomic cards and theme colours.
+- The login editor no longer repeats the 2FA code and fill receipts: the item
+  detail view shows both.
+- **Design check in CI** (`.github/scripts/design_check.sh`, runs before the
+  build): fails on a hard-coded colour outside `ui/theme`, any pre-0.4.0
+  design name, filled icons, spring animations, or downloadable fonts.
+
+### Phase 7.6: privacy proof, timeline, editors (0.4.0)
+
+- **Privacy proof:** the pass count as a hero number, a warning box with a
+  link when the event log chain is broken, one fact sheet per category (accent
+  shadow when every check passes, error shadow when one fails) with a `PASS` /
+  `FAIL` pill per check, and the timeline as a settings row.
+- **Security timeline:** ISO dates as section headers, the time on every row,
+  source and result as tags, failures in red with the word, filter chips
+  (All, Failures, Fills), and an empty state that says what will appear.
+- **Login editor:** `NEW LOGIN` / `EDIT LOGIN`; usernames, passwords and the
+  site in mono; copy and reveal together on the password (the masked field used
+  to hide the copy button); `GENERATE A PASSWORD`, change-password and
+  `+ ADD CUSTOM FIELD` as text actions; folder and tag chips keep their names'
+  case; `SAVE LOGIN` / `ADD LOGIN`; delete sits in a danger zone and the
+  confirm says backups still contain it. Outlined icons.
+- Card and identity editors: clearer delete confirmations; screen ids for the
+  emulator check.
+
+### Phase 7.6: Generate, Health, Settings (0.4.0)
+
+- **Generate:** the password in a shadowed white card in JetBrains Mono, a
+  strength bar with a word, length as a stepper (plus a slider for big
+  jumps), character sets as switch rows, `NEW PASSWORD` and `COPY`. The same
+  panel is used inside the editor.
+- **Health** (was Audit): the ink "vault health" module with the score, a bar
+  and the one reason that matters most ("2 logins share a password. Fix those
+  first"); stat tiles; each finding has a left priority bar (critical, high,
+  low) and opens the item; "This phone" shows device integrity with an `OK`
+  pill or a warning box; `CHECK AGAIN`. A loading state while it checks.
+- **Settings:** grouped under mono headers. Fingerprint unlock is an "on" card
+  with an `ARMED` pill; Autofill shows a live `ON`/`OFF` pill; **Appearance is
+  Light / Dark / Match system**; folders and tags are plain rows with
+  confirmed deletes that say what happens to the logins; Backup and Privacy
+  proof are settings rows. Split into `SettingsScreen.kt` and
+  `SettingsSections.kt` (was one 650-line file).
+- **Backup and restore:** Export / Restore as a segmented toggle; plain
+  explanations; mismatch and failure messages that say what to check;
+  "Check backup" reports in an "on" panel (`CHECKED · NOTHING CHANGED`);
+  restoring sits in a danger zone with a destructive `REPLACE WITH BACKUP`,
+  and the confirm names the file and offers `KEEP MY VAULT`.
+
+### Phase 7.4–7.5: first screens rebuilt (0.4.0)
+
+- **Unlock:** atom mark on the dot grid, eyebrow `VAULT / LOCKED`, a split
+  headline, the master password with its error underneath, `UNLOCK` and a
+  Ghost `USE FINGERPRINT`, and a mono footer (`ARGON2ID · KEYSTORE`, `NO
+  NETWORK`). Fits tablets as one 480 dp column.
+- **Create vault:** eyebrow and split headline, strength bar with a word,
+  "type it again" with a fix-it error, fingerprint as an "on" panel, the
+  protection facts, and the no-recovery warning.
+- **Vault home:** brand header with `LOCK VAULT` as the accent icon action,
+  a title row that states the real count (`42 ITEMS · ON THIS PHONE`, or
+  `12 SHOWN` while filtering), search, chips (folder and tag names keep their
+  case), white item rows with letter or outlined-icon tiles and usernames in
+  mono, a first-use state (0 on this phone, cloud copies: none, add a login),
+  a "no match" state that clears the filters, and an add stack (`+ NEW` opens
+  Login, Payment card, Identity).
+- **Item detail (new):** logins open in a read view. Fact sheet with copy
+  buttons, the password hidden until revealed, the 2FA code on request with a
+  countdown bar, fill receipts with ISO timestamps, change-password link,
+  notes, custom fields (sensitive ones masked), tags, and a pinned
+  `COPY PASSWORD`. Copy says when the clipboard clears (45 s). `EDIT` opens
+  the editor; returning shows the saved values; deleting returns to the vault.
+- **Autofill screens:** "Fill with AtomicVault" and "Save to AtomicVault"
+  share the new layout (atom mark, `FILL · GITHUB.COM` eyebrow, Display title,
+  `UNLOCK AND FILL` / `UNLOCK AND SAVE`). The look-alike warning is the app's
+  one loud block: an error-bordered `THIS IS NOT GITHUB.COM`, the two domains
+  side by side, and `GO BACK`. The Autofill dropdown row is now paper with an
+  ink title and a mono subtitle.
+- Each screen has a stable test tag, exposed to the emulator check as a
+  resource id; the check no longer depends on visible headlines.
+
+### Phase 7.2: Atomic components (0.4.0)
+
+- **Buttons** follow the spec: Primary (accent, ink border, 3 dp hard shadow
+  that the button sinks into when pressed), Solid, Ghost and Destructive, with
+  Display labels. Disabled is 40% with no shadow; busy shows a thin bar instead
+  of a spinner.
+- **Inputs:** mono caps label above, 2 dp ink border, accent border while
+  focused, error border and helper text. Passwords show in JetBrains Mono.
+- **New shared components** (`AtomicSystem.kt`): card, panel, ink module,
+  rule and hairline, section header, title row with counter, tag and status
+  pill, value bar, text action, icon buttons (back, action, toolbar, danger),
+  stepper, segmented toggle, settings row, fact sheet, stat tile, code well,
+  and the empty, loading, warning and danger-zone states.
+- **Header and bottom bar:** pushed screens get an ink back square and a
+  Display title over a 1 dp ink rule. The bottom bar shows the active tab as
+  one ink pill with its label; the other tabs are outlined icons with names
+  for screen readers. "Audit" is now **Health**.
+- Existing screens pick these up without changes: the old surface, dialog,
+  chip, tag and strength meter are restyled to the spec.
+- Component catalogue snapshots (light, dark, 200% font) and a test that the
+  icon-only tabs are named for screen readers.
+
+### Phase 7.1: Atomic design system foundations (0.4.0)
+
+- **Paper theme by default.** Ink on paper with one accent, Signal blue
+  (`docs/design/ATOMIC-DESIGN-SYSTEM.md`). The dark theme is the design
+  system's dark variant. Anyone who explicitly chose dark in an older version
+  keeps it; a new "Match system" mode is stored for the appearance picker.
+- **Bundled fonts:** Bebas Neue (display), Hanken Grotesk (body) and
+  JetBrains Mono (labels and secrets), about 380 KB in the APK, OFL licences
+  in `assets/licenses/`. Nothing is downloaded. Every screen now uses Hanken
+  Grotesk; the password generator shows passwords in JetBrains Mono.
+- **Tokens:** an immutable `AtomicPalette` (light and dark) behind
+  `AtomicTheme.colors`; radii 3/4/6/8/28/pill; border widths; hard offset
+  shadows (`Modifier.hardShadow`); motion durations with CSS `ease` and no
+  springs; reduced motion follows the system animation setting. Old colour
+  names remain as aliases until step 7.9.
+- **Contrast test:** every text/surface pair in both palettes is checked
+  against WCAG AA in a unit test.
+- Status and navigation bar icons follow the app theme; the window background
+  is paper (no dark flash at start-up).
+- New launcher icon: the Atomic atom mark on ink.
+- The switch follows the spec: accent track when on; paper track, ink outline
+  and a smaller ink thumb when off. It animates without a bounce.
+- Test safety: the emulator script and UI tests match text ignoring case,
+  because the design system shows labels in capitals.
+
+### Phase 6: restore drill
+
+- **"Check backup (no changes)"** on the restore tab decrypts a backup file and
+  reports what is in it (items by type, folders, when it was made) without
+  touching the vault, so a backup can be trusted before it is needed.
+
+### Phase 6: change-password shortcut
+
+- Website logins get **"Change password on github.com →"** in the editor, which
+  opens the site's standard `/.well-known/change-password` page in the browser
+  (the browser does the networking; AtomicVault stays offline). The new password
+  is captured by the Autofill save prompt as usual.
+
+### Phase 6: India-ready identity fields
+
+- The identity editor takes an **Aadhaar number** (checked with UIDAI's Verhoeff
+  check digit, stored as a sensitive field) and a **PAN** (format-checked).
+  `IndianIds` also validates IFSC codes and UPI IDs for later item types.
+- A custom field labelled **UPI PIN, MPIN, ATM PIN or OTP** shows a warning:
+  these should never be stored, even encrypted.
+- Saving an identity no longer drops custom fields it does not show (e.g. from
+  a backup).
+
+### Phase 6: fill receipts
+
+- The login editor shows **where and when a login was filled**: "Filled 3 times
+  · last 2 Oct, 14:05", and warns if a fill ever went to a site or app other than
+  the login's own. Built on the Trust Ledger, which stores the item and target
+  only as hashes. Fills picked from the locked-vault chip are recorded from
+  Android's fill event history (`FillReceipts`), each exactly once.
+
+### Phase 6 (first differentiator): phishing guard
+
+- **Look-alike site warning.** When a page has no saved login but resembles a
+  site the user has one for, AtomicVault says so instead of staying silent:
+  a "Not github.com" chip in the keyboard strip (vault open) or a warning screen
+  after unlocking (vault locked). It never fills on a look-alike.
+- `PhishingGuard` (pure Kotlin, offline, only the user's own saved domains):
+  digit/letter swaps (`paypa1.com`, `g00gle.com`, `rnicrosoft.com`), one or two
+  typos (`githuh.com`, `hdfcbnak.com`), the brand inside another site
+  (`github-login.com`, `github.com.account-verify.xyz`) and punycode homoglyphs
+  (`gіthub.com` with a Cyrillic і). Subdomains of saved sites and the same name
+  on another country domain (`amazon.in` vs `amazon.com`) never warn.
+- Each warning is recorded in the Trust Ledger ("Look-alike site warning").
+
+### Phase 4: performance, and 2FA codes
+
+- **Search no longer decrypts the whole vault per keystroke (P1).** Usernames
+  are decrypted once per item version and cached for the unlocked session; tags
+  load in one query instead of one per row.
+- **Backup export and the security scan read the vault in three queries** instead
+  of four per item.
+- **Moshi uses its generated adapters only (P6)**; the reflection factory (and
+  `kotlin-reflect`) is gone. `BackupRoundTripTest` checks every field of every
+  item type survives export and import.
+- **The dashboard keeps no decrypted secrets (P5)**: findings hold id, title and
+  type only.
+- **2FA codes (TOTP, RFC 6238)** computed on the device: an "Authenticator key"
+  field in the login editor shows the live code with a countdown and Copy, and
+  Autofill fills the code on one-time-code fields (SMS-style 2FA screens are
+  left to the keyboard). `TotpTest` uses the RFC's own test vectors.
+
+### Phase 3: Autofill built for Gboard and every keyboard
+
+- **Suggestions in the keyboard strip.** On Android 11+ every AtomicVault
+  suggestion carries an inline chip (Gboard, Samsung, SwiftKey...) as well as
+  the classic dropdown. Long-pressing a chip opens AtomicVault; it used to start
+  the fill itself (B10).
+- **Vault locked:** one "Unlock AtomicVault" chip. Tapping it authenticates once
+  and returns this screen's accounts, ready to fill (F1). It used to show
+  nothing unless a fingerprint had been used in the last 30 seconds.
+- **Vault open in the app:** one chip per matching account with its username;
+  tapping asks for the fingerprint or master password, then fills username and
+  password together.
+- **Master password everywhere (F3).** A new `VaultAuthActivity` tries the
+  Keystore-bound fingerprint first and always offers the master password, so
+  Autofill works on phones without biometrics. One `VaultUnlocker` does password
+  unlock for the app and Autofill alike.
+- **Saving always works (F2).** "Save to AtomicVault" opens a short confirm
+  screen that authenticates and saves (`AutofillSaveActivity`); the captured
+  login waits in memory only (`PendingSaves`, 5-minute expiry), never on disk.
+  Two-page logins (email, then password) are saved together (`FLAG_DELAY_SAVE`).
+- **Sign-up forms** get a "Strong password" chip that fills a generated password
+  into the new and confirm fields; the save prompt then stores it.
+- **Field detection rewritten (B11)** as `FormClassifier` (pure Kotlin, tested):
+  autofill hints > HTML autocomplete/type > input type > whole words. No more
+  "pass" matching "passport", hidden or disabled fields are never filled,
+  labels are not fields, postal/promo codes are not 2FA codes.
+- **No key without a screen.** The 30-second grace key and
+  `tryRevealWithoutPrompt` are deleted (purged on upgrade); the biometric
+  unlock key is kept, so nobody has to re-enable biometrics.
+- Autofill never acts on AtomicVault's own screens (B7, service side).
+- Settings shows whether AtomicVault is the active Autofill service (live), with
+  the Chrome step; the "Arm autofill" switch, which only toggled biometrics, is
+  gone.
+
+### Phase 2: data safety and crash fixes
+
+- **Lock never corrupts a save (B4).** New `VaultSession` owns the open vault
+  (key, connection, repository) for the whole process. Locking stops new work
+  at once and closes / zeroes the key when the last running operation ends;
+  before, locking mid-save sealed the item under a zero-filled key.
+  `VaultSessionTest` locks during a running save.
+- **No more silent key-store fallback (B5).** `VaultMetaStore` picks its store
+  once per install and remembers it; if that store cannot open later the app
+  says so instead of showing onboarding over the real vault. Creating a vault
+  next to an orphaned database renames the old file aside instead of failing.
+  The envelope is written synchronously.
+- **Backups and device transfer exclude everything** (`data_extraction_rules`,
+  `backup_rules`); `allowBackup="false"` alone does not stop device-to-device
+  transfer on Android 12+.
+- **Editing a login no longer wipes its TOTP secret or Android app (B6)**; the
+  app wipe was found while fixing the TOTP one.
+- **KDF parameters stored with a vault are used at unlock (B8)**, validated.
+- **Trust Ledger (B9):** an explicit sequence number, one transaction for
+  "read head + append", one cached connection, and a migration that keeps
+  existing chains valid. Same-millisecond events, concurrent writers and a
+  clock moved backwards no longer report "chain broken".
+- **Background vault work cannot crash the app (F4)**; failures are shown.
+- **Search** waits for a pause in typing and a newer query cancels an older one,
+  so results never arrive out of order (F5).
+- **Security score** counts logins only; cards and identities were all flagged
+  as "empty password" (F6). The analysis runs off the main thread.
+- **Restore is all-or-nothing (F7)**, keeps this phone's biometric setting,
+  and can be undone until the vault locks (the previous vault is kept in
+  memory only) (F8).
+- **A damaged field no longer breaks the security scan or backups (F9)**: it
+  reads as empty and the item is flagged `damaged`.
+
+### Phase 1: Atomic keyboard removed
+
+- **Removed** the input method service, its reveal activity/coordinator, the
+  in-app `LiquidGlassKeyboard`, `res/xml/method.xml`, the manifest entries, the
+  R8 keep rule, the Settings section and the keyboard snapshot tests. Filling
+  now goes only through Android Autofill, which shows inside Gboard (or any
+  keyboard) on Android 11+.
+- **Unlock lockout fixed (B1).** The unlock screen forced the in-app keyboard,
+  which had no accented letters, non-Latin scripts or emoji, while onboarding
+  used the system keyboard. Unlock now uses a password field on the system
+  keyboard. Regression test: `RegressionUiTest` types `Grüße-é-नमस्ते-🔐-9`.
+- **Password normalization (B2).** New vaults and backups derive from the NFC
+  form; unlock and import try NFC, then the raw input, and a vault that only
+  opened with the raw form is re-wrapped once. `MasterPassword`,
+  `MasterPasswordTest`.
+- **Screenshots blocked on every screen (B3)**, including onboarding.
+- **Autofill kept off the app's own fields (B7, app side)**: nothing offers to
+  save the master password or an item being edited.
+- **Privacy Proof made honest**: screen protection is read from the live window
+  (it always said "not yet enabled"), and a new live check confirms the app
+  registers no keyboard service. `ManifestPrivacyClaimsTest` enforces it.
+- Unlock errors other than a wrong password now say what failed (F10, partly).
+- One-time notice for users upgrading from a version with the keyboard.
+- CI: the emulator script (`emulator_check.sh`) fails if any input method is
+  registered, and now restarts the app and unlocks through the system keyboard.
+
+### Phase 0: baseline
+
+- Failing unit tests print full stack traces in the CI log.
+- `VaultEnvelopeFixtureTest`: vault envelopes generated independently in
+  Python guard key derivation for existing users.
+- `AUDIT-REPORT.md` marked superseded. `fix/v0.2-audit-and-bugfixes` was
+  checked: its three commits are already contained in the current code and
+  the branch can be deleted.
+
+## Branch `fix/biometric-ime-autofill`
+
+Everything below is on the branch `fix/biometric-ime-autofill`, 21 commits from
+2026-09-18 to 2026-09-19, on top of `main` at `2217d9a` ("Update-c003", the
+commit that carried the earlier audit's edits). The branch is **not merged**.
+Against `main` it changes 42 files (+4395 / -2207).
+
+Every commit on the branch passed the `Android CI` workflow (unit tests, lint,
+debug build, and from `49aa60a` onward the emulator job), except where a commit
+is noted as fixing the previous one's compile error.
+
+Nothing in this list has been verified on a physical phone yet. See
+[PHONE-TEST-CHECKLIST.md](PHONE-TEST-CHECKLIST.md).
+
+## Upgrade notes (read before releasing)
+
+- **Biometric unlock must be turned on again once** after upgrading from 0.2.1.
+  The Keystore key layout changed (see the biometric entry below). The old key
+  is purged automatically; the master password keeps working throughout and no
+  vault data is touched.
+- The auto-lock setting changed meaning in the UI only. The stored value `0`
+  always meant "lock immediately"; the chip that used to be labelled "Never"
+  now says "Immediately". Nobody's actual behaviour changes.
+- **The Atomic keyboard is removed.** Anyone who had it selected falls back to
+  the system default keyboard automatically; a one-time notice explains the
+  change and offers to turn on Autofill.
+- Version is still `0.2.1` / `versionCode 2`. It needs bumping before a release
+  build can update an installed 0.2.1.
+
+## Security and data-safety fixes
+
+| Area | Problem | Fix | Commit |
+|---|---|---|---|
+| Biometric unlock | One 30-second timed Keystore key backed the `BiometricPrompt` `CryptoObject` flow. `Cipher.init` on a timed key throws outside the window, so unlock silently did nothing on a cold start and enabling biometrics could crash. | Two keys: a per-use **unlock** key for the `CryptoObject` flow, and a timed **grace** key used only for the no-UI metadata matching in Autofill and the keyboard. Legacy single-key state is purged. | `e885cad` |
+| Biometric prompt | A wrong-finger attempt was reported as a terminal error, ending the caller's flow while the prompt was still open. A second tap could stack a second prompt. A missing/invalidated key did nothing. | Wrong finger is a non-terminal callback. One prompt at a time. A missing key resets the UI and shows a message. Settings shows the Keystore state, not the stored setting. | `e885cad` |
+| Autofill service | The DEK was not zeroed on the fill path's early exits; a parse failure never completed the callback; the cancellation signal was ignored. | Parse inside the `try`, zero in `finally`, honour cancellation. | `e885cad` |
+| Autofill matching | Every site in a browser shares the browser's package, and a package match was treated as strong evidence, so a login saved from Chrome was offered on every other website in Chrome. | A package match only counts for native-app screens (no web domain). For web content the domain decides. An item that stores a web domain is never revealed by package alone (the keyboard cannot see domains). | `6c6309a`, `9631167` |
+| Autofill save | The same match let a save on site B find site A's item and overwrite it. The update was a full replace carrying only username and password, wiping the item's notes, TOTP secret, custom fields, tags and folder. | `AutofillSave`: only an item that already holds the same username is updated (two accounts = two items); everything else is carried over; the browser package is no longer stored for web logins. | `6c6309a` |
+| Keyboard reveal | A revealed credential was typed into whatever field was focused when the biometric screen returned. | Typed only into the field it was requested for (package, field id, input type). If it arrives while no input is attached it waits up to 15 s for the same field. The wait has a 60 s timeout. | `9631167` |
+| Keyboard reveal | The completed request stayed referenced from a static, keeping the revealed password reachable. | The coordinator drops the request as soon as it completes. | `9631167` |
+| Clipboard | The 45 s clear compared the clipboard to the copied value. From Android 10 a backgrounded app reads nothing from the clipboard, so in the normal flow (copy here, paste elsewhere) the clear never happened. | Tracks whether anything else replaced the clip via change notifications and clears without reading. Locking the vault also clears. | `9631167` |
+| Payment card / identity editors | Edits opened blank (async load) and saving overwrote the stored item; saving dropped the item's tags; there was no way to delete an item. | Editors wait for the load; tags are preserved; a Delete action with confirmation. | `e885cad`, `b75ed5e` |
+| Auto-lock | The "Never" chip stored `0`, which the lifecycle observer treats as "lock immediately". | Chips are Immediately / 1 / 5 / 15 min and the label reads "Lock after leaving the app". | `b75ed5e` |
+
+## Keyboard (system input method)
+
+- Attach the view-tree lifecycle/saved-state owners to the IME window's decor
+  view, not only the `ComposeView` (likely start-up crash) and resume the
+  lifecycle on each input start. `e885cad`
+- Enter runs the field's own IME action (search/send/go/next/done) or types a
+  real newline; backspace uses key events so a selection deletes as a whole and
+  surrogate pairs are not split; shift is one-shot; a second symbols page adds
+  `_ = / \` and similar. `e885cad`
+- Suggestion lookup (open the vault DB and match) moved off the main thread.
+  The service scope is cancelled on destroy. `9631167`
+- Restyled to the design reference: flat 8 dp keys, a white primary Enter key
+  whose icon follows the field's action, a compact "Atomic Shield" strip on
+  password fields only. `7dfae78`
+
+## User interface (design reference)
+
+The whole UI was moved to `atomicvault_design_system_reference/`. Only its
+visual language was taken: flat `#131313` canvas, opaque stepped surfaces,
+emerald `#4EDEA3` accent, white primary button, 8/12/16/24 dp radii, uppercase
+micro labels. Its mock-only content (defence index, "air-gapped core", hardware
+attestation claims, passkeys, emergency access, keylogger simulator) was
+deliberately not built. See [DECISIONS.md](DECISIONS.md).
+
+| Change | Commit |
+|---|---|
+| Palette from the reference screenshots; `LiquidGlassSurface` made flat (removed the specular line and radial glow on every card); 12 dp buttons/fields, emerald switch, tinted badges | `7dfae78` |
+| Home: one card per entry with a letter or type icon; icon buttons; no dead space | `e8cf82e` |
+| Material dialogs were pill-shaped blobs (`Shapes.extraLarge` was 999 dp) and used Material's lilac surface tiers; all surface tiers now come from the tokens | `b59af85` |
+| `AtomicTopBar` and floating four-tab bottom navigation (Vault, Generate, Audit, Settings) | `235c038` |
+| One `AtomicDialog` (24 dp sheet, stacked full-width buttons, optional content slot) replacing every `AlertDialog`; Unlock screen | `cd30519` |
+| Onboarding, Security dashboard (single scrolling page, score ring, 2x2 stats, finding cards), credential editor grouped in cards, header on every pushed screen | `55f156d` |
+| Password generator (output card, length slider 8-128, option card) | `ddeae4d` |
+| 360 dp / 1.5x font fixes: auto-lock chips wrapped mid-word, placeholders wrapped inside single-line fields, button labels centre when they wrap | `ea1d3a1` |
+| Privacy proof and timeline rows wrap instead of overflowing | `517cf5b`, `e00c67d` |
+| Home `+` opens Login / Payment card / Identity (they were only in Settings) | `b75ed5e` |
+| Settings footer showed a hard-coded `v1.0.0`; now reads `BuildConfig.VERSION_NAME` | `235c038` |
+
+## Accessibility
+
+- `AtomicSwitch` is `toggleable(role = Switch)` so screen readers announce an
+  on/off switch (it was a bare `clickable`), with a 48 dp touch target.
+- Filter chips get a 48 dp touch target and expose their selected state;
+  bottom-nav tabs are `selectable(role = Tab)`. `ca839df`
+
+## Tests and CI
+
+- `android-ci.yml`: runs on any non-`main` branch and pull requests. Unit tests,
+  lint, debug APK, UI snapshot renders, reports; no signing secrets. `e885cad`
+- `UiSnapshotTest`, `UiStressSnapshotTest` (360 dp wide, 1.5x font, dialogs)
+  render the real screens to PNGs, uploaded as `AtomicVault-UI-Snapshots-<n>`.
+- Emulator job (API 29): installs the debug APK, selects the Atomic keyboard,
+  creates a vault by typing a master password, walks the four tabs and the Home
+  `+` menu, and fails on any logged crash. `49aa60a` to `f8d0a74`
+- Regression tests: `RegressionUiTest` (auto-lock chips, tag preservation,
+  delete flow, add menu, switch/chip semantics, dialog reachability),
+  `VaultLifecycleObserverTest` (0 = immediately), `CredentialMatcherTest` (incl.
+  look-alike domains), `AutofillSaveTest`, `ClipboardHelperTest`.
+- `docs/PHONE-TEST-CHECKLIST.md`. `14e2f66`
+
+## Files added
+
+- `app/src/main/java/com/example/ui/components/AtomicChrome.kt` (top bar,
+  bottom nav, icon tile, status dot)
+- `app/src/main/java/com/example/autofill/AutofillSave.kt`
+- `.github/workflows/android-ci.yml`, `.github/scripts/emulator_ime_check.sh`
+- Tests listed above, under `app/src/test` and `app/src/testDebug`
+- `docs/`
+
+## Earlier audit (already on `main` before this branch)
+
+`AUDIT-REPORT.md` describes the edits in `2217d9a` (autofill work off the main
+thread, suspend `getItem`/`getAllCredentialsForSecurity`, fuller state clear on
+lock). Its open findings are tracked in [TASKS.md](TASKS.md). Two claims in it
+were wrong and are corrected above: DEK zeroing was *not* consistent (the fill
+path's early exits skipped it), and the `remember { getItem }` to
+`produceState` change broke the payment-card and identity editors.

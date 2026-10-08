@@ -1,37 +1,40 @@
 package com.example.ui.trust
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import com.example.database.CredentialPreview
 import com.example.trust.TrustEventType
 import com.example.trust.TrustLedger
 import com.example.trust.TrustLedgerEntry
-import com.example.ui.components.GlassVariant
-import com.example.ui.components.LiquidGlassSurface
-import com.example.ui.components.SectionLabel
-import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
+import com.example.ui.components.AtomicEmptyState
+import com.example.ui.components.AtomicHairline
+import com.example.ui.components.AtomicSectionHeader
+import com.example.ui.components.AtomicTag
+import com.example.ui.components.AtomicTagTone
+import com.example.ui.components.AtomicTopBar
+import com.example.ui.components.AtomicWarningBox
+import com.example.ui.components.FilterChipPill
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.theme.AtomicType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,12 +75,19 @@ private fun eventLabel(type: TrustEventType): String = when (type) {
     TrustEventType.BACKUP_IMPORTED -> "Backup imported"
     TrustEventType.SECURITY_SETTING_CHANGED -> "Security setting changed"
     TrustEventType.INTEGRITY_CHECK_COMPLETED -> "Integrity check completed"
+    TrustEventType.PHISHING_WARNING_SHOWN -> "Look-alike site warning"
 }
 
-private fun formatDay(timestamp: Long): String = SimpleDateFormat("MMMM d", Locale.getDefault()).format(Date(timestamp))
-private fun formatTime(timestamp: Long): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(timestamp))
+private fun formatDay(timestamp: Long): String = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(Date(timestamp))
+private fun formatTime(timestamp: Long): String = SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(timestamp))
 
-@OptIn(ExperimentalMaterial3Api::class)
+private enum class TimelineFilter(val label: String) { ALL("All"), FAILURES("Failures"), FILLS("Fills") }
+
+/**
+ * Security timeline (plan 8.7): what happened, when. ISO dates as mono
+ * section headers, a time on every row, failures in the error colour with
+ * the word, and filters for failures and fills.
+ */
 @Composable
 fun SecurityTimelineScreen(
     entries: List<TrustLedgerEntry>,
@@ -86,95 +96,85 @@ fun SecurityTimelineScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val grouped = entries.groupBy { formatDay(it.timestamp) }
+    val colors = AtomicTheme.colors
+    var filter by remember { mutableStateOf(TimelineFilter.ALL) }
+    val shown = when (filter) {
+        TimelineFilter.ALL -> entries
+        TimelineFilter.FAILURES -> entries.filter { it.result != "success" }
+        TimelineFilter.FILLS -> entries.filter { it.eventType == TrustEventType.CREDENTIAL_FILLED }
+    }
+    val grouped = shown.groupBy { formatDay(it.timestamp) }
 
     Scaffold(
-        modifier = modifier,
-        containerColor = AtomicColors.Background,
-        topBar = {
-            TopAppBar(
-                title = { Text("Security Event Timeline", color = AtomicColors.Foreground) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AtomicColors.Foreground)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AtomicColors.Background)
-            )
-        }
+        modifier = modifier.testTag("screen_security_timeline"),
+        containerColor = colors.background,
+        topBar = { AtomicTopBar(title = "Security timeline", caption = "Tamper-evident event log", onBack = onBack) }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = AtomicSpacing.md),
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(AtomicSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
         ) {
-            if (chainBrokenAtId != null) {
-                item {
-                    Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-                    LiquidGlassSurface(variant = GlassVariant.Glow, modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "\u26a0 Integrity check failed at entry $chainBrokenAtId. The stored chain no longer " +
-                                "matches its recorded hashes -- this only detects modification after the fact, not a " +
-                                "compromised app that never logged an event at all.",
-                            color = AtomicColors.Danger,
-                            fontSize = AtomicFontSize.caption
-                        )
-                    }
-                }
-            } else {
-                item {
-                    Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+            item {
+                if (chainBrokenAtId != null) {
+                    AtomicWarningBox(
+                        title = "Chain broken at entry $chainBrokenAtId",
+                        message = "The stored log no longer matches its recorded hashes from this entry on. This detects " +
+                            "changes after the fact; it cannot see events a compromised app never logged."
+                    )
+                } else {
                     Text(
-                        text = "Chain verified \u2014 every entry below matches its recorded hash.",
-                        color = AtomicColors.TextMuted,
-                        fontSize = AtomicFontSize.caption
+                        text = "Chain verified: every entry below matches its recorded hash.",
+                        style = AtomicType.bodySmall,
+                        color = colors.textSecondary
                     )
                 }
             }
-
-            if (entries.isEmpty()) {
-                item {
-                    LiquidGlassSurface(variant = GlassVariant.Subtle, modifier = Modifier.fillMaxWidth()) {
-                        Text("No events recorded yet.", color = AtomicColors.TextMuted)
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+                    TimelineFilter.entries.forEach { f ->
+                        FilterChipPill(label = f.label, selected = filter == f, onClick = { filter = f }, testTag = "timeline_filter_${f.name}")
                     }
                 }
             }
-
+            if (shown.isEmpty()) {
+                item {
+                    AtomicEmptyState(
+                        message = if (entries.isEmpty()) {
+                            "Nothing recorded yet. Unlocks, fills, saves and backups appear here."
+                        } else {
+                            "No events of this kind yet."
+                        }
+                    )
+                }
+            }
             grouped.forEach { (day, dayEntries) ->
-                item { SectionLabel(text = day) }
+                item { AtomicSectionHeader(day, Modifier.padding(top = AtomicSpacing.sm)) }
                 items(dayEntries) { entry -> TimelineRow(entry, previews) }
             }
-
-            item { Spacer(modifier = Modifier.height(AtomicSpacing.xl)) }
         }
     }
 }
 
 @Composable
 private fun TimelineRow(entry: TrustLedgerEntry, previews: List<CredentialPreview>) {
-    LiquidGlassSurface(variant = GlassVariant.Card, modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text(
-                    text = resolveLabel(entry, previews),
-                    color = AtomicColors.Foreground,
-                    fontWeight = AtomicFontWeight.medium,
-                    fontSize = AtomicFontSize.body
-                )
-                val authLabel = entry.authenticationType?.let { " \u2022 $it" } ?: ""
-                Text(
-                    text = "${entry.source}$authLabel \u2022 ${entry.result}",
-                    color = AtomicColors.TextMuted,
-                    fontSize = AtomicFontSize.caption
-                )
+    val colors = AtomicTheme.colors
+    val failed = entry.result != "success"
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = AtomicSize.row).padding(vertical = AtomicSpacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.md)
+        ) {
+            Text(text = formatTime(entry.timestamp), style = AtomicType.monoCaption, color = colors.textSecondary, modifier = Modifier.padding(top = AtomicSpacing.hairline))
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(AtomicSpacing.xs)) {
+                Text(text = resolveLabel(entry, previews), style = AtomicType.body, color = if (failed) colors.error else colors.textPrimary)
+                Row(horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+                    AtomicTag(label = entry.source, tone = AtomicTagTone.Quiet)
+                    entry.authenticationType?.let { AtomicTag(label = it.replace('_', ' '), tone = AtomicTagTone.Quiet) }
+                    AtomicTag(label = entry.result, tone = if (failed) AtomicTagTone.Danger else AtomicTagTone.Quiet)
+                }
             }
-            Text(
-                text = formatTime(entry.timestamp),
-                color = AtomicColors.TextMuted,
-                fontSize = AtomicFontSize.caption
-            )
         }
+        AtomicHairline()
     }
 }

@@ -6,10 +6,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,49 +14,36 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
+import com.example.backup.BackupCodec
 import com.example.backup.BackupFile
+import com.example.ui.components.AtomicSheet
 import com.example.ui.components.AtomicOutlinedButton
+import kotlinx.coroutines.launch
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
-import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
-import com.example.ui.theme.AtomicRadius
+import com.example.ui.components.AtomicTopBar
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicType
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.components.AtomicButtonVariant
+import com.example.ui.components.AtomicButton
+import com.example.ui.components.AtomicDangerZone
+import com.example.ui.components.AtomicPanel
+import com.example.ui.components.AtomicWarningBox
+import com.example.ui.components.AtomicSegmented
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,9 +51,14 @@ fun BackupScreen(
     onExportBackup: (passphrase: String, onResult: (Result<ByteArray>) -> Unit) -> Unit,
     onImportBackup: (bytes: ByteArray, passphrase: String, onResult: (Result<Int>) -> Unit) -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Puts back the vault as it was before the last restore (kept in memory until lock). */
+    onUndoRestore: ((onResult: (Result<Int>) -> Unit) -> Unit)? = null,
+    /** Adds logins from another password manager's CSV export: (added, skipped). */
+    onImportCsv: ((bytes: ByteArray, onResult: (Result<Pair<Int, Int>>) -> Unit) -> Unit)? = null
 ) {
     val context = LocalContext.current
+    var restoredCount by remember { mutableStateOf<Int?>(null) }
     var selectedTab by remember { mutableIntStateOf(0) }
 
     // Export state
@@ -84,6 +73,8 @@ fun BackupScreen(
     var importPassphrase by remember { mutableStateOf("") }
     var importBusy by remember { mutableStateOf(false) }
     var importError by remember { mutableStateOf<String?>(null) }
+    var checkResult by remember { mutableStateOf<String?>(null) }
+    val checkScope = androidx.compose.runtime.rememberCoroutineScope()
     var showImportConfirmDialog by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -96,76 +87,91 @@ fun BackupScreen(
     }
 
     if (showImportConfirmDialog && selectedFileUri != null) {
-        AlertDialog(
-            onDismissRequest = { showImportConfirmDialog = false },
-            title = { Text("Replace vault?", fontWeight = AtomicFontWeight.bold) },
-            text = {
-                Text("This replaces all current credentials with the backup contents. This cannot be undone.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showImportConfirmDialog = false
-                        val uri = selectedFileUri ?: return@TextButton
-                        importBusy = true
-                        importError = null
-                        try {
-                            val bytes = BackupFile.readBytesFromUri(context, uri)
-                            onImportBackup(bytes, importPassphrase) { result ->
-                                importBusy = false
-                                result.onSuccess { count ->
-                                    Toast.makeText(context, "Successfully restored $count credentials", Toast.LENGTH_LONG).show()
-                                    onBack()
-                                }.onFailure { e ->
-                                    importError = e.message ?: "Failed to import backup"
-                                }
+        AtomicSheet(
+            label = "Restore",
+            title = "Replace this vault?",
+            message = "Every item in this vault is replaced by the items in ${selectedFileName ?: "the backup"}. " +
+                "You can undo until you lock the vault; after that it is final.",
+            confirmLabel = "Replace with backup",
+            dismissLabel = "Keep my vault",
+            isDestructive = true,
+            confirmTestTag = "confirm_import_replace_button",
+            onConfirm = {
+                showImportConfirmDialog = false
+                val uri = selectedFileUri ?: return@AtomicSheet
+                importBusy = true
+                importError = null
+                try {
+                    val bytes = BackupFile.readBytesFromUri(context, uri)
+                    onImportBackup(bytes, importPassphrase) { result ->
+                        importBusy = false
+                        result.onSuccess { count ->
+                            if (onUndoRestore != null) {
+                                restoredCount = count
+                            } else {
+                                Toast.makeText(context, "Successfully restored $count credentials", Toast.LENGTH_LONG).show()
+                                onBack()
                             }
-                        } catch (e: Exception) {
-                            importBusy = false
-                            importError = "Could not read file: ${e.message}"
+                        }.onFailure { e ->
+                            importError = e.message ?: "Failed to import backup"
                         }
-                    },
-                    modifier = Modifier.testTag("confirm_import_replace_button")
-                ) {
-                    Text("Replace", color = AtomicColors.Danger, fontWeight = AtomicFontWeight.bold)
+                    }
+                } catch (e: Exception) {
+                    importBusy = false
+                    importError = "Could not read file: ${e.message}"
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showImportConfirmDialog = false }) {
-                    Text("Cancel", color = AtomicColors.TextMuted)
-                }
-            }
+            onDismiss = { showImportConfirmDialog = false }
         )
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Backup & Restore",
-                        fontWeight = AtomicFontWeight.bold,
-                        fontSize = AtomicFontSize.heading
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("backup_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
+    val restored = restoredCount
+    if (restored != null && onUndoRestore != null) {
+        AtomicSheet(
+            label = "Restore",
+            title = "Backup restored",
+            message = "Restored $restored items. The vault as it was before is kept in memory until you lock, " +
+                "so you can still undo this.",
+            confirmLabel = "Done",
+            dismissLabel = "Close",
+            confirmTestTag = "restore_done_button",
+            onConfirm = {
+                restoredCount = null
+                onBack()
+            },
+            // Tapping outside closes too, so undo is never the dismiss action.
+            onDismiss = {
+                restoredCount = null
+                onBack()
+            }
+        ) {
+            AtomicOutlinedButton(
+                text = "Undo restore",
+                onClick = {
+                    restoredCount = null
+                    onUndoRestore { result ->
+                        result.onSuccess { count ->
+                            Toast.makeText(context, "Restore undone: $count items are back", Toast.LENGTH_LONG).show()
+                            onBack()
+                        }.onFailure { e ->
+                            importError = "Could not undo the restore: ${e.message}"
+                        }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
+                testTag = "restore_undo_button"
+            )
+        }
+    }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize().testTag("screen_backup"),
+        containerColor = AtomicTheme.colors.background,
+        topBar = {
+            AtomicTopBar(
+                title = "Backup and restore",
+                caption = "Encrypted with a passphrase you choose",
+                onBack = onBack,
+                backTestTag = "backup_back_button"
             )
         }
     ) { innerPadding ->
@@ -174,30 +180,20 @@ fun BackupScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = AtomicColors.Accent,
-                indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        color = AtomicColors.Accent
-                    )
-                }
-            ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Export", fontWeight = AtomicFontWeight.medium) },
-                    modifier = Modifier.testTag("tab_export")
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Import", fontWeight = AtomicFontWeight.medium) },
-                    modifier = Modifier.testTag("tab_import")
-                )
-            }
+            AtomicSegmented(
+                options = if (onImportCsv != null) listOf(0, 1, 2) else listOf(0, 1),
+                selected = selectedTab,
+                onSelect = { selectedTab = it },
+                label = {
+                    when (it) {
+                        0 -> "Export"
+                        1 -> "Restore"
+                        else -> "Import CSV"
+                    }
+                },
+                modifier = Modifier.padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.md),
+                testTagPrefix = "backup_tab_"
+            )
 
             Column(
                 modifier = Modifier
@@ -205,12 +201,15 @@ fun BackupScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(AtomicSpacing.lg)
             ) {
-                if (selectedTab == 0) {
+                if (selectedTab == 2 && onImportCsv != null) {
+                    CsvImportPane(onImportCsv = onImportCsv, onUndo = onUndoRestore, onDone = onBack)
+                } else if (selectedTab == 0) {
                     // EXPORT VIEW
                     Text(
-                        text = "Exports an encrypted .vault file protected by a passphrase you choose. Master password is not used.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AtomicColors.TextMuted
+                        text = "Saves every item to one encrypted file, locked with a passphrase you choose here " +
+                            "(not your master password). Keep the file and the passphrase in different places.",
+                        style = AtomicType.body,
+                        color = AtomicTheme.colors.textSecondary
                     )
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.lg))
@@ -222,7 +221,7 @@ fun BackupScreen(
                     AtomicTextField(
                         value = exportPassphrase,
                         onValueChange = { exportPassphrase = it },
-                        label = "Backup Passphrase",
+                        label = "Backup passphrase",
                         placeholder = "At least 8 characters",
                         isPassword = true,
                         warningMessage = if (exportPassphrase.isNotEmpty() && !isLengthValid) "Use at least 8 characters." else null,
@@ -234,26 +233,22 @@ fun BackupScreen(
                     AtomicTextField(
                         value = exportConfirm,
                         onValueChange = { exportConfirm = it },
-                        label = "Confirm Passphrase",
-                        placeholder = "Re-enter backup passphrase",
+                        label = "Type it again",
+                        placeholder = "The same passphrase",
                         isPassword = true,
-                        warningMessage = if (exportConfirm.isNotEmpty() && exportPassphrase != exportConfirm) "Passphrases do not match." else null,
+                        errorMessage = if (exportConfirm.isNotEmpty() && exportPassphrase != exportConfirm) "These don't match yet. Check the last few characters." else null,
                         testTag = "export_confirm_input"
                     )
 
-                    if (exportError != null) {
-                        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-                        Text(
-                            text = exportError ?: "",
-                            color = AtomicColors.Danger,
-                            fontSize = AtomicFontSize.caption
-                        )
+                    exportError?.let {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+                        AtomicWarningBox(title = "Export failed", message = it)
                     }
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.xl))
 
                     AtomicPrimaryButton(
-                        text = "Export encrypted vault",
+                        text = "Export backup",
                         onClick = {
                             exportBusy = true
                             exportError = null
@@ -272,38 +267,18 @@ fun BackupScreen(
                         testTag = "export_submit_button"
                     )
                 } else {
-                    // IMPORT VIEW
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(AtomicRadius.lg),
-                        colors = CardDefaults.cardColors(containerColor = AtomicColors.WarningLight),
-                        border = CardDefaults.outlinedCardBorder().copy(
-                            brush = androidx.compose.ui.graphics.SolidColor(AtomicColors.Warning)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(AtomicSpacing.md),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = AtomicColors.Warning,
-                                modifier = Modifier.size(22.dp)
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text(
-                                text = "Importing will replace all current vault data. Back up first if needed.",
-                                fontSize = AtomicFontSize.label,
-                                color = AtomicColors.Text
-                            )
-                        }
-                    }
+                    // RESTORE VIEW
+                    Text(
+                        text = "Choose a backup file and its passphrase. CHECK opens it and counts what is inside without " +
+                            "changing anything. Restoring replaces this vault.",
+                        style = AtomicType.body,
+                        color = AtomicTheme.colors.textSecondary
+                    )
 
                     Spacer(modifier = Modifier.height(AtomicSpacing.lg))
 
                     AtomicOutlinedButton(
-                        text = if (selectedFileName != null) "File: $selectedFileName" else "Choose backup (.atvb) file",
+                        text = if (selectedFileName != null) "File: $selectedFileName" else "Choose backup file",
                         onClick = {
                             filePickerLauncher.launch(arrayOf("*/*"))
                         },
@@ -316,18 +291,17 @@ fun BackupScreen(
                     AtomicTextField(
                         value = importPassphrase,
                         onValueChange = { importPassphrase = it },
-                        label = "Backup Passphrase",
-                        placeholder = "Passphrase used during export",
+                        label = "Backup passphrase",
+                        placeholder = "The passphrase used when exporting",
                         isPassword = true,
                         testTag = "import_passphrase_input"
                     )
 
-                    if (importError != null) {
-                        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-                        Text(
-                            text = importError ?: "",
-                            color = AtomicColors.Danger,
-                            fontSize = AtomicFontSize.caption
+                    importError?.let {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.md))
+                        AtomicWarningBox(
+                            title = "Could not open this backup",
+                            message = "$it Check that the passphrase is the one used when exporting, and that the file is complete."
                         )
                     }
 
@@ -335,15 +309,68 @@ fun BackupScreen(
 
                     val canImport = selectedFileUri != null && importPassphrase.isNotEmpty() && !importBusy
 
-                    AtomicPrimaryButton(
-                        text = "Import & replace",
+                    // Restore drill: decrypt and count without touching the vault,
+                    // so a backup can be trusted before it is ever needed.
+                    AtomicOutlinedButton(
+                        text = "Check backup",
                         onClick = {
-                            showImportConfirmDialog = true
+                            val uri = selectedFileUri ?: return@AtomicOutlinedButton
+                            importBusy = true
+                            importError = null
+                            checkResult = null
+                            checkScope.launch {
+                                val outcome = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                                    try {
+                                        val data = BackupCodec.importBackup(
+                                            BackupFile.readBytesFromUri(context, uri),
+                                            importPassphrase.toCharArray()
+                                        )
+                                        val byType = data.items.groupingBy { it.itemType }.eachCount()
+                                        val made = java.text.SimpleDateFormat("d MMM yyyy, HH:mm", java.util.Locale.getDefault())
+                                            .format(java.util.Date(data.exportedAt))
+                                        Result.success(
+                                            "Backup is readable: ${data.items.size} items " +
+                                                "(${byType[com.example.database.VaultItemType.LOGIN] ?: 0} logins, " +
+                                                "${byType[com.example.database.VaultItemType.PAYMENT_CARD] ?: 0} cards, " +
+                                                "${byType[com.example.database.VaultItemType.IDENTITY] ?: 0} identities), " +
+                                                "${data.folders.size} folders, made $made."
+                                        )
+                                    } catch (e: Exception) {
+                                        Result.failure(e)
+                                    }
+                                }
+                                importBusy = false
+                                outcome.onSuccess { checkResult = it }
+                                    .onFailure { importError = it.message ?: "This backup could not be read" }
+                            }
                         },
                         enabled = canImport,
-                        busy = importBusy,
-                        testTag = "import_submit_button"
+                        testTag = "import_check_button"
                     )
+                    checkResult?.let {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+                        AtomicPanel(modifier = Modifier.fillMaxWidth(), on = true) {
+                            Text(AtomicType.caps("Checked · nothing changed"), style = AtomicType.monoCaption, color = AtomicTheme.colors.accent)
+                            Text(text = it, style = AtomicType.bodySmall, color = AtomicTheme.colors.textPrimary)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(AtomicSpacing.md))
+
+                    AtomicDangerZone(
+                        label = "Restore · Replaces your vault",
+                        warning = "Every item in this vault is replaced by the backup's items. You can undo until you lock the vault."
+                    ) {
+                        AtomicButton(
+                            text = "Replace with backup",
+                            onClick = { showImportConfirmDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            variant = AtomicButtonVariant.Destructive,
+                            enabled = canImport,
+                            busy = importBusy,
+                            testTag = "import_submit_button"
+                        )
+                    }
                 }
             }
         }
