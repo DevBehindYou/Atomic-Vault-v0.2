@@ -25,3 +25,12 @@ Status: ACTIVE
 Decision: the idle-lock setting lives in plain preferences, like the theme
 (not secret, needed while locked). Password history uses a sealed
 `password_history` table and is not exported to backups.
+Consequence (VERIFIED by `BackupRestoreDeviceTest`, PR #26): restoring a
+backup clears the history. Open for the user as TASK-008.
+
+## ADR-S4 — Release version 0.4.0 / versionCode 3
+
+Status: ACTIVE
+Decision: the release carries the 0.3.0 fixes and the 0.4.0 redesign, so it is
+0.4.0 (PRs #23, #24; `docs/DECISIONS.md` D10 updated). 0.2.2 (from an old
+TASKS line) was superseded.

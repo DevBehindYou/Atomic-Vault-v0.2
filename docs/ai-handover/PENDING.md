@@ -6,9 +6,9 @@
 
 Status: OPEN
 Why: Nothing has run on a real device yet.
-Files: `tools/phone_check.sh` (PR #19), `.github/scripts/emulator_check.sh`
+Files: `tools/phone_check.sh`, `.github/scripts/emulator_check.sh`
 Action:
-1. Merge PR #19 when its CI is green (or check out its branch).
+1. Pull the work branch (PR #19 is merged).
 2. On the computer with the phone attached: `gh auth login` once, then `tools/phone_check.sh`.
 3. If it fails, read `phone-check/emulator-artifacts/` and the console's
    "app process" section. A `FATAL EXCEPTION` from another app is not ours.
@@ -56,3 +56,15 @@ mechanical PR after the release; keep the applicationId.
 
 Status: DONE (PR #21: native Argon2id; see ISSUES.md)
 Action: on the real phone (TASK-001), confirm vault creation and unlock still work.
+
+### TASK-007 — Backup round trip on a device (T6)
+
+Status: DONE (PR #26)
+
+### TASK-008 — Decide: password history in backups (user)
+
+Status: OPEN (product decision, not a bug)
+Why: by ADR-S3, history is not exported; a restore therefore clears it.
+Action: if the user wants history kept across restores, add it to
+`VaultExport` (new optional field, backward compatible), restore it in
+`importReplace`, and extend `BackupRestoreDeviceTest`. Otherwise no change.

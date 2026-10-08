@@ -15,7 +15,7 @@ Do not restart from scratch.
 git fetch origin
 git status --short
 git branch --show-current
-git rev-parse --short origin/claude/stoic-lamport-t601ql   # expect b28797d, or a merge of PR #19 on top
+git rev-parse --short origin/claude/stoic-lamport-t601ql   # expect ab7c515 or later
 ```
 
 ## First Objective
@@ -24,7 +24,7 @@ git rev-parse --short origin/claude/stoic-lamport-t601ql   # expect b28797d, or 
 
 ## Execute
 
-1. Merge PR #19 if green (`gh pr view 19`), or `git checkout claude/stoic-lamport-t601ql-phone`.
+1. `git checkout claude/stoic-lamport-t601ql && git pull` (PR #19 with the script is merged).
 2. `adb devices` shows exactly one phone. `gh auth status` is logged in.
 3. Run `tools/phone_check.sh`. Keep the phone unlocked during the run (about 3 minutes).
 4. Report the result. Then guide the user through `docs/PHONE-TEST-CHECKLIST.md`
@@ -43,7 +43,7 @@ git rev-parse --short origin/claude/stoic-lamport-t601ql   # expect b28797d, or 
   (a different agent should use its own attribution).
 - Before pushing: `bash .github/scripts/design_check.sh` and
   `bash .github/scripts/unused_imports_check.sh` (ktlint).
-- Tell the user progress in % (currently 20/24 = 83%).
+- Tell the user progress in % (currently 28/31 = 90%; all remaining items need the phone or the user).
 
 ## Do Not Repeat
 
@@ -55,3 +55,4 @@ git rev-parse --short origin/claude/stoic-lamport-t601ql   # expect b28797d, or 
 - [ ] checklist sections 1-7 ticked, or bugs filed
 - [ ] snapshots reviewed
 - [ ] handover updated
+- [ ] user asked about TASK-008 (password history in backups)
