@@ -22,6 +22,12 @@
 > by the user, merged: password history (#14), offline breach check (#16),
 > CSV import (#13), screen-lock unlock (#15). Agent work left: T11 only
 > (after the release).
+>
+> **Update 2026-10-08:** T6 now also runs on a device (`BackupRestoreDeviceTest`:
+> real SQLCipher vault → encrypted backup → restore under a new key). Known
+> limitation: backups do not carry password history, and a restore clears it.
+> Native Argon2 (#21) and version 0.4.0 (#23, #24) merged; release PR #20 is
+> green and waits on the phone test.
 
 Status as of 2026-09-21. Branch `fix/biometric-ime-autofill` at `9631167`, CI
 green, unmerged. Priorities: **P0** blocks a release, **P1** should ship with
@@ -65,7 +71,7 @@ it, **P2** soon after, **P3** when convenient.
 - **T5. Release-build smoke test.** (Done 2026-10-05, CI #52: the minified `internal` build passes the full emulator check.) Run the R8-minified `assembleInternal`
   build through the emulator check, since minification can break Moshi, Compose
   or the Autofill/IME services in ways the debug build hides.
-- **T6. Backup round-trip test.** `BackupCodec` has unit tests, but export then
+- **T6. Backup round-trip test.** (Done: unit level, and on a device 2026-10-08.) `BackupCodec` has unit tests, but export then
   import of a real vault with folders, tags, cards and identities has not been
   exercised end to end. Add an instrumented or emulator-driven test.
 - **T7. Full TalkBack pass.** (Done in code 2026-10-05, #2; confirm on the phone test.) Switches, chips and tabs are fixed; check the
@@ -99,6 +105,8 @@ it, **P2** soon after, **P3** when convenient.
 - If the process is killed before the 45 s timer fires, a copied password stays
   on the clipboard.
 - Emulator screenshots of vault screens are blank (`FLAG_SECURE`).
+- Backups do not include password history, and restoring a backup clears it
+  (the backup format predates the feature).
 - Autofill inline suggestions and the app-link (level 4) trust path are
   implemented but have only been reviewed, not exercised on a device.
 
