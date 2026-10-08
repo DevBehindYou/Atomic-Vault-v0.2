@@ -5,6 +5,11 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
+### Version 0.2.2 (versionCode 3)
+
+- Version bumped for the release of this branch to `main` (PR #20). The
+  versionCode must rise so 0.2.1 installs update in place.
+
 ### Offline breach check
 
 - Passwords are checked against the **1,000,000 most common passwords from
