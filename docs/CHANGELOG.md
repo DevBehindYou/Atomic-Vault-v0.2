@@ -28,6 +28,11 @@ results are recorded in the plan's progress table.
   (emulator, native, including the real 64 MiB setting) check known answers
   computed with the reference implementation (argon2-cffi).
 
+### Version 0.2.2 (versionCode 3)
+
+- Version bumped for the release of this branch to `main` (PR #20). The
+  versionCode must rise so 0.2.1 installs update in place.
+
 ### Offline breach check
 
 - Passwords are checked against the **1,000,000 most common passwords from
