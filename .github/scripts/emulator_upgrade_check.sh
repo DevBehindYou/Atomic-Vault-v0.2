@@ -104,6 +104,27 @@ echo "Installing this pull request's build over it (data kept)"
 adb shell am force-stop "$PKG"
 adb install -r "$NEW_APK"
 
+# Home after unlock. Upgrading from 0.2.x shows a one-time notice ("The Atomic
+# keyboard is gone") over Home; its sheet hides Home from the UI dump, so it is
+# dismissed with "Later". Sets NOTICE_SEEN=1 when it appeared.
+wait_for_home_after_unlock() {
+  local deadline=$((SECONDS + 60))
+  NOTICE_SEEN=0
+  while [ $SECONDS -lt $deadline ]; do
+    if dump; then
+      if grep -q 'resource-id="screen_home"' "$OUT/ui.xml"; then return 0; fi
+      if grep -qi 'keyboard is gone' "$OUT/ui.xml"; then
+        NOTICE_SEEN=1
+        echo "One-time keyboard notice shown: dismissing it"
+        tap_node text "Later" exact 2
+        continue
+      fi
+    fi
+    sleep 2
+  done
+  fail "Timed out waiting for Home after unlocking"
+}
+
 echo "Unlocking with the new build"
 adb shell am start -n "$PKG/com.example.MainActivity"
 wait_for_text 'resource-id="screen_unlock"' 45
@@ -113,10 +134,13 @@ adb shell input tap $C; sleep 2
 adb shell input text "$PASSWORD"; sleep 1
 hide_keyboard
 tap_node text "Unlock" exact 1
-wait_for_text 'resource-id="screen_home"' 60
+wait_for_home_after_unlock
 dump || fail "UI dump failed on Home after the upgrade"
 if [ "$LEGACY" = 0 ]; then
   grep -q "$PROBE" "$OUT/ui.xml" || fail "The login made before the upgrade is missing"
+else
+  # 0.2.x users had the custom keyboard; they must be told it is gone.
+  [ "$NOTICE_SEEN" = 1 ] || fail "Upgrade from 0.2.x did not show the keyboard notice"
 fi
 echo "New build: unlocked the old vault$([ "$LEGACY" = 0 ] && echo ' and the login is still there')"
 
@@ -130,7 +154,8 @@ adb shell input tap $C; sleep 2
 adb shell input text "$PASSWORD"; sleep 1
 hide_keyboard
 tap_node text "Unlock" exact 1
-wait_for_text 'resource-id="screen_home"' 60
+wait_for_home_after_unlock
+[ "$NOTICE_SEEN" = 0 ] || fail "The keyboard notice came back after it was dismissed"
 
 adb logcat -d > "$OUT/logcat.txt"
 if grep -q "FATAL EXCEPTION" "$OUT/logcat.txt"; then
