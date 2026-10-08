@@ -79,7 +79,8 @@ approved. All text goes through the theme, so it is a one-place change.
 
 The branch stays unmerged until the user has tested on a phone. A push to
 `main` triggers the signed release workflow, so merging is a release decision.
-A version bump (0.2.2 / `versionCode 3`) is proposed but not applied.
+The version is set to 0.4.0 / `versionCode 3` on the work branch (it carries both the
+0.3.0 fixes and the 0.4.0 redesign); merging and tagging stay with the user.
 
 ## D11. No custom keyboard; Autofill is the only fill path (user)
 

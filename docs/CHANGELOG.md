@@ -5,10 +5,12 @@
 Work from [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md), newest first. CI
 results are recorded in the plan's progress table.
 
-### Version 0.2.2 (versionCode 3)
+### Version 0.4.0 (versionCode 3)
 
-- Version bumped for the release of this branch to `main` (PR #20). The
-  versionCode must rise so 0.2.1 installs update in place.
+- Version for the release of this branch to `main` (PR #20). It carries the
+  0.3.0 fixes and the Atomic redesign, which DECISIONS.md says ships as
+  0.4.0, so the release is 0.4.0. The versionCode rises so 0.2.1 installs update in
+  place.
 
 ### Offline breach check
 
