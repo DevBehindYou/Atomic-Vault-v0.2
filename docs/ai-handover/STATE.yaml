@@ -1,0 +1,59 @@
+protocol: AI-HANDOVER/V2
+updated: 2026-10-08
+project: atomic-vault (Android password vault, repo DevBehindYou/Atomic-Vault-v0.2)
+objective: finish 0.3.0/0.4.0 on the work branch, phone-test it, then release
+
+repo:
+  work_branch: claude/stoic-lamport-t601ql
+  work_branch_commit: b28797d   # PRs #21-#25 merged; PR #19 (this handover + phone script) merges on top
+  main_commit: 2217d9a          # untouched; a push to main = signed release (D10)
+  version_in_gradle: 0.4.0 / versionCode 3   # PRs #23 + #24; merge to main and tag v0.4.0 are the user's
+
+stack:
+  - kotlin, jetpack-compose (Atomic design system), material3
+  - sqlcipher-android 4.19.1, field-level AES-256-GCM, Argon2id 64 MiB (native argon2kt 1.6.0, BouncyCastle fallback)
+  - android-keystore + BiometricPrompt (fingerprint key; screen-lock key on API 30+)
+  - autofill framework (no custom keyboard), moshi/ksp
+  - agp 8.13.2, gradle 8.13, kotlin 2.2.21, compileSdk/targetSdk 36, minSdk 28
+
+status:
+  build: VERIFIED          # PR runs for #24 and #25 green on the lines that make up b28797d
+  unit_tests: VERIFIED     # CI
+  emulator_checks: VERIFIED  # debug, minified, fingerprint (API 29), screen-lock (API 30), upgrade, instrumented
+  phone_test: NOT_RUN      # needs the user's device; tools/phone_check.sh added in PR #19
+  snapshot_review: NOT_RUN # CI artifact download blocked in cloud env; do it locally
+  release: NOT_IMPLEMENTED # user task
+
+done_this_session:  # all merged into the work branch with green CI
+  - "#2-#11 a11y, biometric CI, lint, deps, retired tables, unused imports, sealed envelope, sqlcipher swap, toolchain/SDK 36"
+  - "#12 lock after no taps (T3)"
+  - "#13 CSV import"
+  - "#14 password history"
+  - "#15 screen-lock unlock"
+  - "#16 offline breach check"
+  - "#17 docs status, #18 CI failure diagnostics"
+  - "#21 native Argon2id (fixes ISS-001 OOM), #22 upgrade check drives 0.2.x screens"
+  - "#23/#24 version 0.4.0 (versionCode 3)"
+  - "#25 upgrade check dismisses the one-time keyboard notice (0.2.x -> 0.4.0)"
+  - "#19 tools/phone_check.sh + docs/ai-handover"
+
+open_prs:
+  - "#20 work branch -> main (release; user merges)"
+
+pending:
+  - TASK-001 automated phone check on the user's phone (tools/phone_check.sh)
+  - TASK-002 manual phone test (docs/PHONE-TEST-CHECKLIST.md)
+  - TASK-003 review CI UI snapshots
+  - TASK-004 merge PR #20 to main + tag v0.4.0 (user only; version already bumped)
+  - TASK-005 package rename com.example -> com.atomicvault.android (after release)
+
+constraints:
+  - never push or merge to main without the user (D10)
+  - work through PRs into the work branch; merge only on green CI, no code conflicts
+  - commit trailer: Co-Authored-By + Claude-Session lines (see NEXT_AGENT.md)
+  - no internet permission in the app; offline only
+  - report progress in % to the user regularly
+  - never store secrets; release keystore lives in GitHub secrets ANDROID_KEYSTORE_* / ANDROID_KEY_*
+
+progress: 26 of 29 tracked items merged (90%); the rest need the user's phone or decision
+confidence: HIGH

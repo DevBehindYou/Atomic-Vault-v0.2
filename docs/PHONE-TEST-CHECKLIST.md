@@ -1,9 +1,19 @@
 # Phone test checklist
 
 What CI cannot check: it has no fingerprint sensor, no other apps, and runs
-Android 10. Install the debug APK from the latest `Android CI` run
+Android 10 and 11 emulators. Install the debug APK from the latest `Android CI` run
 (artifact `AtomicVault-Debug-APK-<n>`); it installs beside the release app as
 `com.atomicvault.android.debug`. Tick what you tested and note anything odd.
+
+**Automated part first.** With the phone connected over USB (debugging
+allowed), run `tools/phone_check.sh` from a computer with `adb`, `gh` and
+`python3`. It installs the latest green CI debug build beside the real app,
+creates a test vault, walks every tab, restarts, unlocks, and checks Autofill
+on a test login form, then restores the phone settings it changed. It does not
+touch the screen lock or fingerprints. The crash scan reads the phone's whole
+log for those minutes: if it fails on a `FATAL EXCEPTION`, check that the
+crashing package is `com.atomicvault.android.debug` and not another app.
+Everything below that needs a finger, a real keyboard or your eyes stays manual.
 
 ## 1. Biometric unlock (most important)
 
