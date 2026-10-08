@@ -1,16 +1,15 @@
 # Current State
 
 Last updated: 2026-10-08
-Verified against commit: `b28797d`
+Verified against commit: `ab7c515`
 Confidence: HIGH
 
 ## Git
 
 | Branch | Commit | Role |
 |---|---|---|
-| `claude/stoic-lamport-t601ql` | `b28797d` | Work branch; all PRs merge here |
+| `claude/stoic-lamport-t601ql` | `ab7c515` | Work branch; all PRs merge here |
 | `main` | `2217d9a` | Release branch; untouched; push = signed release |
-| `claude/stoic-lamport-t601ql-phone` | PR #19 | Phone-check script + this handover |
 | other `claude/stoic-lamport-t601ql-*` | merged | Safe to delete (the bot could not delete them; 403) |
 
 ## Build and CI
@@ -42,6 +41,7 @@ Confidence: HIGH
 | Toolchain / SDK 36, API-30 type isolation | #10 | `autofill/InlineApi30.kt` |
 | Native Argon2id (argon2kt; fixes vault-creation OOM, ISS-001) | #21 | `crypto/Argon2Kdf.kt`, `Argon2KdfVectorTest`, `Argon2KdfDeviceTest` |
 | Version 0.4.0 / versionCode 3 | #23, #24 | `app/build.gradle.kts` |
+| Backup restore verified on a device (T6) | #26 | `androidTest/.../backup/BackupRestoreDeviceTest.kt` |
 
 Sources are under `app/src/main/java/com/example/` (package not renamed yet).
 
