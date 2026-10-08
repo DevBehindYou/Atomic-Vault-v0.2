@@ -131,6 +131,11 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.autofill)
     implementation(libs.bouncycastle)
+    // Native Argon2 (reference C code): the 64 MiB matrix lives outside the
+    // Java heap. Only androidx.annotation.Keep is used, so appcompat is left out.
+    implementation(libs.argon2kt) {
+        exclude(group = "androidx.appcompat", module = "appcompat")
+    }
     implementation(libs.androidx.sqlite.ktx)
 
     // Serialization
