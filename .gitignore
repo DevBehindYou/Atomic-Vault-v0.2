@@ -19,3 +19,6 @@ app/build/
 local.properties
 .env
 debug.keystore
+
+# tools/phone_check.sh output
+/phone-check/

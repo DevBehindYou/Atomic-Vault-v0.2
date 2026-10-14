@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- supportsInlineSuggestions is read on Android 11+ (keyboard suggestion
+     strip) and ignored on older versions, which use the dropdown. -->
 <autofill-service xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:settingsActivity="com.example.MainActivity"
-    android:supportsInlineSuggestions="true" />
+    android:supportsInlineSuggestions="true"
+    tools:ignore="UnusedAttribute" />
 

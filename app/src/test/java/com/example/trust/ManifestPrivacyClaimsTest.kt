@@ -72,4 +72,16 @@ class ManifestPrivacyClaimsTest {
             manifest.contains("android:allowBackup=\"false\"")
         )
     }
+
+    @Test
+    fun `manifest declares no keyboard service`() {
+        // The Atomic keyboard was removed: filling goes through Android
+        // Autofill, which only sees the form it is asked about. An input
+        // method would see everything typed while selected.
+        val manifest = manifestFile.readText()
+        assertFalse(
+            "AndroidManifest.xml declares an input method service -- the app must not ship a keyboard",
+            manifest.contains("android.permission.BIND_INPUT_METHOD") || manifest.contains("android.view.InputMethod")
+        )
+    }
 }

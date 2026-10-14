@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.pm.verify.domain.DomainVerificationManager
 import android.content.pm.verify.domain.DomainVerificationUserState
 import android.os.Build
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 
 /**
  * Trust-level credential matcher, shared by VaultAutofillService's fill
@@ -65,11 +65,11 @@ object CredentialMatcher {
                 val pkgName = if (cursor.isNull(3)) null else cursor.getString(3)
 
                 val level = classify(
-                    context = context,
                     targetPackageName = packageName,
                     targetDomain = normalizedTargetDomain,
                     itemUriPattern = uriPattern,
-                    itemPackageName = pkgName
+                    itemPackageName = pkgName,
+                    isOsVerified = { pkg, domain -> isOsVerifiedDomain(context, pkg, domain) }
                 )
 
                 if (level != null) {
@@ -91,36 +91,40 @@ object CredentialMatcher {
         findMatches(context, db, packageName, webDomain)
             .filter { it.trustLevel.score >= MINIMUM_AUTO_OFFER_LEVEL.score }
 
-    private fun classify(
-        context: Context,
+    internal fun classify(
         targetPackageName: String?,
         targetDomain: String?,
         itemUriPattern: String?,
-        itemPackageName: String?
+        itemPackageName: String?,
+        isOsVerified: (packageName: String, domain: String) -> Boolean
     ): TrustLevel? {
         val normalizedItemDomain = normalizeDomain(itemUriPattern)
+        val packageMatches = !targetPackageName.isNullOrBlank() && !itemPackageName.isNullOrBlank() &&
+            targetPackageName.equals(itemPackageName, ignoreCase = true)
 
         // Level 4: OS-verified app<->domain relationship (Android App
         // Links / Digital Asset Links). The OS already performed this
         // verification itself, typically at install/app-links-setup
-        // time -- querying DomainVerificationManager here makes no
-        // network call of our own, so this stays consistent with the
-        // app's offline-only design. Best-effort: wrapped in try/catch
-        // in isOsVerifiedDomain() below, and only ever used to grant
-        // MORE trust, never to grant a match that wouldn't otherwise
-        // qualify at Level 3.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            !targetPackageName.isNullOrBlank() && !targetDomain.isNullOrBlank() &&
-            targetPackageName.equals(itemPackageName, ignoreCase = true) &&
-            isOsVerifiedDomain(context, targetPackageName, targetDomain)
+        // time -- querying DomainVerificationManager makes no network call
+        // of our own, so this stays consistent with the app's offline-only
+        // design. Only ever used to grant MORE trust, never a match that
+        // wouldn't otherwise qualify.
+        if (packageMatches && !targetDomain.isNullOrBlank() &&
+            isOsVerified(targetPackageName!!, targetDomain)
         ) {
             return TrustLevel.LEVEL_4_VERIFIED
         }
 
-        // Level 3: exact Android package match
-        if (!targetPackageName.isNullOrBlank() && !itemPackageName.isNullOrBlank() &&
-            targetPackageName.equals(itemPackageName, ignoreCase = true)
-        ) {
+        // Level 3: exact Android package match -- but only for a native app
+        // screen. When a web domain is present the package is a BROWSER, and
+        // every site in that browser shares it; letting it decide the match
+        // offered one site's login on every other site (and, on save,
+        // overwrote it). For web content the domain must decide.
+        //
+        // An item that stores a domain was saved from a browser or web view,
+        // so the package alone must not reveal it: it needs domain evidence
+        // (some browsers and web views report no domain to Autofill).
+        if (packageMatches && targetDomain.isNullOrBlank() && normalizedItemDomain.isNullOrBlank()) {
             return TrustLevel.LEVEL_3_PACKAGE
         }
 
@@ -131,17 +135,14 @@ object CredentialMatcher {
             return TrustLevel.LEVEL_2_DOMAIN
         }
 
-        // Level 1: explicit user-created association. NOT YET
-        // IMPLEMENTED -- there is no UI today for a user to manually
-        // link a credential to a specific app/domain beyond what gets
-        // captured automatically at save time. Left as a real, named
-        // gap on the roadmap rather than faked with a rule that doesn't
-        // actually reflect a user decision.
+        // Level 1: explicit user-created association. NOT YET IMPLEMENTED --
+        // there is no UI today for a user to manually link a credential to a
+        // specific app/domain beyond what gets captured automatically at
+        // save time. Left as a named gap rather than faked.
 
-        // Level 0: loose heuristic fallback -- substring containment
-        // either direction. This is what the ORIGINAL matching logic did
-        // unconditionally; it's kept, but demoted -- computed for
-        // completeness, never included by findAutoOfferMatches().
+        // Level 0: loose heuristic fallback -- substring containment either
+        // direction. Kept, but demoted: computed for completeness, never
+        // included by findAutoOfferMatches().
         if (!targetDomain.isNullOrBlank() && !itemUriPattern.isNullOrBlank() &&
             (targetDomain.contains(itemUriPattern, ignoreCase = true) ||
                 itemUriPattern.contains(targetDomain, ignoreCase = true))
@@ -168,12 +169,24 @@ object CredentialMatcher {
         }
     }
 
-    private fun normalizeDomain(raw: String?): String? {
+    internal fun normalizeDomain(raw: String?): String? {
         if (raw.isNullOrBlank()) return null
         var d = raw.trim().lowercase()
         d = d.removePrefix("https://").removePrefix("http://")
         d = d.removePrefix("www.")
         d = d.substringBefore("/")
         return d.ifBlank { null }
+    }
+
+    /** Every website the vault has a login for (for PhishingGuard's look-alike check). */
+    fun savedDomains(db: SQLiteDatabase): List<String> {
+        val domains = mutableListOf<String>()
+        db.rawQuery(
+            "SELECT DISTINCT uri_match_pattern FROM credential_item WHERE uri_match_pattern IS NOT NULL AND uri_match_pattern != '';",
+            null
+        ).use { c ->
+            while (c.moveToNext()) domains.add(c.getString(0))
+        }
+        return domains
     }
 }

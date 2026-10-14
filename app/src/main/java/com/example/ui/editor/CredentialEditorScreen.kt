@@ -1,50 +1,31 @@
 package com.example.ui.editor
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,41 +38,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.database.CredentialInput
 import com.example.database.CredentialPlain
 import com.example.database.CustomFieldPlain
 import com.example.database.FolderPlain
+import com.example.database.TagPlain
+import com.example.password.PasswordGenerator
 import com.example.security.ClipboardHelper
 import com.example.security.PasswordAnalysis
-import com.example.password.PasswordGenerator
-import com.example.ui.components.AtomicDestructiveButton
-import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicSwitch
 import com.example.ui.components.AtomicTextField
 import com.example.ui.components.EntropyMeter
-import com.example.ui.components.FilterChipPill
-import com.example.ui.components.SectionLabel
 import com.example.ui.generator.PasswordGeneratorPanel
-import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
-import com.example.ui.theme.AtomicRadius
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.theme.AtomicType
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CredentialEditorScreen(
     itemId: String?,
     folders: List<FolderPlain>,
-    allTags: List<com.example.database.TagPlain>,
+    allTags: List<TagPlain>,
     onLoadItem: suspend (String) -> CredentialPlain?,
     onSave: (CredentialInput) -> Unit,
     onDelete: (String) -> Unit,
@@ -118,9 +88,31 @@ fun CredentialEditorScreen(
     val selectedTagIds = remember { mutableStateListOf<String>() }
     var passwordVisible by remember { mutableStateOf(false) }
     var showGenerator by remember { mutableStateOf(false) }
-    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     val customFields = remember { mutableStateListOf<CustomFieldPlain>() }
+
+    // Loaded with the item and saved back: saving used to write "" / null
+    // here and wiped a stored TOTP secret and the Android app a login was
+    // saved from (which Autofill matches on).
+    var totpSecret by remember { mutableStateOf("") }
+    var androidPackageName by remember { mutableStateOf<String?>(null) }
+
+    fun currentInput() = CredentialInput(
+        folderId = selectedFolderId,
+        title = title.trim(),
+        username = username.trim(),
+        password = password,
+        notes = notes,
+        uriMatchPattern = uriMatchPattern.ifBlank { null },
+        androidPackageName = androidPackageName,
+        totpSecret = totpSecret,
+        customFields = customFields.filter { it.label.isNotBlank() },
+        tagIds = selectedTagIds.toList()
+    )
+
+    // What the form held once loaded; null while an edit is still loading,
+    // so leaving before the item arrives never asks to discard.
+    var baseline by remember { mutableStateOf<CredentialInput?>(null) }
 
     LaunchedEffect(itemId) {
         if (itemId != null) {
@@ -131,6 +123,8 @@ fun CredentialEditorScreen(
                 password = item.password
                 uriMatchPattern = item.uriMatchPattern ?: ""
                 notes = item.notes
+                totpSecret = item.totpSecret
+                androidPackageName = item.androidPackageName
                 selectedFolderId = item.folderId
                 customFields.clear()
                 customFields.addAll(item.customFields)
@@ -138,114 +132,52 @@ fun CredentialEditorScreen(
                 selectedTagIds.addAll(item.tags.map { it.id })
             }
         }
+        baseline = currentInput()
     }
 
-    if (showDeleteConfirmDialog && itemId != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
-            title = {
-                Text(
-                    text = "Delete credential",
-                    fontWeight = AtomicFontWeight.bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            },
-            text = {
-                Text(
-                    text = "This cannot be undone.",
-                    color = AtomicColors.TextMuted
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteConfirmDialog = false
-                        onDelete(itemId)
-                    },
-                    modifier = Modifier.testTag("confirm_delete_dialog_button")
-                ) {
-                    Text(
-                        text = "Delete",
-                        color = AtomicColors.Danger,
-                        fontWeight = AtomicFontWeight.bold
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel", color = AtomicColors.TextMuted)
-                }
-            }
-        )
-    }
-
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState) { data ->
-                Snackbar(
-                    containerColor = AtomicColors.GlassFill.copy(alpha = 0.95f),
-                    contentColor = AtomicColors.Foreground,
-                    actionColor = AtomicColors.Accent,
-                    snackbarData = data
-                )
-            }
-        },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (isEditMode) "Edit Credential" else "New Credential",
-                        fontWeight = AtomicFontWeight.bold,
-                        fontSize = AtomicFontSize.heading
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("editor_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
+    ItemEditorScaffold(
+        title = if (isEditMode) "Edit login" else "New login",
+        screenTestTag = "screen_login_editor",
+        saveLabel = if (isEditMode) "Save login" else "Add login",
+        saveEnabled = title.isNotBlank(),
+        saveTestTag = "editor_save_button",
+        onSave = { onSave(currentInput()) },
+        onBack = onBack,
+        hasUnsavedChanges = editorHasChanges(baseline, currentInput()),
+        modifier = modifier,
+        backTestTag = "editor_back_button",
+        snackbarHostState = snackbarHostState,
+        delete = if (itemId != null) {
+            EditorDelete(
+                buttonLabel = "Delete login",
+                warning = "Removes this login from the vault on this phone.",
+                confirmTitle = "Delete login",
+                confirmMessage = "Delete \"$title\"? It is removed from this phone. Backups you already made still contain it.",
+                buttonTestTag = "editor_delete_button",
+                confirmTestTag = "confirm_delete_dialog_button",
+                onConfirm = { onDelete(itemId) }
             )
+        } else {
+            null
         }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = AtomicSpacing.lg, vertical = AtomicSpacing.sm)
-        ) {
-            // Title (Required)
+    ) {
+        EditorSection("Login") {
             AtomicTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = "Title *",
-                placeholder = "e.g. Google, GitHub, Work VPN",
+                label = "Name",
+                placeholder = "e.g. GitHub, Gmail, Work VPN",
                 singleLine = true,
                 testTag = "editor_title_input"
             )
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
-            // Username
             AtomicTextField(
                 value = username,
                 onValueChange = { username = it },
                 label = "Username",
                 placeholder = "Email or username",
                 singleLine = true,
+                mono = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                 trailingIcon = if (username.isNotEmpty()) {
                     {
@@ -257,9 +189,9 @@ fun CredentialEditorScreen(
                             modifier = Modifier.testTag("editor_copy_username_button")
                         ) {
                             Icon(
-                                imageVector = Icons.Default.ContentCopy,
+                                imageVector = Icons.Outlined.ContentCopy,
                                 contentDescription = "Copy username",
-                                tint = AtomicColors.Accent
+                                tint = AtomicTheme.colors.accent
                             )
                         }
                     }
@@ -267,23 +199,16 @@ fun CredentialEditorScreen(
                 testTag = "editor_username_input"
             )
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
             // Password with inline Show/Hide and Copy buttons
             Column {
-                Text(
-                    text = "Password",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = AtomicFontWeight.medium,
-                    modifier = Modifier.padding(bottom = AtomicSpacing.xs)
-                )
-
                 AtomicTextField(
                     value = password,
                     onValueChange = { password = it },
+                    label = "Password",
                     placeholder = "Password",
                     isPassword = !passwordVisible,
+                    revealToggle = false,
+                    mono = true,
                     singleLine = true,
                     trailingIcon = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -296,9 +221,9 @@ fun CredentialEditorScreen(
                                     modifier = Modifier.testTag("editor_copy_password_button")
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.ContentCopy,
+                                        imageVector = Icons.Outlined.ContentCopy,
                                         contentDescription = "Copy password",
-                                        tint = AtomicColors.Accent
+                                        tint = AtomicTheme.colors.accent
                                     )
                                 }
                             }
@@ -306,9 +231,9 @@ fun CredentialEditorScreen(
                                 onClick = { passwordVisible = !passwordVisible }
                             ) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                     contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                                    tint = AtomicColors.TextMuted
+                                    tint = AtomicTheme.colors.textSecondary
                                 )
                             }
                         }
@@ -325,24 +250,30 @@ fun CredentialEditorScreen(
                         strength = strength,
                         modifier = Modifier.fillMaxWidth().testTag("editor_password_strength_meter")
                     )
+                    val editorContext = LocalContext.current
+                    val leaked by androidx.compose.runtime.produceState(false, password) {
+                        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                            com.example.security.BreachedPasswords.get(editorContext)?.contains(password) == true
+                        }
+                    }
+                    if (leaked) {
+                        Spacer(modifier = Modifier.height(AtomicSpacing.xs))
+                        com.example.ui.components.AtomicWarningBox(
+                            title = "This password appears in public leaks",
+                            message = "Attackers try leaked passwords first. Generate a new one for this login.",
+                            modifier = Modifier.testTag("editor_password_leaked")
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(AtomicSpacing.xs))
 
-                // Toggle inline password generator
-                TextButton(
+                com.example.ui.components.AtomicTextAction(
+                    text = if (showGenerator) "Hide generator" else "Generate a password",
                     onClick = { showGenerator = !showGenerator },
-                    modifier = Modifier.testTag("toggle_inline_generator_button")
-                ) {
-                    Text(
-                        text = if (showGenerator) "Hide generator" else "Generate password",
-                        color = AtomicColors.Accent,
-                        fontSize = AtomicFontSize.label,
-                        fontWeight = AtomicFontWeight.medium
-                    )
-                }
+                    testTag = "toggle_inline_generator_button"
+                )
 
-                // Inline Password Generator Panel
                 AnimatedVisibility(
                     visible = showGenerator,
                     enter = fadeIn() + expandVertically(),
@@ -357,23 +288,68 @@ fun CredentialEditorScreen(
                     )
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-
-            // URL / Match Pattern
+        EditorSection("Website or app") {
             AtomicTextField(
                 value = uriMatchPattern,
                 onValueChange = { uriMatchPattern = it },
-                label = "Website / App Match Pattern",
-                placeholder = "e.g. github.com, com.example.app",
+                label = "Fills on (website or app)",
+                placeholder = "e.g. github.com or com.example.app",
                 singleLine = true,
+                mono = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                 testTag = "editor_url_input"
             )
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.md))
+            // Change password: opens the site's standard change-password
+            // page (/.well-known/change-password) in the browser. The
+            // browser does the networking; AtomicVault stays offline,
+            // and the new password is saved through Autofill as usual.
+            val changeDomain = com.example.autofill.PhishingGuard.registrable(uriMatchPattern)
+            if (isEditMode && changeDomain != null) {
+                com.example.ui.components.AtomicTextAction(
+                    text = "Change password on $changeDomain →",
+                    onClick = {
+                        try {
+                            context.startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse("https://$changeDomain/.well-known/change-password")
+                                ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        } catch (e: Exception) {
+                            coroutineScope.launch { snackbarHostState.showSnackbar("No browser found to open the page") }
+                        }
+                    },
+                    testTag = "editor_change_password"
+                )
+            }
+        }
 
-            // Notes
+        // Authenticator (TOTP) key: codes are computed on the device;
+        // Autofill offers them on 2FA fields.
+        EditorSection("2FA") {
+            AtomicTextField(
+                value = totpSecret,
+                onValueChange = { totpSecret = it },
+                label = "Authenticator key (2FA)",
+                placeholder = "Setup key or otpauth:// link",
+                isPassword = true,
+                warningMessage = if (totpSecret.isNotBlank() && com.example.crypto.Totp.parse(totpSecret) == null) {
+                    "This isn't an authenticator key. Paste the setup key or the otpauth:// link from the site."
+                } else {
+                    null
+                },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Password
+                ),
+                testTag = "editor_totp_input"
+            )
+        }
+
+        EditorSection("Notes") {
             AtomicTextField(
                 value = notes,
                 onValueChange = { notes = it },
@@ -384,70 +360,18 @@ fun CredentialEditorScreen(
                 maxLines = 6,
                 testTag = "editor_notes_input"
             )
+        }
 
-            // Folder selection (if folders exist)
-            if (folders.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                SectionLabel(text = "Folder")
+        EditorOrganiseSection(
+            folders = folders,
+            allTags = allTags,
+            selectedFolderId = selectedFolderId,
+            onSelectFolder = { selectedFolderId = it },
+            selectedTagIds = selectedTagIds
+        )
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
-                ) {
-                    FilterChipPill(
-                        label = "None",
-                        selected = selectedFolderId == null,
-                        onClick = { selectedFolderId = null },
-                        testTag = "editor_folder_none"
-                    )
-
-                    for (folder in folders) {
-                        FilterChipPill(
-                            label = folder.name,
-                            selected = selectedFolderId == folder.id,
-                            onClick = { selectedFolderId = folder.id },
-                            testTag = "editor_folder_${folder.id}"
-                        )
-                    }
-                }
-            }
-
-            // Tag selection (multi-select) -- a separate, second
-            // organizing system alongside folders. New tags are created
-            // from Settings, not here, matching how folders work.
-            if (allTags.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                SectionLabel(text = "Tags")
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
-                ) {
-                    for (tag in allTags) {
-                        FilterChipPill(
-                            label = tag.name,
-                            selected = selectedTagIds.contains(tag.id),
-                            onClick = {
-                                if (selectedTagIds.contains(tag.id)) {
-                                    selectedTagIds.remove(tag.id)
-                                } else {
-                                    selectedTagIds.add(tag.id)
-                                }
-                            },
-                            testTag = "editor_tag_${tag.id}"
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.lg))
-
-            // Custom Fields Section
-            SectionLabel(text = "Custom Fields")
+        Column(verticalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)) {
+            com.example.ui.components.AtomicSectionHeader("Custom fields")
 
             for (i in customFields.indices) {
                 val cf = customFields[i]
@@ -456,10 +380,10 @@ fun CredentialEditorScreen(
                     onUpdate = { updated -> customFields[i] = updated },
                     onRemove = { customFields.removeAt(i) }
                 )
-                Spacer(modifier = Modifier.height(AtomicSpacing.sm))
             }
 
-            TextButton(
+            com.example.ui.components.AtomicTextAction(
+                text = "+ Add custom field",
                 onClick = {
                     customFields.add(
                         CustomFieldPlain(
@@ -470,51 +394,8 @@ fun CredentialEditorScreen(
                         )
                     )
                 },
-                modifier = Modifier.testTag("add_custom_field_button")
-            ) {
-                Text(
-                    text = "+ Add custom field",
-                    color = AtomicColors.Accent,
-                    fontSize = AtomicFontSize.label,
-                    fontWeight = AtomicFontWeight.medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.xl))
-
-            // Save Button
-            AtomicPrimaryButton(
-                text = if (isEditMode) "Save changes" else "Create credential",
-                onClick = {
-                    val input = CredentialInput(
-                        folderId = selectedFolderId,
-                        title = title.trim(),
-                        username = username.trim(),
-                        password = password,
-                        notes = notes,
-                        uriMatchPattern = uriMatchPattern.ifBlank { null },
-                        androidPackageName = null,
-                        totpSecret = "",
-                        customFields = customFields.filter { it.label.isNotBlank() },
-                        tagIds = selectedTagIds.toList()
-                    )
-                    onSave(input)
-                },
-                enabled = title.isNotBlank(),
-                testTag = "editor_save_button"
+                testTag = "add_custom_field_button"
             )
-
-            // Delete Button (Edit Mode only)
-            if (isEditMode) {
-                Spacer(modifier = Modifier.height(AtomicSpacing.md))
-                AtomicDestructiveButton(
-                    text = "Delete credential",
-                    onClick = { showDeleteConfirmDialog = true },
-                    testTag = "editor_delete_button"
-                )
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }
@@ -525,15 +406,11 @@ private fun CustomFieldEditorRow(
     onUpdate: (CustomFieldPlain) -> Unit,
     onRemove: () -> Unit
 ) {
-    Card(
+    com.example.ui.components.AtomicCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(AtomicRadius.md),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
-        )
+        contentPadding = AtomicSpacing.md
     ) {
-        Column(modifier = Modifier.padding(AtomicSpacing.md)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -544,56 +421,64 @@ private fun CustomFieldEditorRow(
                     onValueChange = { onUpdate(field.copy(label = it)) },
                     placeholder = "Label",
                     modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-
-                AtomicTextField(
-                    value = field.value,
-                    onValueChange = { onUpdate(field.copy(value = it)) },
-                    placeholder = "Value",
-                    isPassword = field.isSensitive,
-                    modifier = Modifier.weight(1.4f),
-                    singleLine = true
+                    singleLine = true,
+                    // A UPI PIN, ATM PIN or OTP should never be written down,
+                    // even encrypted: anyone who sees it can move money.
+                    errorMessage = if (com.example.security.IndianIds.isForbiddenSecretLabel(field.label)) {
+                        "Don't store a UPI/ATM PIN or OTP. Your bank will never ask you to write it down."
+                    } else {
+                        null
+                    },
+                    testTag = "custom_field_label"
                 )
 
                 IconButton(
                     onClick = onRemove,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(AtomicSize.tile)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Remove field",
-                        tint = AtomicColors.Danger
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = "Remove ${field.label.ifBlank { "this field" }}",
+                        tint = AtomicTheme.colors.error
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(AtomicSpacing.xs))
+            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
+
+            AtomicTextField(
+                value = field.value,
+                onValueChange = { onUpdate(field.copy(value = it)) },
+                placeholder = "Value",
+                isPassword = field.isSensitive,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(AtomicSpacing.sm)
             ) {
-                Text(
-                    text = if (field.isSensitive) "Masked (Sensitive)" else "Plaintext",
-                    fontSize = AtomicFontSize.micro,
-                    color = AtomicColors.TextMuted
+                Icon(
+                    imageVector = if (field.isSensitive) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
+                    contentDescription = null,
+                    modifier = Modifier.size(AtomicSize.iconSm),
+                    tint = if (field.isSensitive) AtomicTheme.colors.accent else AtomicTheme.colors.textSecondary
                 )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (field.isSensitive) Icons.Default.Lock else Icons.Default.LockOpen,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = if (field.isSensitive) AtomicColors.Accent else AtomicColors.TextMuted
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    AtomicSwitch(
-                        checked = field.isSensitive,
-                        onCheckedChange = { onUpdate(field.copy(isSensitive = it)) }
-                    )
-                }
+                Text(
+                    text = if (field.isSensitive) "Masked (sensitive)" else "Plain text",
+                    style = AtomicType.bodySmall,
+                    color = AtomicTheme.colors.textSecondary,
+                    modifier = Modifier.weight(1f)
+                )
+                AtomicSwitch(
+                    checked = field.isSensitive,
+                    onCheckedChange = { onUpdate(field.copy(isSensitive = it)) },
+                    label = "Mask ${field.label.ifBlank { "this field" }}"
+                )
             }
         }
     }

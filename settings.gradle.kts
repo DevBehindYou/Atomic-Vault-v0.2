@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "AtomicVault"
 include(":app")
+include(":autofilltest")

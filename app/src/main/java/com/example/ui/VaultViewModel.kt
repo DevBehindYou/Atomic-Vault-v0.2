@@ -1,37 +1,46 @@
 package com.example.ui
 
 import android.app.Application
-import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.backup.BackupCodec
+import com.example.backup.CsvImport
 import com.example.crypto.Argon2Kdf
 import com.example.crypto.DekCodec
+import com.example.crypto.MasterPassword
 import com.example.database.CredentialInput
 import com.example.database.CredentialPlain
 import com.example.database.CredentialPreview
 import com.example.database.FolderPlain
+import com.example.database.PasswordHistoryEntry
 import com.example.database.SqlcipherGuard
 import com.example.database.TagPlain
 import com.example.database.VaultDatabase
 import com.example.database.VaultExport
 import com.example.database.VaultRepository
-import com.example.database.VaultRepositoryImpl
+import com.example.database.VaultLockedException
+import com.example.database.VaultSession
 import com.example.database.VaultSettingsPatch
 import com.example.database.VaultSettingsPlain
 import com.example.keystore.BiometricGatedKeyStore
+import com.example.security.AppBiometricManager
+import com.example.security.QuickUnlockKind
 import com.example.keystore.VaultMetaStore
+import com.example.keystore.VaultUnlocker
 import com.example.security.DeviceIntegrity
 import com.example.trust.TrustEventType
 import com.example.trust.TrustLedger
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.sqlcipher.database.SQLiteDatabase
 import java.util.Arrays
 import javax.crypto.Cipher
 
@@ -53,7 +62,9 @@ data class VaultUiState(
     val folderFilter: String? = null,
     val autofillSupported: Boolean = true,
     val autofillArmed: Boolean = false,
-    val integrityWarnings: List<String> = emptyList()
+    val integrityWarnings: List<String> = emptyList(),
+    /** One-time explanation for users upgrading from a version that shipped the Atomic keyboard. */
+    val showKeyboardRemovedNotice: Boolean = false
 )
 
 class VaultViewModel(application: Application) : AndroidViewModel(application) {
@@ -66,9 +77,22 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     // and why the key itself, not app code, now enforces the auth check.
     private val keyStore = BiometricGatedKeyStore(application)
 
-    private var activeDb: SQLiteDatabase? = null
-    private var activeDek: ByteArray? = null
-    private var repository: VaultRepository? = null
+    // The open vault (key, connection, repository) lives in VaultSession so
+    // locking can wait for in-flight work instead of zeroing the key under it.
+
+    /** Failures in background vault work end up on screen, never as a crash. */
+    private val errors = CoroutineExceptionHandler { _, e ->
+        _uiState.update { it.copy(busy = false, error = describe(e)) }
+    }
+
+    /** The vault before the last restore, decrypted, in memory only; dropped on lock. */
+    @Volatile private var undoSnapshot: VaultExport? = null
+
+    /** The latest list/search load; a newer one cancels it so results never arrive out of order. */
+    private var previewJob: Job? = null
+
+    // Non-secret app flags that must be readable before unlock.
+    private val appPrefs = application.getSharedPreferences(APP_PREFS, android.content.Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(VaultUiState())
     val uiState: StateFlow<VaultUiState> = _uiState.asStateFlow()
@@ -86,14 +110,25 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
         _uiState.update {
             it.copy(
-                status = if (!hasVault) VaultStatus.ONBOARDING else VaultStatus.LOCKED,
+                // An unreadable key store is never "no vault": showing
+                // onboarding there would invite creating a vault over the
+                // real one.
+                status = if (!hasVault && !metaStore.isUnavailable) VaultStatus.ONBOARDING else VaultStatus.LOCKED,
+                // A vault that already exists was made by a version that
+                // shipped the Atomic keyboard; a fresh install never sees this.
+                showKeyboardRemovedNotice = hasVault && !appPrefs.getBoolean(PREF_KEYBOARD_NOTICE_SEEN, false),
                 biometricArmed = bioArmed,
                 autofillArmed = autofillArmed,
-                autofillSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O,
+                autofillSupported = true, // Autofill exists from API 26; minSdk is 28
                 integrityWarnings = warnings,
-                error = null
+                error = if (metaStore.isUnavailable) KEY_STORE_UNAVAILABLE else null
             )
         }
+    }
+
+    fun dismissKeyboardRemovedNotice() {
+        appPrefs.edit().putBoolean(PREF_KEYBOARD_NOTICE_SEEN, true).apply()
+        _uiState.update { it.copy(showKeyboardRemovedNotice = false) }
     }
 
     fun clearError() {
@@ -110,13 +145,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(busy = true, error = null) }
         viewModelScope.launch(Dispatchers.Default) {
             try {
+                moveAsideOrphanedDatabase()
                 val salt = Argon2Kdf.generateSaltBase64()
-                val kek = Argon2Kdf.deriveKek(password, salt)
+                val kek = Argon2Kdf.deriveKek(MasterPassword.normalize(password), salt)
                 val dek = DekCodec.generateDek()
                 val wrappedDek = DekCodec.wrapDek(kek, dek)
+                Arrays.fill(kek, 0.toByte())
                 val kdfParamsJson = VaultMetaStore.createDefaultKdfParamsJson(salt)
 
                 metaStore.saveVaultEnvelope(salt, kdfParamsJson, wrappedDek)
+                appPrefs.edit().putBoolean(PREF_KEYBOARD_NOTICE_SEEN, true).apply()
 
                 // NOTE: biometric arming is NOT done here anymore. Wrapping the
                 // DEK with the biometric-gated Keystore key requires a live,
@@ -127,18 +165,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 // after this completes (OnboardingScreen does this).
                 keyStore.clear()
 
-                val db = VaultDatabase.open(getApplication(), dek)
-                val repo = VaultRepositoryImpl(db, dek)
-                repo.updateSettings(VaultSettingsPatch(autoLockSeconds = 60, biometricEnabled = false))
-
-                activeDb = db
-                activeDek = dek
-                repository = repo
-
-                val previews = repo.listPreviews()
-                val folders = repo.listFolders()
-                val tags = repo.listTags()
-                val settings = repo.getSettings()
+                VaultSession.unlock(getApplication(), dek)
+                VaultSession.use { it.repository.updateSettings(VaultSettingsPatch(autoLockSeconds = 60, biometricEnabled = false)) }
+                val (previews, folders, tags, settings) = loadSnapshot()
 
                 withContext(Dispatchers.Main) {
                     _uiState.update {
@@ -169,45 +198,32 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(busy = true, error = null) }
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                val envelope = metaStore.getVaultEnvelope()
-                if (envelope == null) {
-                    withContext(Dispatchers.Main) {
-                        _uiState.update { it.copy(busy = false, error = "Vault envelope not found") }
-                        onComplete(false)
+                val dek = when (val result = VaultUnlocker.unlock(metaStore, password)) {
+                    is VaultUnlocker.Result.Unlocked -> result.dek
+                    VaultUnlocker.Result.WrongPassword -> {
+                        TrustLedger.record(
+                            getApplication(), TrustEventType.VAULT_UNLOCK_FAILED,
+                            authenticationType = "master_password", result = "failure"
+                        )
+                        withContext(Dispatchers.Main) {
+                            _uiState.update { it.copy(busy = false, error = "Incorrect master password") }
+                            onComplete(false)
+                        }
+                        return@launch
                     }
-                    return@launch
+                    VaultUnlocker.Result.NoVault, VaultUnlocker.Result.KeyStoreUnavailable -> {
+                        withContext(Dispatchers.Main) {
+                            _uiState.update {
+                                it.copy(busy = false, error = if (metaStore.isUnavailable) KEY_STORE_UNAVAILABLE else "Vault envelope not found")
+                            }
+                            onComplete(false)
+                        }
+                        return@launch
+                    }
                 }
 
-                val kek = Argon2Kdf.deriveKek(password, envelope.saltBase64)
-                val dek = try {
-                    DekCodec.unwrapDek(kek, envelope.wrappedDek)
-                } catch (e: Exception) {
-                    Arrays.fill(kek, 0.toByte())
-                    TrustLedger.record(
-                        getApplication(), TrustEventType.VAULT_UNLOCK_FAILED,
-                        authenticationType = "master_password", result = "failure"
-                    )
-                    withContext(Dispatchers.Main) {
-                        _uiState.update { it.copy(busy = false, error = "Incorrect master password") }
-                        onComplete(false)
-                    }
-                    return@launch
-                }
-                // KEK's only job was unwrapping the DEK above -- clear it now
-                // rather than leaving it reachable for the rest of this scope.
-                Arrays.fill(kek, 0.toByte())
-
-                val db = VaultDatabase.open(getApplication(), dek)
-                val repo = VaultRepositoryImpl(db, dek)
-
-                activeDb = db
-                activeDek = dek
-                repository = repo
-
-                val previews = repo.listPreviews()
-                val folders = repo.listFolders()
-                val tags = repo.listTags()
-                val settings = repo.getSettings()
+                VaultSession.unlock(getApplication(), dek)
+                val (previews, folders, tags, settings) = loadSnapshot()
 
                 withContext(Dispatchers.Main) {
                     _uiState.update {
@@ -226,7 +242,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                 TrustLedger.record(getApplication(), TrustEventType.VAULT_UNLOCKED, authenticationType = "master_password")
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    _uiState.update { it.copy(busy = false, error = "Incorrect master password") }
+                    _uiState.update { it.copy(busy = false, error = "Could not open the vault: ${e.message ?: e.javaClass.simpleName}") }
                     onComplete(false)
                 }
             }
@@ -256,17 +272,8 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
 
-                val db = VaultDatabase.open(getApplication(), dek)
-                val repo = VaultRepositoryImpl(db, dek)
-
-                activeDb = db
-                activeDek = dek
-                repository = repo
-
-                val previews = repo.listPreviews()
-                val folders = repo.listFolders()
-                val tags = repo.listTags()
-                val settings = repo.getSettings()
+                VaultSession.unlock(getApplication(), dek)
+                val (previews, folders, tags, settings) = loadSnapshot()
 
                 withContext(Dispatchers.Main) {
                     _uiState.update {
@@ -294,15 +301,13 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun lockVault() {
-        try {
-            activeDb?.close()
-        } catch (e: Exception) {
-            // Ignore close exceptions
-        }
-        activeDek?.let { Arrays.fill(it, 0.toByte()) }
-        activeDb = null
-        activeDek = null
-        repository = null
+        // A locked vault should not leave a copied password sitting on the clipboard.
+        com.example.security.ClipboardHelper.clearIfOwned(getApplication())
+        previewJob?.cancel()
+        undoSnapshot = null
+        // Stops new work now; the database closes and the key is zeroed as
+        // soon as any save or export still running has finished.
+        VaultSession.lock()
 
         _uiState.update {
             it.copy(
@@ -325,9 +330,44 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         TrustLedger.record(getApplication(), TrustEventType.VAULT_LOCKED)
     }
 
+    private data class Snapshot(
+        val previews: List<CredentialPreview>,
+        val folders: List<FolderPlain>,
+        val tags: List<TagPlain>,
+        val settings: VaultSettingsPlain
+    )
+
+    private fun loadSnapshot(): Snapshot = VaultSession.use { session ->
+        val repo = session.repository
+        val state = _uiState.value
+        Snapshot(
+            previews = repo.listPreviews(state.folderFilter, state.query, state.tagFilter),
+            folders = repo.listFolders(),
+            tags = repo.listTags(),
+            settings = repo.getSettings()
+        )
+    }
+
+    /** Runs vault work off the main thread; a locked vault or a failure is reported, never thrown. */
+    private fun launchVaultWork(block: suspend (VaultRepository) -> Unit) {
+        if (!VaultSession.isUnlocked) {
+            _uiState.update { it.copy(error = "The vault is locked") }
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO + errors) {
+            VaultSession.use { session -> block(session.repository) }
+        }
+    }
+
+    private fun describe(e: Throwable): String = when (e) {
+        is VaultLockedException -> "The vault is locked"
+        else -> e.message ?: e.javaClass.simpleName
+    }
+
     fun setSearchQuery(query: String) {
         _uiState.update { it.copy(query = query) }
-        reloadPreviews()
+        // Typing fires this per keystroke: wait for a short pause first.
+        reloadPreviews(debounceMs = 150)
     }
 
     fun setFolderFilter(folderId: String?) {
@@ -341,37 +381,36 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun reloadVaultData() {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            val state = _uiState.value
-            val previews = repo.listPreviews(state.folderFilter, state.query, state.tagFilter)
-            val folders = repo.listFolders()
-            val tags = repo.listTags()
-            val settings = repo.getSettings()
+        if (!VaultSession.isUnlocked) return
+        viewModelScope.launch(Dispatchers.IO + errors) {
+            val snapshot = loadSnapshot()
             _uiState.update {
                 it.copy(
-                    previews = previews,
-                    folders = folders,
-                    tags = tags,
-                    settings = settings
+                    previews = snapshot.previews,
+                    folders = snapshot.folders,
+                    tags = snapshot.tags,
+                    settings = snapshot.settings
                 )
             }
         }
     }
 
-    private fun reloadPreviews() {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+    private fun reloadPreviews(debounceMs: Long = 0) {
+        if (!VaultSession.isUnlocked) return
+        previewJob?.cancel()
+        previewJob = viewModelScope.launch(Dispatchers.IO + errors) {
+            if (debounceMs > 0) delay(debounceMs)
             val state = _uiState.value
-            val previews = repo.listPreviews(state.folderFilter, state.query, state.tagFilter)
+            val previews = VaultSession.use { it.repository.listPreviews(state.folderFilter, state.query, state.tagFilter) }
+            // A newer query may have started while this one ran.
+            ensureActive()
             _uiState.update { it.copy(previews = previews) }
         }
     }
 
     fun createTag(name: String, onDone: (TagPlain) -> Unit = {}) {
-        val repo = repository ?: return
         if (name.isBlank()) return
-        viewModelScope.launch(Dispatchers.IO) {
+        launchVaultWork { repo ->
             val tag = repo.createTag(name)
             val tags = repo.listTags()
             _uiState.update { it.copy(tags = tags) }
@@ -380,8 +419,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteTag(id: String) {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+        launchVaultWork { repo ->
             repo.deleteTag(id)
             val tags = repo.listTags()
             val clearFilter = _uiState.value.tagFilter == id
@@ -394,19 +432,27 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * Loads one full credential, including decrypting every field plus its
-     * custom fields and tags. That's real SQLCipher I/O and several
-     * AES-GCM operations, so it must not run on the main thread -- this
-     * was previously a plain synchronous call invoked straight from
-     * composition/LaunchedEffect, which janks the editor open on any
-     * sizeable item. Suspending here forces every caller onto a coroutine.
+     * custom fields and tags -- real SQLCipher I/O and several AES-GCM
+     * operations, so it suspends onto IO. Null if the vault is locked.
      */
     suspend fun getItem(id: String): CredentialPlain? = withContext(Dispatchers.IO) {
-        repository?.getItem(id)
+        VaultSession.useIfUnlocked { it.repository.getItem(id) }
+    }
+
+    /** Earlier passwords of a login, newest first; empty if the vault is locked. */
+    suspend fun passwordHistory(id: String): List<PasswordHistoryEntry> = withContext(Dispatchers.IO) {
+        VaultSession.useIfUnlocked { it.repository.passwordHistory(id) }.orEmpty()
+    }
+
+    fun clearPasswordHistory(id: String, onDone: () -> Unit) {
+        launchVaultWork { repo ->
+            repo.clearPasswordHistory(id)
+            withContext(Dispatchers.Main) { onDone() }
+        }
     }
 
     fun createItem(input: CredentialInput, onDone: () -> Unit) {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+        launchVaultWork { repo ->
             repo.createItem(input)
             reloadVaultData()
             TrustLedger.record(getApplication(), TrustEventType.CREDENTIAL_CREATED, source = "app")
@@ -415,8 +461,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateItem(id: String, input: CredentialInput, onDone: () -> Unit) {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+        launchVaultWork { repo ->
             repo.updateItem(id, input)
             reloadVaultData()
             TrustLedger.record(getApplication(), TrustEventType.CREDENTIAL_MODIFIED, subjectReference = id, source = "app")
@@ -425,8 +470,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteItem(id: String, onDone: () -> Unit) {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+        launchVaultWork { repo ->
             repo.deleteItem(id)
             reloadVaultData()
             TrustLedger.record(getApplication(), TrustEventType.CREDENTIAL_DELETED, subjectReference = id, source = "app")
@@ -435,8 +479,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun createFolder(name: String) {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+        launchVaultWork { repo ->
             repo.createFolder(name)
             val folders = repo.listFolders()
             _uiState.update { it.copy(folders = folders) }
@@ -444,8 +487,7 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteFolder(id: String) {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+        launchVaultWork { repo ->
             repo.deleteFolder(id)
             reloadVaultData()
         }
@@ -459,9 +501,16 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      * [completeBiometricArm] with the authenticated Cipher on success.
      */
     fun beginBiometricArm(): Cipher? {
-        if (activeDek == null) return null
-        return keyStore.beginArming()
+        if (!VaultSession.isUnlocked) return null
+        return when (AppBiometricManager.quickUnlockKind(getApplication())) {
+            QuickUnlockKind.FINGERPRINT -> keyStore.beginArming(screenLock = false)
+            QuickUnlockKind.SCREEN_LOCK -> keyStore.beginArming(screenLock = true)
+            QuickUnlockKind.NONE -> null
+        }
     }
+
+    /** True when quick unlock asks for the phone's screen lock instead of a fingerprint. */
+    fun quickUnlockUsesScreenLock(): Boolean = keyStore.usesScreenLock()
 
     /**
      * Step 2 of enabling biometric unlock/autofill. [authenticatedCipher]
@@ -472,11 +521,9 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      * "biometric unlock is on" and "autofill can reveal via biometric."
      */
     fun completeBiometricArm(authenticatedCipher: Cipher) {
-        val dek = activeDek ?: return
-        keyStore.finishArming(authenticatedCipher, dek)
-        val repo = repository
-        viewModelScope.launch(Dispatchers.IO) {
-            val updated = repo?.updateSettings(VaultSettingsPatch(biometricEnabled = true))
+        VaultSession.useIfUnlocked { keyStore.finishArming(authenticatedCipher, it.dek) } ?: return
+        viewModelScope.launch(Dispatchers.IO + errors) {
+            val updated = VaultSession.useIfUnlocked { it.repository.updateSettings(VaultSettingsPatch(biometricEnabled = true)) }
             _uiState.update {
                 it.copy(
                     settings = updated ?: it.settings,
@@ -488,12 +535,38 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Shows a biometric failure on the unlock screen without touching the keystore. */
+    fun reportBiometricError(message: String) {
+        _uiState.update { it.copy(error = message) }
+    }
+
+    /**
+     * Called when the unlock screen asked for a biometric Cipher and got
+     * none. Either the key is gone (a new fingerprint was enrolled, so the
+     * Keystore invalidated it) -- in which case the UI must stop offering
+     * biometrics -- or the key store failed transiently and stays armed.
+     */
+    fun onBiometricUnavailable() {
+        val stillArmed = keyStore.isArmed()
+        _uiState.update {
+            it.copy(
+                biometricArmed = stillArmed,
+                autofillArmed = stillArmed,
+                error = if (stillArmed) {
+                    "Biometric unlock is unavailable right now. Use your master password."
+                } else {
+                    "Biometric unlock was reset (your fingerprints changed). " +
+                        "Unlock with your master password, then turn it back on in Settings."
+                }
+            )
+        }
+    }
+
     /** Disarms biometric unlock and autofill reveal together (one shared key -- see keyStore's doc comment). */
     fun disableBiometric() {
         keyStore.clear()
-        val repo = repository
-        viewModelScope.launch(Dispatchers.IO) {
-            val updated = repo?.updateSettings(VaultSettingsPatch(biometricEnabled = false))
+        viewModelScope.launch(Dispatchers.IO + errors) {
+            val updated = VaultSession.useIfUnlocked { it.repository.updateSettings(VaultSettingsPatch(biometricEnabled = false)) }
             _uiState.update {
                 it.copy(
                     settings = updated ?: it.settings,
@@ -513,32 +586,31 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      * that as "unlock to verify," not as a failed check.
      */
     fun isSqlcipherVerified(): Boolean {
-        val db = activeDb ?: return false
-        return try {
-            SqlcipherGuard.assertSqlcipherActive(db)
-            true
-        } catch (e: Exception) {
-            false
-        }
+        return VaultSession.useIfUnlocked { session ->
+            try {
+                SqlcipherGuard.assertSqlcipherActive(session.db)
+                true
+            } catch (e: Exception) {
+                false
+            }
+        } ?: false
     }
 
     fun updateAutoLockSeconds(autoLockSeconds: Int) {
-        val repo = repository ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+        launchVaultWork { repo ->
             val updated = repo.updateSettings(VaultSettingsPatch(autoLockSeconds = autoLockSeconds))
             _uiState.update { it.copy(settings = updated) }
         }
     }
 
     fun exportBackup(passphrase: String, onResult: (Result<ByteArray>) -> Unit) {
-        val repo = repository
-        if (repo == null) {
-            onResult(Result.failure(IllegalStateException("Vault is locked")))
+        if (!VaultSession.isUnlocked) {
+            onResult(Result.failure(VaultLockedException()))
             return
         }
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                val exportData = repo.exportData()
+                val exportData = VaultSession.use { it.repository.exportData() }
                 val backupBytes = BackupCodec.exportBackup(exportData, passphrase.toCharArray())
                 withContext(Dispatchers.Main) { onResult(Result.success(backupBytes)) }
             } catch (e: Exception) {
@@ -548,17 +620,70 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun importBackup(backupBytes: ByteArray, passphrase: String, onResult: (Result<Int>) -> Unit) {
-        val repo = repository
-        if (repo == null) {
-            onResult(Result.failure(IllegalStateException("Vault is locked")))
+        if (!VaultSession.isUnlocked) {
+            onResult(Result.failure(VaultLockedException()))
             return
         }
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 val data = BackupCodec.importBackup(backupBytes, passphrase.toCharArray())
-                repo.importReplace(data)
+                VaultSession.use { session ->
+                    // Keep the current vault (in memory only, never on disk)
+                    // so the restore can be undone until the vault locks.
+                    val before = session.repository.exportData()
+                    session.repository.importReplace(data)
+                    undoSnapshot = before
+                }
                 reloadVaultData()
                 withContext(Dispatchers.Main) { onResult(Result.success(data.items.size)) }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { onResult(Result.failure(e)) }
+            }
+        }
+    }
+
+    /**
+     * Adds the logins from another password manager's CSV export. Rows that
+     * are already in the vault are skipped; the vault as it was can be put
+     * back with [undoLastRestore] until it locks. Result: (added, skipped).
+     */
+    fun importCsv(bytes: ByteArray, onResult: (Result<Pair<Int, Int>>) -> Unit) {
+        if (!VaultSession.isUnlocked) {
+            onResult(Result.failure(VaultLockedException()))
+            return
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                val parsed = CsvImport.parse(bytes.toString(Charsets.UTF_8))
+                val added = VaultSession.use { session ->
+                    val before = session.repository.exportData()
+                    val fresh = CsvImport.withoutDuplicates(parsed.items, before.items)
+                    fresh.forEach { session.repository.createItem(it) }
+                    if (fresh.isNotEmpty()) undoSnapshot = before
+                    fresh.size
+                }
+                reloadVaultData()
+                val skipped = parsed.skippedRows + parsed.items.size - added
+                withContext(Dispatchers.Main) { onResult(Result.success(added to skipped)) }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) { onResult(Result.failure(e)) }
+            }
+        }
+    }
+
+    /** Puts back the vault as it was before the last restore. */
+    fun undoLastRestore(onResult: (Result<Int>) -> Unit) {
+        val before = undoSnapshot
+        if (before == null || !VaultSession.isUnlocked) {
+            onResult(Result.failure(IllegalStateException("Nothing to undo")))
+            return
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                VaultSession.use { it.repository.importReplace(before) }
+                undoSnapshot = null
+                reloadVaultData()
+                withContext(Dispatchers.Main) { onResult(Result.success(before.items.size)) }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) { onResult(Result.failure(e)) }
             }
@@ -573,6 +698,35 @@ class VaultViewModel(application: Application) : AndroidViewModel(application) {
      * was called from.
      */
     suspend fun getAllCredentialsForSecurity(): List<CredentialPlain> = withContext(Dispatchers.IO) {
-        repository?.exportData()?.items ?: emptyList()
+        VaultSession.useIfUnlocked { it.repository.exportData().items } ?: emptyList()
+    }
+
+    /**
+     * A database file with no envelope pointing at it cannot be opened by
+     * anyone (its key is gone), but it is the user's data. Never overwrite or
+     * delete it: rename it aside so a new vault can be created next to it.
+     */
+    private fun moveAsideOrphanedDatabase() {
+        val file = VaultDatabase.getDatabaseFile(getApplication())
+        if (!file.exists() || metaStore.hasVault()) return
+        val stamp = System.currentTimeMillis()
+        for (suffix in listOf("", "-journal", "-wal", "-shm")) {
+            val f = java.io.File(file.path + suffix)
+            if (f.exists()) f.renameTo(java.io.File("${file.path}.orphaned-$stamp$suffix"))
+        }
+    }
+
+    override fun onCleared() {
+        // The screen that owned this vault session is gone for good (not a
+        // rotation): lock rather than leave the key in memory with no UI.
+        VaultSession.lock()
+        super.onCleared()
+    }
+
+    private companion object {
+        const val KEY_STORE_UNAVAILABLE = "This phone can't open AtomicVault's key store right now. " +
+            "Restart the phone and try again. Your vault has not been changed."
+        const val APP_PREFS = "atomicvault_app_prefs"
+        const val PREF_KEYBOARD_NOTICE_SEEN = "notice_keyboard_removed_seen"
     }
 }

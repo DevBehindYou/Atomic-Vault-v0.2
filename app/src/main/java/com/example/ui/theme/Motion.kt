@@ -1,33 +1,42 @@
 package com.example.ui.theme
 
+import android.content.Context
+import android.provider.Settings
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * Motion tokens for Liquid Glass. LiquidAccessories specifies one curve
- * for everything: cubic-bezier(.22, 1, .36, 1). GlassEasing is that curve
- * for programmatic/eased transitions; GlassSpring is for anything the user
- * is actively touching or dragging, where a physical spring reads better
- * than a fixed-duration ease (see the design plan's Interaction &
- * Animation Spec). Durations are kept short throughout -- "trust before
- * beauty" in the design plan means nothing here should make someone wait
- * to find out whether an unlock succeeded.
+ * Motion tokens (design system §8). Motion confirms an action or reveals
+ * content; it never decorates. No springs, bounce or overshoot: CSS `ease`
+ * or linear only. When the system animator scale is 0 ("Remove
+ * animations"), [LocalReducedMotion] is true and components use short fades
+ * only, with no translation or rotation.
  */
 object AtomicMotion {
-    val GlassEasing = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
+    /** CSS `ease`. */
+    val Ease = CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f)
 
-    val GlassSpring = spring<Float>(
-        dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessMedium
-    )
+    const val PRESS_MS = 120
+    const val STATE_MS = 150
+    const val TOGGLE_MS = 200
+    const val ENTER_MS = 350
+    const val REVEAL_MS = 500
 
-    const val DURATION_FAST_MS = 120 // press feedback, toggle flip
-    const val DURATION_BASE_MS = 220 // card expand, sheet in/out
-    const val DURATION_SLOW_MS = 360 // screen-level transitions only
+    fun <T> press(): TweenSpec<T> = tween(PRESS_MS, easing = Ease)
+    fun <T> state(): TweenSpec<T> = tween(STATE_MS, easing = Ease)
+    fun <T> toggle(): TweenSpec<T> = tween(TOGGLE_MS, easing = Ease)
+    fun <T> enter(): TweenSpec<T> = tween(ENTER_MS, easing = Ease)
+    fun <T> countdown(durationMs: Int): TweenSpec<T> = tween(durationMs, easing = LinearEasing)
 
-    val fastTween = tween<Float>(durationMillis = DURATION_FAST_MS, easing = GlassEasing)
-    val baseTween = tween<Float>(durationMillis = DURATION_BASE_MS, easing = GlassEasing)
-    val slowTween = tween<Float>(durationMillis = DURATION_SLOW_MS, easing = GlassEasing)
+    /** True when the user turned animations off in system settings. */
+    fun reducedMotion(context: Context): Boolean = try {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    } catch (e: Exception) {
+        false
+    }
 }
+
+val LocalReducedMotion = staticCompositionLocalOf { false }

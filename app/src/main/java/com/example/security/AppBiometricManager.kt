@@ -1,6 +1,8 @@
 package com.example.security
 
+import android.app.KeyguardManager
 import android.content.Context
+import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -13,6 +15,15 @@ enum class BiometricAuthStatus {
     NO_HARDWARE,
     UNAVAILABLE
 }
+
+/**
+ * How this phone can do quick unlock. FINGERPRINT: a strong biometric is
+ * enrolled. SCREEN_LOCK: no strong biometric, but the phone has a PIN,
+ * pattern or password and runs Android 11+ (the first version where a
+ * Keystore key can require the screen lock on every use). NONE: neither;
+ * only the master password.
+ */
+enum class QuickUnlockKind { FINGERPRINT, SCREEN_LOCK, NONE }
 
 /**
  * Single shared biometric-prompt entry point for the whole app -- the
@@ -47,6 +58,18 @@ object AppBiometricManager {
         }
     }
 
+    fun quickUnlockKind(context: Context): QuickUnlockKind {
+        if (BiometricManager.from(context).canAuthenticate(AUTHENTICATORS_CRYPTO) == BiometricManager.BIOMETRIC_SUCCESS) {
+            return QuickUnlockKind.FINGERPRINT
+        }
+        val keyguard = context.getSystemService(KeyguardManager::class.java)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && keyguard?.isDeviceSecure == true) {
+            QuickUnlockKind.SCREEN_LOCK
+        } else {
+            QuickUnlockKind.NONE
+        }
+    }
+
     fun isBiometricAvailable(context: Context): Boolean {
         return canAuthenticate(context) == BiometricAuthStatus.AVAILABLE
     }
@@ -58,7 +81,8 @@ object AppBiometricManager {
         negativeButtonText: String = "Use Master Password",
         onSuccess: () -> Unit,
         onError: (String) -> Unit = {},
-        onCancel: () -> Unit = {}
+        onCancel: () -> Unit = {},
+        onAttemptFailed: () -> Unit = {}
     ) {
         val executor = ContextCompat.getMainExecutor(activity)
         val prompt = BiometricPrompt(
@@ -84,7 +108,11 @@ object AppBiometricManager {
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    onError("Authentication failed. Please try again.")
+                    // A single non-matching attempt (wrong finger, smudge). The
+                    // prompt stays open and lets the user retry, so this is NOT a
+                    // terminal error -- treating it as one used to dismiss the
+                    // caller's flow while the prompt was still on screen.
+                    onAttemptFailed()
                 }
             }
         )
@@ -112,9 +140,12 @@ object AppBiometricManager {
         title: String = "Unlock AtomicVault",
         subtitle: String = "Authenticate using fingerprint or face",
         negativeButtonText: String = "Use Master Password",
+        /** The key needs the phone's screen lock instead of a fingerprint (see QuickUnlockKind). */
+        screenLock: Boolean = false,
         onSuccess: (Cipher) -> Unit,
         onError: (String) -> Unit = {},
-        onCancel: () -> Unit = {}
+        onCancel: () -> Unit = {},
+        onAttemptFailed: () -> Unit = {}
     ) {
         val executor = ContextCompat.getMainExecutor(activity)
         val prompt = BiometricPrompt(
@@ -147,16 +178,28 @@ object AppBiometricManager {
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    onError("Authentication failed. Please try again.")
+                    // A single non-matching attempt (wrong finger, smudge). The
+                    // prompt stays open and lets the user retry, so this is NOT a
+                    // terminal error -- treating it as one used to dismiss the
+                    // caller's flow while the prompt was still on screen.
+                    onAttemptFailed()
                 }
             }
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
-            .setSubtitle(subtitle)
-            .setNegativeButtonText(negativeButtonText)
-            .setAllowedAuthenticators(AUTHENTICATORS_CRYPTO)
+            .apply {
+                if (screenLock) {
+                    // The system shows its own Cancel; a negative button is not allowed here.
+                    setSubtitle("Use your phone's PIN, pattern or password")
+                    setAllowedAuthenticators(BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+                } else {
+                    setSubtitle(subtitle)
+                    setNegativeButtonText(negativeButtonText)
+                    setAllowedAuthenticators(AUTHENTICATORS_CRYPTO)
+                }
+            }
             .build()
 
         prompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))

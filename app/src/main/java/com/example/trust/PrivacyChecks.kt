@@ -38,10 +38,12 @@ object PrivacyChecks {
         sqlcipherVerified: Boolean,
         biometricArmed: Boolean,
         integrityWarnings: List<String>,
-        screenCaptureProtectionActive: Boolean = false // honest default: not yet built, see design plan roadmap
+        /** Read by the caller from the live window flags (FLAG_SECURE). */
+        screenCaptureProtectionActive: Boolean
     ): List<PrivacyCheck> {
         val internetDeclared = hasInternetPermission(context)
         val backupAllowed = isBackupAllowed(context)
+        val keyboardServiceDeclared = declaresInputMethod(context)
 
         return listOf(
             // -- Network Access --
@@ -56,6 +58,18 @@ object PrivacyChecks {
                 passed = true,
                 detail = "None declared in the build configuration",
                 isLiveCheck = false
+            ),
+
+            // -- Typing --
+            PrivacyCheck(
+                "Typing", "No keyboard service",
+                passed = !keyboardServiceDeclared,
+                detail = if (!keyboardServiceDeclared) {
+                    "The app installs no keyboard, so it never sees what you type in other apps; it fills through Android Autofill"
+                } else {
+                    "A keyboard service is declared -- unexpected"
+                },
+                isLiveCheck = true
             ),
 
             // -- Vault --
@@ -88,7 +102,7 @@ object PrivacyChecks {
             PrivacyCheck(
                 "Android", "Screen capture protection",
                 passed = screenCaptureProtectionActive,
-                detail = if (screenCaptureProtectionActive) "Active" else "Not yet enabled -- planned hardening work, not shipped yet",
+                detail = if (screenCaptureProtectionActive) "Active on every screen -- screenshots, recording and Recents are blocked" else "Not active on this window",
                 isLiveCheck = true
             ),
             PrivacyCheck(
@@ -109,6 +123,18 @@ object PrivacyChecks {
             info.requestedPermissions?.any { it == android.Manifest.permission.INTERNET } ?: false
         } catch (e: Exception) {
             // Fail closed toward "can't verify" being treated as a failed check, not a passed one.
+            true
+        }
+    }
+
+    /** True if this installed app registers any input method (keyboard) service. */
+    // Queries only this app's own package, which package visibility never hides.
+    @android.annotation.SuppressLint("QueryPermissionsNeeded")
+    private fun declaresInputMethod(context: Context): Boolean {
+        return try {
+            val intent = android.content.Intent("android.view.InputMethod").setPackage(context.packageName)
+            context.packageManager.queryIntentServices(intent, 0).isNotEmpty()
+        } catch (e: Exception) {
             true
         }
     }

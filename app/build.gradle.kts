@@ -8,14 +8,14 @@ plugins {
 
 android {
     namespace = "com.atomicvault.android"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.atomicvault.android"
         minSdk = 28 // Required minimum Android SDK 9.0 (Pie)
-        targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.1"
+        targetSdk = 36
+        versionCode = 3
+        versionName = "0.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -100,6 +100,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // OSGi bundle metadata, shipped by both bcprov (1.81+) and jspecify;
+            // meaningless on Android and a duplicate-path packaging failure.
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
 
@@ -128,11 +131,15 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.autofill)
     implementation(libs.bouncycastle)
+    // Native Argon2 (reference C code): the 64 MiB matrix lives outside the
+    // Java heap. Only androidx.annotation.Keep is used, so appcompat is left out.
+    implementation(libs.argon2kt) {
+        exclude(group = "androidx.appcompat", module = "appcompat")
+    }
     implementation(libs.androidx.sqlite.ktx)
 
     // Serialization
     implementation(libs.moshi)
-    implementation(libs.moshi.kotlin)
     ksp(libs.moshi.codegen)
 
     // Coroutines
@@ -157,6 +164,17 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+// CI reads failures from the job log (artifacts are not always reachable), so
+// print each failing test with its full stack trace.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showCauses = true
+        showStackTraces = true
+    }
 }
 
 gradle.taskGraph.whenReady {

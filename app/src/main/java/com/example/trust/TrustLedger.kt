@@ -29,7 +29,8 @@ enum class TrustEventType {
     BACKUP_EXPORTED,
     BACKUP_IMPORTED,
     SECURITY_SETTING_CHANGED,
-    INTEGRITY_CHECK_COMPLETED
+    INTEGRITY_CHECK_COMPLETED,
+    PHISHING_WARNING_SHOWN
 }
 
 data class TrustLedgerEntry(
@@ -46,7 +47,7 @@ data class TrustLedgerEntry(
 )
 
 private class TrustLedgerDbHelper(context: Context) :
-    SQLiteOpenHelper(context.applicationContext, "atomicvault_trust_ledger.db", null, 1) {
+    SQLiteOpenHelper(context.applicationContext, "atomicvault_trust_ledger.db", null, 2) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             """
@@ -60,27 +61,37 @@ private class TrustLedgerDbHelper(context: Context) :
               source TEXT NOT NULL,
               result TEXT NOT NULL,
               previous_hash TEXT NOT NULL,
-              event_hash TEXT NOT NULL
+              event_hash TEXT NOT NULL,
+              seq INTEGER
             );
             """.trimIndent()
         )
-        // Every read path (listEntries, verifyChainIntegrity, lastHash)
-        // orders by timestamp -- without this, each becomes a full table
-        // scan + sort as the ledger grows with normal use over weeks/months.
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_trust_event_timestamp ON trust_event(timestamp);")
+        createIndices(db)
     }
 
-    override fun onOpen(db: SQLiteDatabase) {
-        super.onOpen(db)
-        // onCreate() only fires for a brand-new database file --
-        // existing ledger databases from before this index was added
-        // (Phase 3) would never get it otherwise, since the version
-        // number wasn't bumped. CREATE INDEX IF NOT EXISTS is safe to
-        // run on every open.
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_trust_event_timestamp ON trust_event(timestamp);")
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) {
+            // v1 ordered the chain by millisecond timestamp, then a random
+            // UUID. Give every existing entry its position in exactly that
+            // order, which is the order its hashes were chained in.
+            db.execSQL("ALTER TABLE trust_event ADD COLUMN seq INTEGER")
+            db.execSQL(
+                """
+                UPDATE trust_event SET seq = (
+                  SELECT COUNT(*) FROM trust_event t2
+                  WHERE t2.timestamp < trust_event.timestamp
+                     OR (t2.timestamp = trust_event.timestamp AND t2.id <= trust_event.id)
+                )
+                """.trimIndent()
+            )
+        }
+        createIndices(db)
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+    private fun createIndices(db: SQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_trust_event_timestamp ON trust_event(timestamp);")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_trust_event_seq ON trust_event(seq);")
+    }
 }
 
 /**
@@ -134,33 +145,42 @@ object TrustLedger {
         result: String = "success"
     ) {
         try {
-            TrustLedgerDbHelper(context).writableDatabase.use { db ->
-                val previousHash = lastHash(db)
-                val timestamp = System.currentTimeMillis()
-                val subjectHash = subjectReference?.let { sha256(it) }
-                val packageHash = targetPackage?.let { sha256(it) }
+            synchronized(this) {
+                val db = database(context)
+                db.beginTransaction()
+                try {
+                    // Reading the chain head and appending must be one step:
+                    // two writers (the app and Autofill) used to read the same
+                    // head and fork the chain, which then failed verification.
+                    val (previousHash, lastSeq) = head(db)
+                    val timestamp = clock()
+                    val subjectHash = subjectReference?.let { sha256(it) }
+                    val packageHash = targetPackage?.let { sha256(it) }
 
-                val eventHash = bytesToHex(
-                    TrustLedgerKeyStore.hmac(
-                        payload(previousHash, timestamp, eventType.name, subjectHash, packageHash, authenticationType, source, result)
+                    val eventHash = bytesToHex(
+                        hmac(payload(previousHash, timestamp, eventType.name, subjectHash, packageHash, authenticationType, source, result))
                     )
-                )
 
-                db.insert(
-                    "trust_event", null,
-                    ContentValues().apply {
-                        put("id", UUID.randomUUID().toString())
-                        put("timestamp", timestamp)
-                        put("event_type", eventType.name)
-                        put("subject_reference_hash", subjectHash)
-                        put("target_package_hash", packageHash)
-                        put("authentication_type", authenticationType)
-                        put("source", source)
-                        put("result", result)
-                        put("previous_hash", previousHash)
-                        put("event_hash", eventHash)
-                    }
-                )
+                    db.insertOrThrow(
+                        "trust_event", null,
+                        ContentValues().apply {
+                            put("id", UUID.randomUUID().toString())
+                            put("seq", lastSeq + 1)
+                            put("timestamp", timestamp)
+                            put("event_type", eventType.name)
+                            put("subject_reference_hash", subjectHash)
+                            put("target_package_hash", packageHash)
+                            put("authentication_type", authenticationType)
+                            put("source", source)
+                            put("result", result)
+                            put("previous_hash", previousHash)
+                            put("event_hash", eventHash)
+                        }
+                    )
+                    db.setTransactionSuccessful()
+                } finally {
+                    db.endTransaction()
+                }
             }
         } catch (e: Exception) {
             // See doc comment -- never let a logging failure surface as
@@ -171,11 +191,11 @@ object TrustLedger {
     fun listEntries(context: Context, limit: Int = 200): List<TrustLedgerEntry> {
         val results = mutableListOf<TrustLedgerEntry>()
         try {
-            TrustLedgerDbHelper(context).readableDatabase.use { db ->
+            database(context).let { db ->
                 db.rawQuery(
                     "SELECT id, timestamp, event_type, subject_reference_hash, target_package_hash, " +
                         "authentication_type, source, result, previous_hash, event_hash FROM trust_event " +
-                        "ORDER BY timestamp DESC LIMIT ?",
+                        "ORDER BY seq DESC LIMIT ?",
                     arrayOf(limit.toString())
                 ).use { c ->
                     while (c.moveToNext()) results.add(entryFromCursor(c))
@@ -196,13 +216,13 @@ object TrustLedger {
      */
     fun verifyChainIntegrity(context: Context): String? {
         try {
-            TrustLedgerDbHelper(context).readableDatabase.use { db ->
+            database(context).let { db ->
                 var expectedPrevious = GENESIS_HASH
 
                 db.rawQuery(
                     "SELECT id, timestamp, event_type, subject_reference_hash, target_package_hash, " +
                         "authentication_type, source, result, previous_hash, event_hash FROM trust_event " +
-                        "ORDER BY timestamp ASC, id ASC",
+                        "ORDER BY seq ASC",
                     null
                 ).use { c ->
                     while (c.moveToNext()) {
@@ -210,7 +230,7 @@ object TrustLedger {
                         if (entry.previousHash != expectedPrevious) return entry.id
 
                         val recomputed = bytesToHex(
-                            TrustLedgerKeyStore.hmac(
+                            hmac(
                                 payload(
                                     entry.previousHash, entry.timestamp, entry.eventType.name,
                                     entry.subjectReferenceHash, entry.targetPackageHash,
@@ -229,13 +249,76 @@ object TrustLedger {
         return null
     }
 
+    /** Where and when one item was filled, from the hashed ledger entries. */
+    data class FillReceipts(
+        val count: Int,
+        val lastFilledAt: Long?,
+        /** Fills into a site/app other than the item's own (by hash), e.g. a manual "fill anyway". */
+        val elsewhereCount: Int
+    )
+
+    /**
+     * Fill receipts for [itemId]: how often it was filled, when last, and
+     * whether every fill went to its own site/app. Hashes are compared, so the
+     * ledger still never stores which sites the user has accounts on.
+     */
+    fun fillReceipts(context: Context, itemId: String, ownTargets: Collection<String>): FillReceipts {
+        val subject = sha256(itemId)
+        val own = ownTargets.filter { it.isNotBlank() }.map { sha256(it.trim().lowercase()) }.toSet()
+        var count = 0
+        var last: Long? = null
+        var elsewhere = 0
+        try {
+            database(context).rawQuery(
+                "SELECT timestamp, target_package_hash FROM trust_event WHERE event_type = ? AND subject_reference_hash = ? ORDER BY seq DESC",
+                arrayOf(TrustEventType.CREDENTIAL_FILLED.name, subject)
+            ).use { c ->
+                while (c.moveToNext()) {
+                    count++
+                    if (last == null) last = c.getLong(0)
+                    val target = if (c.isNull(1)) null else c.getString(1)
+                    if (target != null && own.isNotEmpty() && target !in own) elsewhere++
+                }
+            }
+        } catch (e: Exception) {
+            // Receipts are informational; an unreadable ledger shows none.
+        }
+        return FillReceipts(count, last, elsewhere)
+    }
+
     fun sha256(input: String): String =
         bytesToHex(MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8)))
 
-    private fun lastHash(db: SQLiteDatabase): String {
-        db.rawQuery("SELECT event_hash FROM trust_event ORDER BY timestamp DESC, id DESC LIMIT 1", null).use { c ->
-            return if (c.moveToFirst()) c.getString(0) else GENESIS_HASH
+    /** Hash of the newest entry (the chain head), for the user to note and compare later. */
+    fun headHash(context: Context): String = synchronized(this) { head(database(context)).first }
+
+    /** The chain head: (hash of the last entry, its seq), or GENESIS / 0 when empty. */
+    private fun head(db: SQLiteDatabase): Pair<String, Long> {
+        db.rawQuery("SELECT event_hash, seq FROM trust_event ORDER BY seq DESC LIMIT 1", null).use { c ->
+            return if (c.moveToFirst()) c.getString(0) to c.getLong(1) else GENESIS_HASH to 0L
         }
+    }
+
+    private var helper: TrustLedgerDbHelper? = null
+
+    /** One helper (and connection) for the process instead of opening the file for every event. */
+    @Synchronized
+    private fun database(context: Context): SQLiteDatabase {
+        val h = helper ?: TrustLedgerDbHelper(context).also { helper = it }
+        return h.writableDatabase
+    }
+
+    /** Test seams: the HMAC key lives in AndroidKeyStore, which unit tests do not have. */
+    internal var hmac: (ByteArray) -> ByteArray = { TrustLedgerKeyStore.hmac(it) }
+    internal var clock: () -> Long = { System.currentTimeMillis() }
+
+    internal fun resetForTest() {
+        synchronized(this) {
+            helper?.close()
+            helper = null
+        }
+        hmac = { TrustLedgerKeyStore.hmac(it) }
+        clock = { System.currentTimeMillis() }
     }
 
     private fun entryFromCursor(c: android.database.Cursor): TrustLedgerEntry = TrustLedgerEntry(

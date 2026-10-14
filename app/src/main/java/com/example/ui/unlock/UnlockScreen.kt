@@ -1,51 +1,60 @@
 package com.example.ui.unlock
 
+import com.example.ui.theme.AtomicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import com.example.ui.VaultUiState
-import com.example.ui.components.AtomicOutlinedButton
+import com.example.ui.components.AtomMark
+import com.example.ui.components.AtomicButton
+import com.example.ui.components.AtomicButtonVariant
+import com.example.ui.components.AtomicHairline
 import com.example.ui.components.AtomicPrimaryButton
 import com.example.ui.components.AtomicTextField
-import com.example.ui.theme.AtomicColors
-import com.example.ui.theme.AtomicFontSize
-import com.example.ui.theme.AtomicFontWeight
+import com.example.ui.components.dotGrid
 import com.example.ui.theme.AtomicSpacing
+import com.example.ui.theme.AtomicTheme
+import com.example.ui.theme.AtomicType
 
+/**
+ * Unlock (plan 8.7). The one job: open the vault. Primary: UNLOCK.
+ * Secondary: fingerprint, when armed. A split headline, the master
+ * password typed with the user's own keyboard, and a plain error that says
+ * what to do. The busy state is the button's own bar while Argon2 runs.
+ */
 @Composable
 fun UnlockScreen(
     uiState: VaultUiState,
@@ -53,17 +62,21 @@ fun UnlockScreen(
     onUnlockWithBiometric: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = AtomicTheme.colors
     var password by remember { mutableStateOf("") }
 
-    // NOTE: the actual BiometricPrompt now lives in NavGraph.kt, bound to a
-    // Cipher via BiometricGatedKeyStore -- see the P0 fix in the
-    // improvement plan. This screen just signals intent; it must NOT show
-    // its own separate (non-crypto-bound) prompt, or the biometric check
-    // stops being cryptographically tied to the key at all.
+    // NOTE: the actual BiometricPrompt lives in NavGraph.kt, bound to a
+    // Cipher via BiometricGatedKeyStore. This screen just signals intent; it
+    // must NOT show its own separate (non-crypto-bound) prompt, or the
+    // biometric check stops being cryptographically tied to the key at all.
 
-    var hasAttemptedBiometric by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    fun submit() {
+        if (password.isNotEmpty() && !uiState.busy) onUnlockWithPassword(password)
+    }
 
-    // Auto-trigger biometric unlock on screen launch if biometrics are armed
+    var hasAttemptedBiometric by rememberSaveable { mutableStateOf(false) }
+
+    // Offer the fingerprint once on arrival when it is armed.
     LaunchedEffect(uiState.biometricArmed) {
         if (uiState.biometricArmed && !hasAttemptedBiometric) {
             hasAttemptedBiometric = true
@@ -74,179 +87,95 @@ fun UnlockScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(colors.background)
+            .dotGrid()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(AtomicSpacing.xl),
-        verticalArrangement = Arrangement.Center,
+            .padding(horizontal = AtomicSpacing.lg)
+            .testTag("screen_unlock"),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(AtomicSpacing.xl))
+        // Forms stay readable on tablets: one column, at most 480 dp wide.
+        Column(modifier = Modifier.widthIn(max = AtomicSize.formMaxWidth).fillMaxWidth()) {
+            Spacer(Modifier.height(AtomicSpacing.hero))
+            AtomMark(size = AtomicSize.markLg)
+            Spacer(Modifier.height(AtomicSpacing.xl))
 
-        com.example.ui.components.LiquidGlassSurface(
-            modifier = Modifier.size(56.dp),
-            variant = com.example.ui.components.GlassVariant.Card,
-            shape = androidx.compose.foundation.shape.CircleShape,
-            contentPadding = 0.dp
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Shield,
-                    contentDescription = null,
-                    tint = AtomicColors.Foreground,
-                    modifier = Modifier.size(28.dp)
+            Text(
+                text = AtomicType.caps("Vault / Locked"),
+                style = AtomicType.monoCaption,
+                color = colors.accent
+            )
+            Spacer(Modifier.height(AtomicSpacing.md))
+            Text(
+                text = buildAnnotatedString {
+                    append("Locked. ")
+                    withStyle(SpanStyle(color = colors.accent)) { append("Your key opens it.") }
+                },
+                style = AtomicType.displayXL.copy(fontSize = 56.sp, lineHeight = 53.sp),
+                color = colors.textPrimary,
+                modifier = Modifier.semantics { heading() }
+            )
+            Spacer(Modifier.height(AtomicSpacing.md))
+            Text(
+                text = "Everything stays encrypted on this phone. Nothing leaves it.",
+                style = AtomicType.body,
+                color = colors.textSecondary
+            )
+
+            Spacer(Modifier.height(AtomicSpacing.xl))
+
+            // The system keyboard (Gboard or whatever the user picked) types
+            // the master password. A password-type field makes keyboards turn
+            // off learning and suggestions.
+            AtomicTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = "Master password",
+                isPassword = true,
+                errorMessage = uiState.error,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = { submit() }),
+                testTag = "unlock_master_password_input",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(AtomicSpacing.lg))
+
+            AtomicPrimaryButton(
+                text = "Unlock",
+                onClick = { submit() },
+                enabled = password.isNotEmpty(),
+                busy = uiState.busy,
+                testTag = "unlock_submit_button"
+            )
+
+            if (uiState.biometricArmed) {
+                Spacer(Modifier.height(AtomicSpacing.md))
+                AtomicButton(
+                    text = "Use fingerprint",
+                    onClick = onUnlockWithBiometric,
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = AtomicButtonVariant.Ghost,
+                    enabled = !uiState.busy,
+                    testTag = "unlock_biometric_button"
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
-        Text(
-            text = "Unlock AtomicVault",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = AtomicFontWeight.bold
-        )
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-
-        Text(
-            text = "Your master password encrypts everything. It is never stored and cannot be recovered.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = AtomicColors.TextMuted,
-            modifier = Modifier.padding(horizontal = AtomicSpacing.md)
-        )
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.xl))
-
-        if (uiState.biometricArmed) {
-            AtomicOutlinedButton(
-                text = "Unlock with biometrics",
-                onClick = { onUnlockWithBiometric() },
-                modifier = Modifier.fillMaxWidth(),
-                testTag = "unlock_biometric_button"
-            )
-
-            Spacer(modifier = Modifier.height(AtomicSpacing.lg))
-        }
-
-        // Custom Password Display
-        com.example.ui.components.LiquidGlassSurface(
-            modifier = Modifier.fillMaxWidth().height(64.dp),
-            variant = com.example.ui.components.GlassVariant.Interactive,
-            contentPadding = AtomicSpacing.md
-        ) {
+            Spacer(Modifier.height(AtomicSpacing.xxl))
+            AtomicHairline()
             Row(
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth().padding(vertical = AtomicSpacing.sm),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    if (password.isEmpty()) {
-                        Text(
-                            text = "Master password",
-                            color = AtomicColors.TextMuted,
-                            fontSize = AtomicFontSize.body
-                        )
-                    } else {
-                        Text(
-                            text = "•".repeat(password.length),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = AtomicFontSize.title,
-                            letterSpacing = 4.sp,
-                            maxLines = 1
-                        )
-                    }
-                }
-
-                if (password.isNotEmpty()) {
-                    IconButton(
-                        onClick = { password = "" },
-                        modifier = Modifier
-                            .size(32.dp)
-                            .semantics { contentDescription = "Clear password" }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = null,
-                            tint = AtomicColors.TextMuted
-                        )
-                    }
-                }
+                Text(AtomicType.caps("Argon2id · Keystore"), style = AtomicType.monoCaption, color = colors.textSecondary)
+                Text(AtomicType.caps("No network"), style = AtomicType.monoCaption, color = colors.textSecondary)
             }
         }
-
-        if (uiState.error != null) {
-            Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-            Text(
-                text = uiState.error,
-                color = AtomicColors.Danger,
-                fontSize = AtomicFontSize.caption,
-                fontWeight = AtomicFontWeight.medium
-            )
-        }
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.lg))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AtomicSpacing.sm),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Shield,
-                contentDescription = null,
-                tint = AtomicColors.Success,
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(modifier = Modifier.width(AtomicSpacing.xs))
-            Text(
-                text = "ATOMIC SHIELD",
-                color = AtomicColors.TextMuted,
-                fontSize = AtomicFontSize.micro,
-                fontWeight = AtomicFontWeight.bold
-            )
-            Text(
-                text = " \u00b7 in-app isolated input \u00b7 zero telemetry",
-                color = AtomicColors.TextMuted,
-                fontSize = AtomicFontSize.micro,
-                fontWeight = AtomicFontWeight.regular
-            )
-        }
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.sm))
-
-        // Custom Liquid Glass Keyboard
-        com.example.ui.components.LiquidGlassKeyboard(
-            onKeyPress = { password += it },
-            onBackspace = {
-                if (password.isNotEmpty()) {
-                    password = password.dropLast(1)
-                }
-            },
-            onEnter = {
-                if (password.isNotEmpty() && !uiState.busy) {
-                    onUnlockWithPassword(password)
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.md))
-
-        Text(
-            text = "Keystrokes never leave memory or touch a 3rd-party keyboard.",
-            color = AtomicColors.TextMuted,
-            fontSize = AtomicFontSize.caption,
-            modifier = Modifier.padding(horizontal = AtomicSpacing.lg)
-        )
-
-        Spacer(modifier = Modifier.height(AtomicSpacing.xl))
     }
 }

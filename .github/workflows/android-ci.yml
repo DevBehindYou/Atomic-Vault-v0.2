@@ -1,0 +1,375 @@
+name: Android CI
+
+# Verification-only build: unit tests, lint and a debug APK. Needs no signing
+# secrets and never touches the release keystore, so it is safe to run on any
+# branch or pull request. Production signing stays in android-release.yml
+# (main pushes and v* tags only).
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Keyed by branch, so a pull request's run replaces the push run of the same
+# commit instead of running twice.
+concurrency:
+  group: android-ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Unit tests, lint & debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Design system check
+        run: bash .github/scripts/design_check.sh
+
+      - name: Unused imports check (ktlint)
+        run: bash .github/scripts/unused_imports_check.sh
+
+      - name: Unit tests and debug APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew testDebugUnitTest assembleDebug --stacktrace
+
+      # Runs even when the step above failed, so one push reports both.
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: ./gradlew lintDebug --stacktrace
+
+      # The text report in the log, for sessions that can read job logs but
+      # cannot download artifacts.
+      - name: Print lint report
+        if: ${{ !cancelled() }}
+        run: cat app/build/reports/lint-results-debug.txt 2>/dev/null || echo "No lint text report"
+
+      # Renders the real screens (UiSnapshotTest) to PNGs for visual review.
+      - name: Render UI snapshots
+        if: ${{ !cancelled() }}
+        run: ./gradlew recordRoborazziDebug --stacktrace
+
+      - name: Upload UI snapshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-UI-Snapshots-${{ github.run_number }}
+          path: app/build/ui-snapshots/*.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-CI-Reports-${{ github.run_number }}
+          path: |
+            app/build/reports/tests/
+            app/build/reports/lint-results-debug.html
+            app/build/reports/lint-results-debug.txt
+            app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Debug-APK-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Autofill test app
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-AutofillTest-APK-${{ github.run_number }}
+          path: autofilltest/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      # The release build type with R8 shrinking, signed with the debug key
+      # and installed as com.atomicvault.android.internal. Minification can
+      # break Moshi, Compose or the Autofill service in ways the debug build
+      # hides, so the emulator job runs this APK too (TASKS T5).
+      - name: Minified internal APK (R8)
+        run: ./gradlew assembleInternal --stacktrace
+
+      - name: Upload minified internal APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Internal-APK-${{ github.run_number }}
+          path: app/build/outputs/apk/internal/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  # Runs the built debug APK on an emulator: it must launch, create a vault,
+  # walk the app, restart locked and unlock through the system keyboard, and
+  # nothing may crash. Unit tests and Robolectric renders cannot see a startup
+  # or service crash.
+  emulator:
+    name: Emulator check (${{ matrix.variant }})
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: debug
+            artifact: Debug-APK
+            apk: app-debug.apk
+            pkg: com.atomicvault.android.debug
+          - variant: minified
+            artifact: Internal-APK
+            apk: app-internal.apk
+            pkg: com.atomicvault.android.internal
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download the APK under test
+        uses: actions/download-artifact@v4
+        with:
+          name: AtomicVault-${{ matrix.artifact }}-${{ github.run_number }}
+          path: apk
+
+      - name: Download Autofill test app
+        uses: actions/download-artifact@v4
+        with:
+          name: AtomicVault-AutofillTest-APK-${{ github.run_number }}
+          path: testapk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Launch, create a vault, walk the app, restart and unlock
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: PKG=${{ matrix.pkg }} bash .github/scripts/emulator_check.sh apk/${{ matrix.apk }} testapk/autofilltest-debug.apk
+
+      - name: Upload emulator screenshots and logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Emulator-${{ matrix.variant }}-${{ github.run_number }}
+          path: emulator-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Fingerprint unlock with the emulator's virtual sensor (TASKS T2): enrols
+  # a fingerprint, arms unlock in onboarding, and checks the right finger,
+  # an unknown finger and a cancelled prompt.
+  emulator-biometric:
+    name: Emulator fingerprint check
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: AtomicVault-Debug-APK-${{ github.run_number }}
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Enrol a fingerprint, arm unlock, unlock, reject, cancel
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: bash .github/scripts/emulator_biometric_check.sh apk/app-debug.apk
+
+      - name: Upload fingerprint check logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Emulator-biometric-${{ github.run_number }}
+          path: emulator-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+  emulator-screenlock:
+    name: Emulator screen-lock check
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: AtomicVault-Debug-APK-${{ github.run_number }}
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set a PIN, arm screen-lock unlock, unlock, cancel
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: bash .github/scripts/emulator_screenlock_check.sh apk/app-debug.apk
+
+      - name: Upload screen-lock check logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Emulator-screenlock-${{ github.run_number }}
+          path: emulator-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Upgrade check (pull requests): the base branch's build creates a vault
+  # with one login, this branch's build is installed over it, and must unlock
+  # it and still show the login. Both APKs are built here so they share one
+  # debug signing key (adb install -r refuses a different signer).
+  upgrade:
+    name: Upgrade check (base build -> this build)
+    if: github.event_name == 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout this pull request
+        uses: actions/checkout@v4
+
+      - name: Checkout the base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build both APKs
+        run: |
+          chmod +x ./gradlew base/gradlew
+          ./gradlew assembleDebug --stacktrace
+          (cd base && ./gradlew assembleDebug --stacktrace)
+          mkdir -p upgrade-apks
+          cp base/app/build/outputs/apk/debug/app-debug.apk upgrade-apks/old.apk
+          cp app/build/outputs/apk/debug/app-debug.apk upgrade-apks/new.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Create a vault on the base build, upgrade, unlock
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: bash .github/scripts/emulator_upgrade_check.sh upgrade-apks/old.apk upgrade-apks/new.apk
+
+      - name: Upload upgrade check logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Emulator-upgrade-${{ github.run_number }}
+          path: emulator-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Instrumented tests (app/src/androidTest) on an emulator: code that needs
+  # the real Android Keystore and EncryptedSharedPreferences, such as the
+  # vault envelope migration.
+  instrumented:
+    name: Instrumented tests (emulator)
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: chmod +x ./gradlew && ./gradlew connectedDebugAndroidTest --stacktrace
+
+      - name: Upload instrumented test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AtomicVault-Instrumented-Reports-${{ github.run_number }}
+          path: app/build/reports/androidTests/
+          if-no-files-found: warn
+          retention-days: 14

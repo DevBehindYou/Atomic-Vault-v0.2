@@ -19,10 +19,11 @@
 }
 
 # SQLCipher Native and Database
--keep class net.sqlcipher.** { *; }
--keep class net.sqlcipher.database.** { *; }
+-keep class net.zetetic.database.** { *; }
+# argon2kt: JNI binds these classes by name from native code.
+-keep class com.lambdapioneer.argon2kt.** { *; }
 -keepclasseswithmembernames class * { native <methods>; }
--dontwarn net.sqlcipher.**
+-dontwarn net.zetetic.database.**
 
 # Moshi Serialization Models & Generated Adapters
 -keep class com.squareup.moshi.** { *; }
@@ -32,10 +33,6 @@
 
 # Manifest Entry Points
 -keep public class * extends android.service.autofill.AutofillService {
-    public <init>();
-}
-
--keep public class * extends android.inputmethodservice.InputMethodService {
     public <init>();
 }
 

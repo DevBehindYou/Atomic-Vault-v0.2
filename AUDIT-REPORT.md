@@ -1,5 +1,10 @@
 # AtomicVault — Full Project Audit
 
+> **Superseded.** This was a static-only review and parts of it proved wrong once
+> the code was built and run (see `docs/CHANGELOG.md`, "Earlier audit"). Current
+> status and open work live in `docs/` -- start with `docs/README.md` and
+> `docs/IMPLEMENTATION-PLAN.md`. Kept for history.
+
 **Scope:** all 59 Kotlin source files, Gradle config, manifest, CI workflow.
 **Method:** static review only. No Android SDK, emulator, or device was reachable in this environment, so nothing below was compiled or run — see §6.
 

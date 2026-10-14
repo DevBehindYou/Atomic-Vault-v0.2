@@ -1,11 +1,14 @@
 package com.example.security
 
 import com.example.database.CredentialPlain
+import com.example.database.VaultItemType
 import kotlin.math.ln
 import kotlin.math.roundToInt
 
 enum class PasswordIssue {
-    EMPTY, REUSED, WEAK
+    EMPTY, REUSED, WEAK,
+    /** Appears in the bundled list of passwords from public breaches (BreachedPasswords). */
+    BREACHED
 }
 
 data class CredentialFinding(
@@ -20,7 +23,8 @@ data class VaultSecurityReport(
     val weakCount: Int,
     val emptyCount: Int,
     val totalCount: Int,
-    val findings: List<CredentialFinding>
+    val findings: List<CredentialFinding>,
+    val breachedCount: Int = 0
 )
 
 object PasswordAnalysis {
@@ -37,7 +41,17 @@ object PasswordAnalysis {
         return password.length * (ln(pool.toDouble()) / ln(2.0))
     }
 
-    fun analyzeVault(items: List<CredentialPlain>): VaultSecurityReport {
+    /**
+     * Password health of the vault's LOGIN items. Payment cards and identities
+     * have no password; counting them used to flag every one as "empty" and
+     * drag the score down.
+     */
+    fun analyzeVault(
+        allItems: List<CredentialPlain>,
+        /** True if the password appears in a breach list; the default checks nothing. */
+        isBreached: (String) -> Boolean = { false }
+    ): VaultSecurityReport {
+        val items = allItems.filter { it.itemType == VaultItemType.LOGIN }
         if (items.isEmpty()) {
             return VaultSecurityReport(
                 score = 100,
@@ -61,6 +75,7 @@ object PasswordAnalysis {
         var emptyCount = 0
         var reusedCount = 0
         var weakCount = 0
+        var breachedCount = 0
         val findings = mutableListOf<CredentialFinding>()
         val flaggedItemIds = mutableSetOf<String>()
 
@@ -73,6 +88,10 @@ object PasswordAnalysis {
                 issues.add(PasswordIssue.EMPTY)
                 emptyCount++
             } else {
+                if (isBreached(item.password)) {
+                    issues.add(PasswordIssue.BREACHED)
+                    breachedCount++
+                }
                 if ((passwordCounts[pass] ?: 0) > 1) {
                     issues.add(PasswordIssue.REUSED)
                     reusedCount++
@@ -85,17 +104,21 @@ object PasswordAnalysis {
 
             if (issues.isNotEmpty()) {
                 flaggedItemIds.add(item.id)
-                findings.add(CredentialFinding(credential = item, issues = issues, entropy = entropy))
+                // The report outlives the scan on screen: keep what the screen
+                // shows (id, title, type), not the decrypted secrets.
+                val shown = item.copy(username = "", password = "", notes = "", totpSecret = "", customFields = emptyList())
+                findings.add(CredentialFinding(credential = shown, issues = issues, entropy = entropy))
             }
         }
 
-        // Sort findings: reused first, then empty, then weak; ties broken by lower entropy
+        // Sort findings: breached first, then reused, empty, weak; ties broken by lower entropy
         findings.sortWith(
             compareBy<CredentialFinding> { finding ->
                 when {
-                    finding.issues.contains(PasswordIssue.REUSED) -> 0
-                    finding.issues.contains(PasswordIssue.EMPTY) -> 1
-                    else -> 2
+                    finding.issues.contains(PasswordIssue.BREACHED) -> 0
+                    finding.issues.contains(PasswordIssue.REUSED) -> 1
+                    finding.issues.contains(PasswordIssue.EMPTY) -> 2
+                    else -> 3
                 }
             }.thenBy { it.entropy }
         )
@@ -110,7 +133,8 @@ object PasswordAnalysis {
             weakCount = weakCount,
             emptyCount = emptyCount,
             totalCount = total,
-            findings = findings
+            findings = findings,
+            breachedCount = breachedCount
         )
     }
 }
